@@ -9,6 +9,16 @@ use App\Models\Vendor;
 class ChartOfAccountsService
 {
     /**
+     * Keys of config('accounting.accounts') that a posting rule, the write-off,
+     * depreciation or the opening-balance wizard actually posts to.
+     */
+    protected const POSTING_KEYS = [
+        'cash', 'receivables', 'fixed_assets', 'accumulated_depreciation',
+        'payables', 'vat_payable', 'owners_equity', 'water_revenue',
+        'water_purchases', 'salaries', 'bad_debt', 'depreciation', 'other_expenses',
+    ];
+
+    /**
      * The standard water-utility chart (CLAUDE.md), plus 5900 for expenses
      * that fit none of the specific accounts (rent, power, office…).
      *
@@ -73,6 +83,27 @@ class ChartOfAccountsService
                 'is_system' => true,
             ]);
         }
+    }
+
+    /**
+     * Account codes the automatic posting rules write to (config/accounting.php).
+     * Deactivating one would make invoices, payments or expenses fail to post.
+     *
+     * @return list<string>
+     */
+    public static function postingCodes(): array
+    {
+        return collect([
+            array_intersect_key(config('accounting.accounts', []), array_flip(self::POSTING_KEYS)),
+            config('accounting.payment_method_accounts', []),
+            config('accounting.expense_category_accounts', []),
+        ])->flatten()->map(fn ($code) => (string) $code)->unique()->values()->all();
+    }
+
+    /** True when automatic postings depend on this account staying active. */
+    public function isRequiredForPosting(ChartOfAccount $account): bool
+    {
+        return in_array((string) $account->code, self::postingCodes(), true);
     }
 
     /** Seed only if the vendor has no accounts at all ("first use"). */

@@ -33,10 +33,17 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
             return;
         }
 
-        $this->invoice->update([
-            'status' => InvoiceStatus::Sent,
-            'issued_at' => $this->invoice->issued_at ?? now(),
-        ]);
+        try {
+            // The status change and its ledger entry succeed or fail together.
+            \Illuminate\Support\Facades\DB::transaction(fn () => $this->invoice->update([
+                'status' => InvoiceStatus::Sent,
+                'issued_at' => $this->invoice->issued_at ?? now(),
+            ]));
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            $this->invoice->refresh();
+            Flux::toast(variant: 'danger', heading: 'Cannot send', text: $e->getMessage());
+            return;
+        }
 
         $pdf->regenerate($this->invoice);
 
@@ -78,7 +85,14 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
             return;
         }
 
-        $this->invoice->update(['status' => InvoiceStatus::Void]);
+        try {
+            \Illuminate\Support\Facades\DB::transaction(fn () => $this->invoice->update(['status' => InvoiceStatus::Void]));
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            $this->invoice->refresh();
+            Flux::toast(variant: 'danger', heading: 'Cannot void', text: $e->getMessage());
+            return;
+        }
+
         $pdf->regenerate($this->invoice);
 
         Flux::toast(variant: 'warning', heading: 'Voided', text: 'Invoice voided');
@@ -90,6 +104,7 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
     public function writeOff(\App\Actions\Accounting\WriteOffInvoice $action, InvoicePdfService $pdf): void
     {
         $this->authorize('update', $this->invoice);
+        $this->authorize('accounting.post');
 
         try {
             $action->handle($this->invoice, $this->writeOffReason ?: null);
@@ -178,11 +193,13 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                 </flux:button>
             @endif
 
-            @if ($invoice->status->isPayable() && $invoice->balance() > 0)
-                <flux:modal.trigger name="write-off">
-                    <flux:button variant="ghost" icon="archive-box-x-mark">Write off</flux:button>
-                </flux:modal.trigger>
-            @endif
+            @can('accounting.post')
+                @if ($invoice->status->isPayable() && $invoice->balance() > 0)
+                    <flux:modal.trigger name="write-off">
+                        <flux:button variant="ghost" icon="archive-box-x-mark">Write off</flux:button>
+                    </flux:modal.trigger>
+                @endif
+            @endcan
 
             @if (!in_array($invoice->status->value, ['paid', 'void', 'written_off']))
                 <flux:button wire:click="void" variant="ghost" icon="x-circle" wire:confirm="Void this invoice?">

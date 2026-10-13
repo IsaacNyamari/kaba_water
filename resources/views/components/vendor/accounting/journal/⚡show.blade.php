@@ -4,10 +4,12 @@ use App\Livewire\Concerns\UsesAccounting;
 use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Models\OpeningBalance;
 use App\Models\Payment;
 use App\Services\Accounting\Exceptions\AccountingException;
 use App\Services\Accounting\LedgerService;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -25,13 +27,38 @@ new #[Layout('layouts.vendor'), Title('Journal Entry')] class extends Component 
         $this->entry = $entry;
     }
 
+    /**
+     * Entries posted from an invoice, payment or expense follow that document:
+     * reversing them here would leave the books disagreeing with it.
+     */
+    public function documentDriven(): bool
+    {
+        return in_array($this->entry->source_type, [Invoice::class, Payment::class, Expense::class], true);
+    }
+
     public function reverse(LedgerService $ledger): void
     {
         $this->authorize('accounting.post');
+
+        if ($this->documentDriven()) {
+            Flux::modal('reverse-entry')->close();
+            Flux::toast(variant: 'danger', heading: 'Cannot reverse here',
+                text: 'This entry was posted from a ' . strtolower(class_basename($this->entry->source_type)) . '. Void, delete or edit that document instead.');
+            return;
+        }
+
         $this->validate(['reason' => ['required', 'string', 'max:255']]);
 
         try {
-            $reversal = $ledger->reverse($this->entry, $this->reason);
+            $reversal = DB::transaction(function () use ($ledger) {
+                $reversal = $ledger->reverse($this->entry, $this->reason);
+
+                // Reversing the opening entry frees the wizard so the balances can be redone.
+                OpeningBalance::where('journal_entry_id', $this->entry->id)
+                    ->update(['is_posted' => false, 'journal_entry_id' => null]);
+
+                return $reversal;
+            });
         } catch (AccountingException|\LogicException $e) {
             Flux::toast(variant: 'danger', heading: 'Cannot reverse', text: $e->getMessage());
             return;
@@ -49,7 +76,7 @@ new #[Layout('layouts.vendor'), Title('Journal Entry')] class extends Component 
             Invoice::class => ['Invoice ' . ($this->entry->reference ?? '#' . $this->entry->source_id), route('vendor.invoices.show', $this->entry->source_id)],
             Payment::class => ['Payment #' . $this->entry->source_id, route('vendor.payments.index')],
             Expense::class => ['Expense #' . $this->entry->source_id, route('vendor.expenses.edit', $this->entry->source_id)],
-            \App\Models\OpeningBalance::class => ['Opening balances', route('vendor.accounting.opening-balances')],
+            OpeningBalance::class => ['Opening balances', route('vendor.accounting.opening-balances')],
             \App\Models\Asset::class => ['Asset #' . $this->entry->source_id, route('vendor.assets.edit', $this->entry->source_id)],
             default => null,
         };
@@ -70,7 +97,7 @@ new #[Layout('layouts.vendor'), Title('Journal Entry')] class extends Component 
             <x-slot:actions>
                 <flux:button href="{{ route('vendor.accounting.journal.index') }}" variant="ghost" icon="arrow-left" wire:navigate>Back</flux:button>
                 @can('accounting.post')
-                    @unless ($entry->reversed_by_id)
+                    @unless ($entry->reversed_by_id || $this->documentDriven())
                         <flux:modal.trigger name="reverse-entry">
                             <flux:button variant="danger" icon="arrow-uturn-left">Reverse</flux:button>
                         </flux:modal.trigger>

@@ -165,7 +165,7 @@ new #[Layout('layouts.vendor'), Title('Opening Balances')] class extends Compone
                 Opening balances as of <strong>{{ $this->existing->as_of_date->format('d M Y') }}</strong> were posted in
                 <flux:link href="{{ route('vendor.accounting.journal.show', $this->existing->journal_entry_id) }}" wire:navigate>
                     entry #{{ $this->existing->journal_entry_id }}</flux:link>.
-                To change them, reverse that entry and contact support to reset the wizard.
+                To change them, reverse that entry — this wizard then opens again.
             </flux:callout>
         @else
             {{-- Step indicator --}}

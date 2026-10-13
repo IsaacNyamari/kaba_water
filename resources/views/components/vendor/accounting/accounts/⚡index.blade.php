@@ -4,6 +4,7 @@ use App\Enums\AccountType;
 use App\Livewire\Concerns\UsesAccounting;
 use App\Models\ChartOfAccount;
 use App\Models\JournalLine;
+use App\Services\Accounting\ChartOfAccountsService;
 use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -41,6 +42,12 @@ new #[Layout('layouts.vendor'), Title('Chart of Accounts')] class extends Compon
     {
         $this->authorize('accounting.post');
         $account = ChartOfAccount::findOrFail($id);
+
+        if ($account->is_active && app(ChartOfAccountsService::class)->isRequiredForPosting($account)) {
+            Flux::toast(variant: 'danger', heading: 'Cannot deactivate',
+                text: "{$account->code} {$account->name} is used by automatic postings (invoices, payments or expenses).");
+            return;
+        }
 
         $account->update(['is_active' => ! $account->is_active]);
 

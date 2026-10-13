@@ -32,7 +32,13 @@ new #[Layout('layouts.vendor'), Title('Expenses')] class extends Component
         $expense = Expense::findOrFail($id);
         $this->authorize('delete', $expense);
 
-        $expense->delete();
+        try {
+            \Illuminate\Support\Facades\DB::transaction(fn () => $expense->delete());
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            \Flux\Flux::toast(variant: 'danger', heading: 'Cannot delete expense', text: $e->getMessage());
+            return;
+        }
+
         \Flux\Flux::toast(variant: 'success', text: 'Expense deleted.');
     }
 

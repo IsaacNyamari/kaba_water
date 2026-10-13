@@ -87,14 +87,22 @@ new #[Layout('layouts.vendor')] class extends Component {
             'paid_at' => $this->paid_at,
         ];
 
-        if ($this->expense) {
-            $this->expense->update($payload);
-            session()->flash('status', 'Expense updated.');
-        } else {
-            $payload['recorded_by'] = auth()->id();
-            Expense::create($payload);
-            session()->flash('status', 'Expense recorded.');
+        try {
+            // The expense and its ledger entry succeed or fail together.
+            \Illuminate\Support\Facades\DB::transaction(function () use ($payload) {
+                if ($this->expense) {
+                    $this->expense->update($payload);
+                } else {
+                    Expense::create($payload + ['recorded_by' => auth()->id()]);
+                }
+            });
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            $this->expense?->refresh();
+            \Flux\Flux::toast(variant: 'danger', heading: 'Cannot save expense', text: $e->getMessage());
+            return;
         }
+
+        session()->flash('status', $this->expense ? 'Expense updated.' : 'Expense recorded.');
 
         $this->redirectRoute('vendor.expenses.index', navigate: true);
     }

@@ -3,6 +3,7 @@
 use App\Enums\AccountType;
 use App\Livewire\Concerns\UsesAccounting;
 use App\Models\ChartOfAccount;
+use App\Services\Accounting\ChartOfAccountsService;
 use Flux\Flux;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
@@ -77,6 +78,11 @@ new #[Layout('layouts.vendor'), Title('Account')] class extends Component {
             }
         }
 
+        if ($this->account && ! $this->is_active && app(ChartOfAccountsService::class)->isRequiredForPosting($this->account)) {
+            $this->addError('is_active', 'This account is used by automatic postings (invoices, payments or expenses) and must stay active.');
+            return;
+        }
+
         if ($this->account && $this->parent_id === $this->account->id) {
             $this->addError('parent_id', 'An account cannot be its own parent.');
             return;
@@ -143,7 +149,10 @@ new #[Layout('layouts.vendor'), Title('Account')] class extends Component {
                 </flux:select>
 
                 <div class="flex items-end">
-                    <flux:checkbox wire:model="is_active" label="Active (can receive postings)" />
+                    <div>
+                        <flux:checkbox wire:model="is_active" label="Active (can receive postings)" />
+                        <flux:error name="is_active" />
+                    </div>
                 </div>
 
                 <div class="sm:col-span-2">

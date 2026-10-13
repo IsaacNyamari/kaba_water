@@ -83,20 +83,25 @@ new #[Layout('layouts.vendor', ['title' => 'Record payment'])] class extends Com
             return;
         }
 
-        DB::transaction(function () use ($invoice, $amount) {
-            Payment::create([
-                'invoice_id' => $invoice->id,
-                'client_id' => $invoice->client_id,
-                'amount' => $amount,
-                'method' => $this->method,
-                'reference' => $this->reference ?: null,
-                'paid_at' => $this->paid_at,
-                'recorded_by' => auth()->id(),
-            ]);
+        try {
+            DB::transaction(function () use ($invoice, $amount) {
+                Payment::create([
+                    'invoice_id' => $invoice->id,
+                    'client_id' => $invoice->client_id,
+                    'amount' => $amount,
+                    'method' => $this->method,
+                    'reference' => $this->reference ?: null,
+                    'paid_at' => $this->paid_at,
+                    'recorded_by' => auth()->id(),
+                ]);
 
-            // Recompute amount_paid + status (paid / sent / overdue)
-            $invoice->syncPayments();
-        });
+                // Recompute amount_paid + status (paid / sent / overdue)
+                $invoice->syncPayments();
+            });
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            Flux::toast(variant: 'danger', heading: 'Cannot record payment', text: $e->getMessage());
+            return;
+        }
 
         // Keep the stored PDF in step with the new balance / PAID stamp.
         rescue(fn () => $pdf->regenerate($invoice));
