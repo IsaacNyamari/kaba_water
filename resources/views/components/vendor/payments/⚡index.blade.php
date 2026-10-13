@@ -39,12 +39,17 @@ new #[Layout('layouts.vendor', ['title' => 'Payments'])] class extends Component
 
         $invoice = $payment->invoice;
 
-        \Illuminate\Support\Facades\DB::transaction(function () use ($payment, $invoice) {
-            $payment->delete();
+        try {
+            \Illuminate\Support\Facades\DB::transaction(function () use ($payment, $invoice) {
+                $payment->delete();
 
-            // Recompute the parent invoice's amount_paid + status (paid / sent / overdue)
-            $invoice?->syncPayments();
-        });
+                // Recompute the parent invoice's amount_paid + status (paid / sent / overdue)
+                $invoice?->syncPayments();
+            });
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            \Flux\Flux::toast(variant: 'danger', heading: 'Cannot delete payment', text: $e->getMessage());
+            return;
+        }
 
         if ($invoice) {
             rescue(fn () => app(\App\Services\InvoicePdfService::class)->regenerate($invoice));

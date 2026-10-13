@@ -10,8 +10,11 @@ use App\Models\Expense;
 use App\Models\ExpenseCategory;
 use App\Models\Invoice;
 use App\Models\JournalEntry;
+use App\Models\JournalLine;
 use App\Models\Payment;
+use App\Services\Accounting\Exceptions\InvoiceWrittenOffException;
 use App\Support\DefaultExpenseCategories;
+use App\Support\Money\MoneyMath;
 use Carbon\CarbonImmutable;
 
 beforeEach(function () {
@@ -141,4 +144,82 @@ test('monthly depreciation posts once per asset per month', function () {
     $entry = entriesFor(Asset::class, $asset->id)->sole();
     expect($entry->total_debit)->toBe('100.00') // 12,000 × 10% ÷ 12
         ->and($entry->date->toDateString())->toBe('2026-02-28');
+});
+
+/** Net debit (Σdr − Σcr) on one account across every posted entry of the vendor. */
+function netDebit($test, string $code): string
+{
+    $lines = JournalLine::query()
+        ->join('journal_entries as je', 'je.id', '=', 'journal_lines.journal_entry_id')
+        ->where('je.vendor_id', $test->vendor->id)
+        ->whereNotNull('je.posted_at')
+        ->where('journal_lines.account_id', accountId($test->vendor, $code))
+        ->get(['journal_lines.debit', 'journal_lines.credit']);
+
+    return MoneyMath::sub(
+        MoneyMath::sumColumn($lines, 'debit'),
+        MoneyMath::sumColumn($lines, 'credit'),
+    );
+}
+
+test('deleting a voided invoice does not reverse it a second time', function () {
+    $invoice = makeInvoice($this, 'sent');
+    $invoice->update(['status' => InvoiceStatus::Void]);
+
+    $invoice->delete();
+
+    expect(entriesFor(Invoice::class, $invoice->id))->toHaveCount(2) // issue + credit note only
+        ->and(netDebit($this, '1100'))->toBe('0.00')
+        ->and(netDebit($this, '4000'))->toBe('0.00')
+        ->and(netDebit($this, '2100'))->toBe('0.00');
+});
+
+test('deleting a written-off invoice reverses the write-off as well', function () {
+    $invoice = makeInvoice($this, 'sent');
+    app(WriteOffInvoice::class)->handle($invoice);
+
+    $invoice->fresh()->delete();
+
+    expect(entriesFor(Invoice::class, $invoice->id))->toHaveCount(4) // issue, write-off, two reversals
+        ->and(netDebit($this, '1100'))->toBe('0.00')
+        ->and(netDebit($this, '5300'))->toBe('0.00')
+        ->and(netDebit($this, '4000'))->toBe('0.00');
+});
+
+test('deleting an issued invoice still reverses its entry', function () {
+    $invoice = makeInvoice($this, 'sent');
+
+    $invoice->delete();
+
+    expect(entriesFor(Invoice::class, $invoice->id))->toHaveCount(2)
+        ->and(netDebit($this, '1100'))->toBe('0.00');
+});
+
+test('payments of a written-off invoice cannot be deleted or added', function () {
+    $invoice = makeInvoice($this, 'sent');
+    $payment = Payment::withoutGlobalScope('vendor')->create([
+        'vendor_id' => $this->vendor->id, 'invoice_id' => $invoice->id, 'client_id' => $this->client->id,
+        'amount' => '400.00', 'method' => 'cash', 'paid_at' => now(),
+    ]);
+    $invoice->syncPayments();
+    app(WriteOffInvoice::class)->handle($invoice->fresh());
+
+    expect(fn () => $payment->delete())->toThrow(InvoiceWrittenOffException::class)
+        ->and(fn () => Payment::withoutGlobalScope('vendor')->create([
+            'vendor_id' => $this->vendor->id, 'invoice_id' => $invoice->id, 'client_id' => $this->client->id,
+            'amount' => '100.00', 'method' => 'cash', 'paid_at' => now(),
+        ]))->toThrow(InvoiceWrittenOffException::class);
+
+    expect(Payment::withoutGlobalScope('vendor')->whereKey($payment->id)->exists())->toBeTrue()
+        ->and(netDebit($this, '1100'))->toBe('0.00')      // 1160 billed − 400 paid − 760 written off
+        ->and(netDebit($this, '5300'))->toBe('760.00');
+});
+
+test('syncing payments keeps a written-off invoice written off', function () {
+    $invoice = makeInvoice($this, 'sent');
+    app(WriteOffInvoice::class)->handle($invoice);
+
+    $invoice->fresh()->syncPayments();
+
+    expect($invoice->fresh()->status)->toBe(InvoiceStatus::WrittenOff);
 });

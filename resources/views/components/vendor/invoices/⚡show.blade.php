@@ -118,7 +118,14 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
         }
 
         $number = $this->invoice->number;
-        $this->invoice->delete();
+
+        try {
+            // The ledger reversals and the delete succeed or fail together.
+            \Illuminate\Support\Facades\DB::transaction(fn () => $this->invoice->delete());
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            Flux::toast(variant: 'danger', heading: 'Cannot delete', text: $e->getMessage());
+            return;
+        }
 
         session()->flash('status', "Invoice {$number} deleted.");
         $this->redirectRoute('vendor.invoices.index', navigate: true);

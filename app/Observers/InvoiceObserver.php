@@ -4,6 +4,7 @@ namespace App\Observers;
 
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
+use App\Models\JournalEntry;
 use App\Services\Accounting\FiscalPeriodService;
 use App\Services\Accounting\LedgerService;
 use App\Services\Accounting\Postings\CreditNoteIssued;
@@ -64,13 +65,30 @@ class InvoiceObserver
         }
     }
 
-    /** Deleting an issued invoice reverses its ledger entry. */
+    /**
+     * Deleting an invoice takes everything it still has on the books back off:
+     * the issue entry and, if it was written off, the bad-debt entry too.
+     * A voided invoice is already netted to zero by its credit note, so that
+     * pair is left alone rather than reversed a second time.
+     */
     public function deleting(Invoice $invoice): void
     {
-        $issued = $this->ledger->findPosted((new InvoiceIssued($invoice))->meta());
+        $live = JournalEntry::withoutGlobalScope('vendor')
+            ->where('vendor_id', $invoice->vendor_id)
+            ->where('source_type', Invoice::class)
+            ->where('source_id', $invoice->id)
+            ->whereNotNull('posted_at')
+            ->whereNull('reversed_by_id')
+            ->whereNull('reverses_id')
+            ->orderBy('id')
+            ->get();
 
-        if ($issued) {
-            $this->ledger->reverse($issued, "Invoice {$invoice->number} deleted");
+        if ($live->contains('source_event', CreditNoteIssued::EVENT)) {
+            $live = $live->reject(fn (JournalEntry $e) => in_array($e->source_event, [InvoiceIssued::EVENT, CreditNoteIssued::EVENT], true));
+        }
+
+        foreach ($live as $entry) {
+            $this->ledger->reverse($entry, "Invoice {$invoice->number} deleted");
         }
     }
 

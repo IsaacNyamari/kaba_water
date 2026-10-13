@@ -49,7 +49,7 @@ class Invoice extends Model
     /**
      * Recompute amount_paid from the payments table and derive the status:
      * paid when fully settled, otherwise sent/overdue based on the due date.
-     * Draft and void invoices keep their status.
+     * Draft, void and written-off invoices keep their status.
      */
     public function syncPayments(): void
     {
@@ -57,6 +57,7 @@ class Invoice extends Model
 
         $status = match (true) {
             $this->status === InvoiceStatus::Void              => InvoiceStatus::Void,
+            $this->status === InvoiceStatus::WrittenOff        => InvoiceStatus::WrittenOff,
             $paid + 0.001 >= (float) $this->total && $paid > 0 => InvoiceStatus::Paid,
             $this->status === InvoiceStatus::Draft             => InvoiceStatus::Draft,
             (bool) $this->due_at?->isPast()                    => InvoiceStatus::Overdue,
