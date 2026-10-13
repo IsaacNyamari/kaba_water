@@ -16,7 +16,7 @@ class ClientAnalytics
         $rows = Reading::whereHas('meter', fn ($q) => $q->where('client_id', $this->clientId))
             ->where('status', 'approved')
             ->where('read_at', '>=', $start)
-            ->selectRaw("DATE_FORMAT(read_at, '%Y-%m') as ym, SUM(consumption) as total")
+            ->selectRaw(\App\Support\SqlDate::yearMonth('read_at') . " as ym, SUM(consumption) as total")
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
@@ -37,7 +37,7 @@ class ClientAnalytics
 
         $rows = Payment::where('client_id', $this->clientId)
             ->where('paid_at', '>=', $start)
-            ->selectRaw("DATE_FORMAT(paid_at, '%Y-%m') as ym, SUM(amount) as total")
+            ->selectRaw(\App\Support\SqlDate::yearMonth('paid_at') . " as ym, SUM(amount) as total")
             ->groupBy('ym')
             ->pluck('total', 'ym');
 

@@ -24,7 +24,7 @@ use Illuminate\Validation\ValidationException;
  */
 class ApproveAccessRequest
 {
-    public const ROLES = ['vendor', 'client', 'super_admin'];
+    public const ROLES = ['vendor', 'accountant', 'vendor_staff', 'client', 'super_admin'];
 
     /**
      * @param  int|null  $vendorId  vendor role: existing workspace, or null to create one
@@ -53,18 +53,19 @@ class ApproveAccessRequest
 
         DB::transaction(function () use ($request, $role, $vendorId, $clientId, $reviewer, $auto) {
             [$vendorId, $clientId] = match ($role) {
-                'vendor'      => [$vendorId ?? $this->createWorkspace($request)->id, null],
-                'client'      => $this->resolveClient($vendorId, $clientId),
+                'vendor' => [$vendorId ?? $this->createWorkspace($request)->id, null],
+                'client' => $this->resolveClient($vendorId, $clientId),
+                'accountant', 'vendor_staff' => [$this->requireVendor($vendorId), null],
                 'super_admin' => [null, null],
             };
 
             $request->update([
-                'status'        => AccessRequestStatus::Approved,
-                'role'          => $role,
-                'vendor_id'     => $vendorId,
-                'client_id'     => $clientId,
-                'reviewed_by'   => $reviewer?->id,
-                'reviewed_at'   => now(),
+                'status' => AccessRequestStatus::Approved,
+                'role' => $role,
+                'vendor_id' => $vendorId,
+                'client_id' => $clientId,
+                'reviewed_by' => $reviewer?->id,
+                'reviewed_at' => now(),
                 'auto_approved' => $auto,
             ]);
         });
@@ -100,19 +101,28 @@ class ApproveAccessRequest
         }
 
         $vendor = Vendor::create([
-            'name'          => $name,
-            'slug'          => $this->uniqueSlug($name),
-            'email'         => $request->email,
-            'phone'         => $request->phone,
-            'currency'      => 'KES',
-            'status'        => VendorStatus::Trial,
-            'plan_id'       => Plan::orderBy('monthly_price')->value('id'),
+            'name' => $name,
+            'slug' => $this->uniqueSlug($name),
+            'email' => $request->email,
+            'phone' => $request->phone,
+            'currency' => 'KES',
+            'status' => VendorStatus::Trial,
+            'plan_id' => Plan::orderBy('monthly_price')->value('id'),
             'trial_ends_at' => now()->addDays(config('access.trial_days', 30)),
         ]);
 
         DefaultExpenseCategories::seedFor($vendor->id);
 
         return $vendor;
+    }
+
+    protected function requireVendor(?int $vendorId): int
+    {
+        if (! $vendorId || ! Vendor::whereKey($vendorId)->exists()) {
+            throw ValidationException::withMessages(['vendorId' => 'Choose the workspace this person will work in.']);
+        }
+
+        return $vendorId;
     }
 
     /** @return array{0: int, 1: int} */

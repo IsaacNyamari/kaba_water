@@ -31,9 +31,9 @@ class AcceptInvitation
 
             $user = User::create([
                 'vendor_id' => $request->vendor_id,
-                'name'      => $name,
-                'email'     => $request->email,
-                'password'  => $password,
+                'name' => $name,
+                'email' => $request->email,
+                'password' => $password,
             ]);
 
             // Opening the emailed link proves the inbox belongs to them.
@@ -48,9 +48,9 @@ class AcceptInvitation
             }
 
             $request->update([
-                'status'            => AccessRequestStatus::Accepted,
-                'accepted_at'       => now(),
-                'user_id'           => $user->id,
+                'status' => AccessRequestStatus::Accepted,
+                'accepted_at' => now(),
+                'user_id' => $user->id,
                 'invite_token_hash' => null, // single use
             ]);
 

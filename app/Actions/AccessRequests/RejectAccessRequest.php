@@ -19,10 +19,10 @@ class RejectAccessRequest
 
         // Rejecting an approved (not yet used) request also kills its link.
         $request->update([
-            'status'            => AccessRequestStatus::Rejected,
-            'rejection_reason'  => $reason ?: null,
-            'reviewed_by'       => $reviewer->id,
-            'reviewed_at'       => now(),
+            'status' => AccessRequestStatus::Rejected,
+            'rejection_reason' => $reason ?: null,
+            'reviewed_by' => $reviewer->id,
+            'reviewed_at' => now(),
             'invite_token_hash' => null,
             'invite_expires_at' => null,
         ]);

@@ -92,7 +92,7 @@ new #[Layout('layouts.vendor'), Title('Dashboard')] class extends Component {
             'datasets' => [
                 [
                     'data' => $d['values'],
-                    'backgroundColor' => ['#a1a1aa', '#2563eb', '#059669', '#e11d48', '#d4d4d8'],
+                    'backgroundColor' => ['#a1a1aa', '#2563eb', '#059669', '#e11d48', '#d4d4d8', '#f97316'],
                     'borderColor' => 'transparent',
                     'borderWidth' => 0,
                 ],

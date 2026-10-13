@@ -21,7 +21,8 @@ use Livewire\Livewire;
 /** Pretend DNS says every address is (or isn't) deliverable — no network in tests. */
 function fakeEmailCheck(EmailCheckResult $result): void
 {
-    app()->instance(EmailDeliverabilityChecker::class, new class($result) extends EmailDeliverabilityChecker {
+    app()->instance(EmailDeliverabilityChecker::class, new class($result) extends EmailDeliverabilityChecker
+    {
         public function __construct(private EmailCheckResult $result) {}
 
         public function check(string $email): array
@@ -34,14 +35,14 @@ function fakeEmailCheck(EmailCheckResult $result): void
 function vendorRequestData(array $overrides = []): array
 {
     return array_merge([
-        'requested_type'    => 'vendor',
-        'name'              => 'Jane Doe',
-        'email'             => 'jane@acmewater.test',
-        'phone'             => '',
-        'organization'      => 'Acme Water',
-        'provider_name'     => '',
+        'requested_type' => 'vendor',
+        'name' => 'Jane Doe',
+        'email' => 'jane@acmewater.test',
+        'phone' => '',
+        'organization' => 'Acme Water',
+        'provider_name' => '',
         'account_reference' => '',
-        'message'           => '',
+        'message' => '',
     ], $overrides);
 }
 

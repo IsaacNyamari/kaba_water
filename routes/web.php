@@ -185,6 +185,38 @@ Route::middleware(['auth', 'verified', 'role:vendor', 'vendor.context', 'sub.act
 
 /*
 |--------------------------------------------------------------------------
+| Vendor accounting (double-entry ledger)
+|--------------------------------------------------------------------------
+| Open to the workspace owner (vendor) plus accountant / vendor_staff roles.
+| Page-level permissions: accounting.view | .post | .close-period | .reopen-period
+*/
+
+Route::middleware(['auth', 'verified', 'role:vendor|accountant|vendor_staff', 'vendor.context', 'sub.active', 'permission:accounting.view'])
+    ->prefix('vendor/accounting')->name('vendor.accounting.')
+    ->group(function () {
+        Route::livewire('/',                        'vendor.accounting.dashboard')->name('dashboard');
+        Route::livewire('/accounts',                'vendor.accounting.accounts.index')->name('accounts.index');
+        Route::livewire('/accounts/create',         'vendor.accounting.accounts.form')->name('accounts.create');
+        Route::livewire('/accounts/{account}/edit', 'vendor.accounting.accounts.form')->name('accounts.edit');
+
+        Route::livewire('/journal',                 'vendor.accounting.journal.index')->name('journal.index');
+        Route::livewire('/journal/create',          'vendor.accounting.journal.form')->name('journal.create');
+        Route::livewire('/journal/{entry}',         'vendor.accounting.journal.show')->name('journal.show');
+
+        Route::livewire('/periods',                 'vendor.accounting.periods.index')->name('periods.index');
+        Route::livewire('/opening-balances',        'vendor.accounting.opening-balances')->name('opening-balances');
+
+        Route::prefix('reports')->name('reports.')->group(function () {
+            Route::livewire('/trial-balance',    'vendor.accounting.reports.trial-balance')->name('trial-balance');
+            Route::livewire('/income-statement', 'vendor.accounting.reports.income-statement')->name('income-statement');
+            Route::livewire('/balance-sheet',    'vendor.accounting.reports.balance-sheet')->name('balance-sheet');
+            Route::livewire('/cash-flow',        'vendor.accounting.reports.cash-flow')->name('cash-flow');
+            Route::livewire('/general-ledger',   'vendor.accounting.reports.general-ledger')->name('general-ledger');
+        });
+    });
+
+/*
+|--------------------------------------------------------------------------
 | Client portal
 |--------------------------------------------------------------------------
 */

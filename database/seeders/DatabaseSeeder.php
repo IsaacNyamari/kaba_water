@@ -63,5 +63,9 @@ class DatabaseSeeder extends Seeder
             'email_verified_at' => $vendorUser->email_verified_at ?? now(),
         ])->save();
         $vendorUser->syncRoles(['vendor']);
+
+        // Accounting: standard chart for every vendor + demo ledger activity.
+        $this->call(ChartOfAccountsSeeder::class);
+        $this->call(DemoAccountingSeeder::class);
     }
 }

@@ -12,7 +12,8 @@ class EnsureSubscriptionActive
     {
         $user = $request->user();
 
-        if (! $user || ! $user->isVendor()) return $next($request);
+        // Applies to every workspace member (vendor owner, accountant, staff) — not clients or admins.
+        if (! $user || ! $user->vendor_id || $user->hasAnyRole(['client', 'super_admin'])) return $next($request);
 
         $vendor = $user->vendor;
         if (! $vendor || ! $vendor->isActive()) {

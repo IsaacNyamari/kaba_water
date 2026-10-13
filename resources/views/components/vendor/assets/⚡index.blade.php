@@ -18,6 +18,30 @@ new #[Layout('layouts.vendor'), Title('Assets')] class extends Component
 
     public function updating(): void { $this->resetPage(); }
 
+    public string $depreciationMonth = '';
+
+    public function mount(): void
+    {
+        $this->depreciationMonth = now()->subMonth()->format('Y-m');
+    }
+
+    /** Post straight-line depreciation for one month (accounting.post). */
+    public function postDepreciation(\App\Actions\Accounting\PostMonthlyDepreciation $action): void
+    {
+        $this->authorize('accounting.post');
+        $this->validate(['depreciationMonth' => ['required', 'date_format:Y-m']]);
+
+        try {
+            $count = $action->handle(auth()->user()->vendor_id, \Carbon\CarbonImmutable::createFromFormat('!Y-m', $this->depreciationMonth));
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            \Flux\Flux::toast(variant: 'danger', heading: 'Cannot post depreciation', text: $e->getMessage());
+            return;
+        }
+
+        \Flux\Flux::toast(variant: $count ? 'success' : 'warning', heading: 'Depreciation',
+            text: $count ? "Posted for {$count} asset(s)." : 'Nothing to post — already done for that month, or no depreciating assets.');
+    }
+
     public function delete(int $id): void
     {
         $asset = Asset::findOrFail($id);
@@ -98,6 +122,13 @@ new #[Layout('layouts.vendor'), Title('Assets')] class extends Component
             </flux:select>
         </div>
 
+        @can('accounting.post')
+            <div class="flex items-end gap-2">
+                <flux:input type="month" wire:model="depreciationMonth" class="w-40" />
+                <flux:button wire:click="postDepreciation" icon="calculator" variant="filled"
+                    wire:confirm="Post this month's depreciation to the ledger?">Post depreciation</flux:button>
+            </div>
+        @endcan
         <flux:button href="{{ route('vendor.assets.create') }}" variant="primary" icon="plus">
             Add asset
         </flux:button>

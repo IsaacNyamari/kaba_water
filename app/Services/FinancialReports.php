@@ -148,14 +148,14 @@ class FinancialReports
         $revenue = Payment::withoutGlobalScope('vendor')
             ->where('vendor_id', $this->vendorId)
             ->where('paid_at', '>=', $start)
-            ->selectRaw("DATE_FORMAT(paid_at, '%Y-%m') as ym, SUM(amount) as total")
+            ->selectRaw(\App\Support\SqlDate::yearMonth('paid_at') . " as ym, SUM(amount) as total")
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
         $expenses = Expense::withoutGlobalScope('vendor')
             ->where('vendor_id', $this->vendorId)
             ->where('paid_at', '>=', $start)
-            ->selectRaw("DATE_FORMAT(paid_at, '%Y-%m') as ym, SUM(amount + tax) as total")
+            ->selectRaw(\App\Support\SqlDate::yearMonth('paid_at') . " as ym, SUM(amount + tax) as total")
             ->groupBy('ym')
             ->pluck('total', 'ym');
 

@@ -9,10 +9,11 @@ enum InvoiceStatus: string
     case Paid    = 'paid';
     case Overdue = 'overdue';
     case Void    = 'void';
+    case WrittenOff = 'written_off'; // uncollectable balance moved to bad debt
 
     public function label(): string
     {
-        return ucfirst($this->value);
+        return $this === self::WrittenOff ? 'Written off' : ucfirst($this->value);
     }
 
     public function color(): string
@@ -23,6 +24,7 @@ enum InvoiceStatus: string
             self::Paid    => 'emerald',
             self::Overdue => 'red',
             self::Void    => 'zinc',
+            self::WrittenOff => 'orange',
         };
     }
 

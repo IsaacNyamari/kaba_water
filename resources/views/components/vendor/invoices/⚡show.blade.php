@@ -85,6 +85,28 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
         $this->invoice->refresh();
     }
 
+    public string $writeOffReason = '';
+
+    public function writeOff(\App\Actions\Accounting\WriteOffInvoice $action, InvoicePdfService $pdf): void
+    {
+        $this->authorize('update', $this->invoice);
+
+        try {
+            $action->handle($this->invoice, $this->writeOffReason ?: null);
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            Flux::toast(variant: 'danger', heading: 'Cannot write off', text: collect($e->errors())->flatten()->first());
+            return;
+        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            Flux::toast(variant: 'danger', heading: 'Cannot write off', text: $e->getMessage());
+            return;
+        }
+
+        rescue(fn () => $pdf->regenerate($this->invoice));
+        Flux::modal('write-off')->close();
+        Flux::toast(variant: 'warning', heading: 'Written off', text: 'The unpaid balance was moved to Bad Debt.');
+        $this->invoice->refresh();
+    }
+
     public function delete(): void
     {
         $this->authorize('delete', $this->invoice);
@@ -149,7 +171,13 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                 </flux:button>
             @endif
 
-            @if (!in_array($invoice->status->value, ['paid', 'void']))
+            @if ($invoice->status->isPayable() && $invoice->balance() > 0)
+                <flux:modal.trigger name="write-off">
+                    <flux:button variant="ghost" icon="archive-box-x-mark">Write off</flux:button>
+                </flux:modal.trigger>
+            @endif
+
+            @if (!in_array($invoice->status->value, ['paid', 'void', 'written_off']))
                 <flux:button wire:click="void" variant="ghost" icon="x-circle" wire:confirm="Void this invoice?">
                     Void
                 </flux:button>
@@ -301,6 +329,20 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                     <span wire:loading.remove wire:target="markPaid">Confirm payment</span>
                     <span wire:loading wire:target="markPaid">Recording…</span>
                 </flux:button>
+            </div>
+        </form>
+    </flux:modal>
+
+    <flux:modal name="write-off" class="w-full max-w-md">
+        <form wire:submit="writeOff" class="space-y-5">
+            <div>
+                <flux:heading size="lg">Write off this invoice?</flux:heading>
+                <flux:subheading>The unpaid balance of {{ number_format($invoice->balance(), 2) }} is posted to Bad Debt and the invoice is closed.</flux:subheading>
+            </div>
+            <flux:input wire:model="writeOffReason" label="Reason (optional)" />
+            <div class="flex justify-end gap-3">
+                <flux:modal.close><flux:button variant="ghost">Cancel</flux:button></flux:modal.close>
+                <flux:button type="submit" variant="danger">Write off</flux:button>
             </div>
         </form>
     </flux:modal>

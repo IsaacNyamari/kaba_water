@@ -13,9 +13,9 @@ namespace App\Enums;
 enum EmailCheckResult: string
 {
     case Deliverable = 'deliverable';
-    case Disposable  = 'disposable';
+    case Disposable = 'disposable';
     case NoMailServer = 'no_mail_server';
-    case Invalid     = 'invalid';
+    case Invalid = 'invalid';
 
     public function passed(): bool
     {
@@ -25,10 +25,10 @@ enum EmailCheckResult: string
     public function label(): string
     {
         return match ($this) {
-            self::Deliverable  => 'Email looks real',
-            self::Disposable   => 'Disposable email',
+            self::Deliverable => 'Email looks real',
+            self::Disposable => 'Disposable email',
             self::NoMailServer => 'Domain has no mail server',
-            self::Invalid      => 'Invalid address',
+            self::Invalid => 'Invalid address',
         };
     }
 

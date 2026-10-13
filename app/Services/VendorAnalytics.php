@@ -22,7 +22,7 @@ class VendorAnalytics
         $payments = Payment::withoutGlobalScope('vendor')
             ->where('payments.vendor_id', $this->vendorId)
             ->where('payments.paid_at', '>=', $start)
-            ->selectRaw("DATE_FORMAT(payments.paid_at, '%Y-%m') as ym, SUM(payments.amount) as total")
+            ->selectRaw(\App\Support\SqlDate::yearMonth('payments.paid_at') . " as ym, SUM(payments.amount) as total")
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
@@ -30,7 +30,7 @@ class VendorAnalytics
             ->where('invoices.vendor_id', $this->vendorId)
             ->where('invoices.status', '!=', InvoiceStatus::Void->value)
             ->where('invoices.issued_at', '>=', $start)
-            ->selectRaw("DATE_FORMAT(invoices.issued_at, '%Y-%m') as ym, SUM(invoices.total) as total")
+            ->selectRaw(\App\Support\SqlDate::yearMonth('invoices.issued_at') . " as ym, SUM(invoices.total) as total")
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
@@ -59,7 +59,7 @@ class VendorAnalytics
             ->where('readings.vendor_id', $this->vendorId)
             ->where('readings.status', 'approved')
             ->where('readings.read_at', '>=', $start)
-            ->selectRaw("DATE_FORMAT(readings.read_at, '%Y-%m') as ym, SUM(readings.consumption) as total")
+            ->selectRaw(\App\Support\SqlDate::yearMonth('readings.read_at') . " as ym, SUM(readings.consumption) as total")
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
@@ -85,7 +85,7 @@ class VendorAnalytics
             ->groupBy('invoices.status')
             ->get();
 
-        $map = ['draft' => 0, 'sent' => 0, 'paid' => 0, 'overdue' => 0, 'void' => 0];
+        $map = ['draft' => 0, 'sent' => 0, 'paid' => 0, 'overdue' => 0, 'void' => 0, 'written_off' => 0];
 
         foreach ($rows as $r) {
             $key = is_object($r->status) ? $r->status->value : $r->status;
@@ -93,7 +93,7 @@ class VendorAnalytics
         }
 
         return [
-            'labels' => ['Draft', 'Sent', 'Paid', 'Overdue', 'Void'],
+            'labels' => ['Draft', 'Sent', 'Paid', 'Overdue', 'Void', 'Written off'],
             'values' => array_values($map),
         ];
     }

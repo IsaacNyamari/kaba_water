@@ -122,7 +122,7 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
 
         $vendorId = match ($this->role) {
             'vendor' => $this->workspaceMode === 'existing' ? $this->vendorId : null,
-            'client' => $this->vendorId,
+            'client', 'accountant', 'vendor_staff' => $this->vendorId,
             default  => null,
         };
 
@@ -345,6 +345,8 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
 
                 <flux:select wire:model.live="role" label="Role to grant">
                     <flux:select.option value="vendor">Vendor (runs a water-company workspace)</flux:select.option>
+                    <flux:select.option value="accountant">Accountant (accounting module of a workspace)</flux:select.option>
+                    <flux:select.option value="vendor_staff">Staff (read-only accounting of a workspace)</flux:select.option>
                     <flux:select.option value="client">Client (customer portal)</flux:select.option>
                     <flux:select.option value="super_admin">Platform admin</flux:select.option>
                 </flux:select>
@@ -364,6 +366,13 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
                             @endforeach
                         </flux:select>
                     @endif
+                    <flux:error name="vendorId" />
+                @elseif (in_array($role, ['accountant', 'vendor_staff'], true))
+                    <flux:select wire:model.live="vendorId" label="Workspace" placeholder="Choose…">
+                        @foreach ($this->vendors as $v)
+                            <flux:select.option value="{{ $v->id }}">{{ $v->name }}</flux:select.option>
+                        @endforeach
+                    </flux:select>
                     <flux:error name="vendorId" />
                 @elseif ($role === 'client')
                     <flux:text class="text-sm">

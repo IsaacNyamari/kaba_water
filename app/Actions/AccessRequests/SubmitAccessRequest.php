@@ -28,18 +28,18 @@ class SubmitAccessRequest
         [$result, $detail] = $this->checker->check($email);
 
         $request = AccessRequest::create([
-            'name'               => trim($data['name']),
-            'email'              => $email,
-            'phone'              => $data['phone'] ?: null,
-            'organization'       => $data['organization'] ?: null,
-            'requested_type'     => $data['requested_type'],
-            'provider_name'      => $data['provider_name'] ?: null,
-            'account_reference'  => $data['account_reference'] ?: null,
-            'message'            => $data['message'] ?: null,
-            'ip_address'         => $ip,
-            'email_check'        => $result,
+            'name' => trim($data['name']),
+            'email' => $email,
+            'phone' => $data['phone'] ?: null,
+            'organization' => $data['organization'] ?: null,
+            'requested_type' => $data['requested_type'],
+            'provider_name' => $data['provider_name'] ?: null,
+            'account_reference' => $data['account_reference'] ?: null,
+            'message' => $data['message'] ?: null,
+            'ip_address' => $ip,
+            'email_check' => $result,
             'email_check_detail' => $detail,
-            'status'             => AccessRequestStatus::Pending,
+            'status' => AccessRequestStatus::Pending,
         ]);
 
         if ($this->shouldAutoApprove($request)) {

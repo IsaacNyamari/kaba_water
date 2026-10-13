@@ -19,7 +19,7 @@ test('users can authenticate using the login screen', function () {
 
     $response
         ->assertSessionHasNoErrors()
-        ->assertRedirect(route('dashboard', absolute: false));
+        ->assertRedirect('/'); // no role yet → home page (role logins: LoginRedirectTest)
 
     $this->assertAuthenticated();
 });

@@ -20,8 +20,11 @@ class FortifyServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        // Bind our role-aware LoginResponse to Fortify's contract.
+        // Every way of signing in (password, two-factor code, passkey) lands the
+        // user on their own role's dashboard — see App\Http\Responses\RoleRedirect.
         $this->app->singleton(LoginResponseContract::class, LoginResponse::class);
+        $this->app->singleton(\Laravel\Fortify\Contracts\TwoFactorLoginResponse::class, \App\Http\Responses\TwoFactorLoginResponse::class);
+        $this->app->singleton(\Laravel\Passkeys\Contracts\PasskeyLoginResponse::class, \App\Http\Responses\PasskeyLoginResponse::class);
     }
 
     /**

@@ -12,6 +12,7 @@
             $user?->hasRole('super_admin') => route('admin.dashboard'),
             $user?->hasRole('vendor') => route('vendor.dashboard'),
             $user?->hasRole('client') => route('portal.dashboard'),
+            $user?->hasAnyRole(['accountant', 'vendor_staff']) => route('vendor.accounting.dashboard'),
             default => url('/'),
         };
     @endphp
@@ -165,6 +166,54 @@
                     </flux:sidebar.group>
                 @endcan
             @endrole
+
+            {{-- ═══════════ ACCOUNTING (owner, accountant, staff) ═══════════ --}}
+            @hasanyrole('vendor|accountant|vendor_staff')
+                @can('accounting.view')
+                    <flux:sidebar.group :heading="__('Accounting')" icon="calculator" class="grid">
+                        <flux:sidebar.item icon="squares-2x2" :href="route('vendor.accounting.dashboard')"
+                            :current="request()->routeIs('vendor.accounting.dashboard')" wire:navigate>
+                            {{ __('Overview') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="list-bullet" :href="route('vendor.accounting.accounts.index')"
+                            :current="request()->routeIs('vendor.accounting.accounts.*')" wire:navigate>
+                            {{ __('Chart of Accounts') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="book-open" :href="route('vendor.accounting.journal.index')"
+                            :current="request()->routeIs('vendor.accounting.journal.*')" wire:navigate>
+                            {{ __('Journal Entries') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="calendar-days" :href="route('vendor.accounting.periods.index')"
+                            :current="request()->routeIs('vendor.accounting.periods.*')" wire:navigate>
+                            {{ __('Fiscal Periods') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="flag" :href="route('vendor.accounting.opening-balances')"
+                            :current="request()->routeIs('vendor.accounting.opening-balances')" wire:navigate>
+                            {{ __('Opening Balances') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="scale" :href="route('vendor.accounting.reports.trial-balance')"
+                            :current="request()->routeIs('vendor.accounting.reports.trial-balance')" wire:navigate>
+                            {{ __('Trial Balance') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="presentation-chart-line" :href="route('vendor.accounting.reports.income-statement')"
+                            :current="request()->routeIs('vendor.accounting.reports.income-statement')" wire:navigate>
+                            {{ __('Income Statement') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="building-library" :href="route('vendor.accounting.reports.balance-sheet')"
+                            :current="request()->routeIs('vendor.accounting.reports.balance-sheet')" wire:navigate>
+                            {{ __('Balance Sheet') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="arrows-right-left" :href="route('vendor.accounting.reports.cash-flow')"
+                            :current="request()->routeIs('vendor.accounting.reports.cash-flow')" wire:navigate>
+                            {{ __('Cash Flow') }}
+                        </flux:sidebar.item>
+                        <flux:sidebar.item icon="document-magnifying-glass" :href="route('vendor.accounting.reports.general-ledger')"
+                            :current="request()->routeIs('vendor.accounting.reports.general-ledger')" wire:navigate>
+                            {{ __('General Ledger') }}
+                        </flux:sidebar.item>
+                    </flux:sidebar.group>
+                @endcan
+            @endhasanyrole
 
             {{-- ═══════════ CLIENT ═══════════ --}}
             @role('client')

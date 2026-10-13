@@ -3,6 +3,8 @@
 namespace App\Models;
 
 use App\Enums\VendorStatus;
+use App\Models\Concerns\HasAccounting;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use App\Models\Client;
 use App\Models\Plan;
 use App\Models\Subscription;
@@ -13,6 +15,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class Vendor extends Model
 {
+    use HasAccounting, HasFactory;
+
     protected $fillable = [
         'name', 'slug', 'email', 'phone', 'logo_path',
         'currency', 'status', 'plan_id', 'trial_ends_at',

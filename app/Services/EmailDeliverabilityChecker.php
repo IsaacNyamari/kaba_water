@@ -54,7 +54,7 @@ class EmailDeliverabilityChecker
         $list = array_map('strtolower', config('access.disposable_domains', []));
 
         foreach ($list as $blocked) {
-            if ($domain === $blocked || Str::endsWith($domain, '.' . $blocked)) {
+            if ($domain === $blocked || Str::endsWith($domain, '.'.$blocked)) {
                 return true;
             }
         }
@@ -64,12 +64,12 @@ class EmailDeliverabilityChecker
 
     protected function hasMx(string $domain): bool
     {
-        return function_exists('checkdnsrr') && @checkdnsrr($domain . '.', 'MX');
+        return function_exists('checkdnsrr') && @checkdnsrr($domain.'.', 'MX');
     }
 
     protected function hasA(string $domain): bool
     {
         return function_exists('checkdnsrr')
-            && (@checkdnsrr($domain . '.', 'A') || @checkdnsrr($domain . '.', 'AAAA'));
+            && (@checkdnsrr($domain.'.', 'A') || @checkdnsrr($domain.'.', 'AAAA'));
     }
 }

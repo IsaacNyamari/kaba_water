@@ -57,6 +57,12 @@ class RolesAndPermissionsSeeder extends Seeder
             'vendor.finance.view',         // see P&L / balance sheet / cash flow
             'vendor.reports.view',         // usage + revenue analytics (existing)
 
+            // ─── Accounting (double-entry ledger) ──────────────────
+            'accounting.view',
+            'accounting.post',            // manual journal entries, reversals, opening balances
+            'accounting.close-period',
+            'accounting.reopen-period',
+
             // ─── Client portal ─────────────────────────────────────
             'client.dashboard.view',
             'client.invoices.view',
@@ -82,10 +88,20 @@ class RolesAndPermissionsSeeder extends Seeder
             Permission::where('name', 'like', 'platform.%')->get()
         );
 
-        // Vendor: every vendor.* permission
+        // Vendor (workspace owner): every vendor.* and accounting.* permission
         $vendor->syncPermissions(
-            Permission::where('name', 'like', 'vendor.%')->get()
+            Permission::where('name', 'like', 'vendor.%')
+                ->orWhere('name', 'like', 'accounting.%')
+                ->get()
         );
+
+        // Accountant: full accounting, nothing operational
+        Role::firstOrCreate(['name' => 'accountant', 'guard_name' => 'web'])->syncPermissions(
+            Permission::where('name', 'like', 'accounting.%')->get()
+        );
+
+        // Vendor staff: read-only accounting
+        Role::firstOrCreate(['name' => 'vendor_staff', 'guard_name' => 'web'])->syncPermissions(['accounting.view']);
 
         // Client: every client.* permission
         $client->syncPermissions(

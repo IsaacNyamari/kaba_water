@@ -16,6 +16,7 @@ use Illuminate\Support\Str;
 class AccessRequest extends Model
 {
     public const TYPE_VENDOR = 'vendor';
+
     public const TYPE_CLIENT = 'client';
 
     protected $fillable = [
@@ -33,28 +34,50 @@ class AccessRequest extends Model
     protected function casts(): array
     {
         return [
-            'status'            => AccessRequestStatus::class,
-            'email_check'       => EmailCheckResult::class,
-            'auto_approved'     => 'boolean',
-            'reviewed_at'       => 'datetime',
-            'invite_sent_at'    => 'datetime',
+            'status' => AccessRequestStatus::class,
+            'email_check' => EmailCheckResult::class,
+            'auto_approved' => 'boolean',
+            'reviewed_at' => 'datetime',
+            'invite_sent_at' => 'datetime',
             'invite_expires_at' => 'datetime',
-            'accepted_at'       => 'datetime',
+            'accepted_at' => 'datetime',
         ];
     }
 
-    public function vendor(): BelongsTo   { return $this->belongsTo(Vendor::class); }
-    public function client(): BelongsTo   { return $this->belongsTo(Client::class)->withoutGlobalScope('vendor'); }
-    public function reviewer(): BelongsTo { return $this->belongsTo(User::class, 'reviewed_by'); }
-    public function user(): BelongsTo     { return $this->belongsTo(User::class); }
+    public function vendor(): BelongsTo
+    {
+        return $this->belongsTo(Vendor::class);
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class)->withoutGlobalScope('vendor');
+    }
+
+    public function reviewer(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reviewed_by');
+    }
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
 
     public function scopePending(Builder $q): Builder
     {
         return $q->where('status', AccessRequestStatus::Pending->value);
     }
 
-    public function isPending(): bool  { return $this->status === AccessRequestStatus::Pending; }
-    public function isApproved(): bool { return $this->status === AccessRequestStatus::Approved; }
+    public function isPending(): bool
+    {
+        return $this->status === AccessRequestStatus::Pending;
+    }
+
+    public function isApproved(): bool
+    {
+        return $this->status === AccessRequestStatus::Approved;
+    }
 
     public function inviteIsUsable(): bool
     {
@@ -81,7 +104,7 @@ class AccessRequest extends Model
 
         $this->forceFill([
             'invite_token_hash' => hash('sha256', $plain),
-            'invite_sent_at'    => now(),
+            'invite_sent_at' => now(),
             'invite_expires_at' => now()->addDays(config('access.invite_expires_days', 7)),
         ])->save();
 

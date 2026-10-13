@@ -90,6 +90,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
             $this->hasRole('super_admin') => route('admin.dashboard'),
             $this->hasRole('vendor')      => route('vendor.dashboard'),
             $this->hasRole('client')      => route('portal.dashboard'),
+            $this->hasAnyRole(['accountant', 'vendor_staff']) => route('vendor.accounting.dashboard'),
             default                       => '/',
         };
     }

@@ -24,6 +24,16 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         $this->configureDefaults();
+        $this->registerAccountingObservers();
+    }
+
+    /** Auto-posting to the double-entry ledger (see docs/accounting.md). */
+    protected function registerAccountingObservers(): void
+    {
+        \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
+        \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
+        \App\Models\Expense::observe(\App\Observers\ExpenseObserver::class);
+        \App\Models\Vendor::observe(\App\Observers\VendorObserver::class);
     }
 
     /**
