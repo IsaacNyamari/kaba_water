@@ -87,6 +87,7 @@ new #[Layout('layouts.admin')] class extends Component {
 
     public function save(): void
     {
+        $this->authorize($this->vendor ? 'update' : 'create', $this->vendor ?? Vendor::class);
         $this->validate();
 
         $payload = [
@@ -104,17 +105,23 @@ new #[Layout('layouts.admin')] class extends Component {
             session()->flash('status', 'Vendor updated.');
         } else {
             $payload['trial_ends_at'] = now()->addDays(30);
-            $vendor = Vendor::create($payload);
-            DefaultExpenseCategories::seedFor($vendor->id);
-            if ($this->create_owner) {
-                $user = User::create([
-                    'vendor_id' => $vendor->id,
-                    'name' => $this->owner_name,
-                    'email' => $this->owner_email,
-                    'password' => $this->owner_password,
-                ]);
-                $user->assignRole('vendor');
-            }
+
+            \Illuminate\Support\Facades\DB::transaction(function () use ($payload) {
+                $vendor = Vendor::create($payload);
+                DefaultExpenseCategories::seedFor($vendor->id);
+
+                if ($this->create_owner) {
+                    $user = User::create([
+                        'vendor_id' => $vendor->id,
+                        'name' => $this->owner_name,
+                        'email' => $this->owner_email,
+                        'password' => $this->owner_password,
+                    ]);
+                    // Admin-created account: mark verified so the owner can sign in straight away.
+                    $user->forceFill(['email_verified_at' => now()])->save();
+                    $user->assignRole('vendor');
+                }
+            });
 
             session()->flash('status', 'Vendor created.');
         }

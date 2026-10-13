@@ -22,12 +22,12 @@ new #[Layout('layouts.vendor')] class extends Component {
         $this->authorize('delete', $meter);
 
         if ($meter->readings()->exists()) {
-            session()->flash('error', 'Cannot delete a meter with readings.');
+            \Flux\Flux::toast(variant: 'danger', text: 'Cannot delete a meter with readings.');
             return;
         }
 
         $meter->delete();
-        session()->flash('status', 'Meter deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Meter deleted.');
     }
 
     public function render()

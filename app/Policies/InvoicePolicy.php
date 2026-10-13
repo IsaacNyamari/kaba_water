@@ -16,7 +16,9 @@ class InvoicePolicy
     public function view(User $user, Invoice $invoice): bool
     {
         if ($user->hasRole('client')) {
+            // Clients never see drafts — those are still being prepared by the vendor.
             return $invoice->client?->user_id === $user->id
+                && $invoice->status !== \App\Enums\InvoiceStatus::Draft
                 && $user->hasPermissionTo('client.invoices.view');
         }
 

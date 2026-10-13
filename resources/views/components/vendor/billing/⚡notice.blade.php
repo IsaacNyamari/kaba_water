@@ -1,14 +1,16 @@
 <?php
 
+use Livewire\Attributes\Layout;
+use Livewire\Attributes\Title;
 use Livewire\Component;
 
-new class extends Component
+new #[Layout('layouts::auth'), Title('Subscription inactive')] class extends Component
 {
     public function mount(): void
     {
         // If the vendor is actually active, no reason to be here.
         if (auth()->user()->vendor?->isActive()) {
-            redirect()->route('vendor.dashboard');
+            $this->redirectRoute('vendor.dashboard');
         }
     }
 };
@@ -35,7 +37,8 @@ new class extends Component
             @endif
 
             <div class="pt-2">
-                <flux:button variant="primary" icon="credit-card">
+                <flux:button variant="primary" icon="credit-card"
+                    href="mailto:{{ config('mail.from.address') }}?subject={{ rawurlencode('Renew subscription: ' . (auth()->user()->vendor?->name ?? '')) }}">
                     Renew subscription
                 </flux:button>
             </div>

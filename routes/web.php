@@ -13,6 +13,21 @@ Route::view('/', 'welcome')->name('home');
 
 /*
 |--------------------------------------------------------------------------
+| Access requests (self-registration is disabled)
+|--------------------------------------------------------------------------
+| Anyone can ask for access; an admin (or the automatic email check, when
+| ACCESS_AUTO_APPROVE=true) approves, and a single-use signed signup link is
+| emailed. The accept page validates the signature itself (Livewire's own
+| update requests don't carry it).
+*/
+
+Route::middleware('guest')->group(function () {
+    Route::livewire('/request-access', 'access.request')->name('access.request');
+    Route::livewire('/access/{accessRequest}/accept', 'access.accept')->name('access.accept');
+});
+
+/*
+|--------------------------------------------------------------------------
 | Legacy /dashboard shim — role-aware redirect
 |--------------------------------------------------------------------------
 | Any bookmark or email link to /dashboard lands the user in the right place.
@@ -32,9 +47,10 @@ Route::get('/dashboard', function () {
 | If this route were inside that group, it would cause a redirect loop.
 */
 
-// Route::middleware(['auth', 'verified', 'role:vendor', 'vendor.context'])
-//     ->livewire('/vendor/billing/notice', 'vendor.billing.notice')
-//     ->name('vendor.billing.notice');
+Route::middleware(['auth', 'verified', 'role:vendor', 'vendor.context'])->group(function () {
+    Route::livewire('/vendor/billing/notice', 'vendor.billing.notice')->name('vendor.billing.notice');
+});
+
 /*
 |--------------------------------------------------------------------------
 | Super Admin
@@ -50,6 +66,9 @@ Route::middleware(['auth', 'verified', 'role:super_admin'])
         Route::livewire('/vendors',               'admin.vendors.index')->name('vendors.index');
         Route::livewire('/vendors/create',        'admin.vendors.form')->name('vendors.create');
         Route::livewire('/vendors/{vendor}/edit', 'admin.vendors.form')->name('vendors.edit');
+
+        // Access requests
+        Route::livewire('/access-requests', 'admin.access-requests.index')->name('access-requests.index');
 
         // Plans
         Route::livewire('/plans',             'admin.plans.index')->name('plans.index');

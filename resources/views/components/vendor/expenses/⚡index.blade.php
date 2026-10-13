@@ -33,7 +33,7 @@ new #[Layout('layouts.vendor'), Title('Expenses')] class extends Component
         $this->authorize('delete', $expense);
 
         $expense->delete();
-        session()->flash('status', 'Expense deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Expense deleted.');
     }
 
     public function with(): array
@@ -58,9 +58,10 @@ new #[Layout('layouts.vendor'), Title('Expenses')] class extends Component
             'suppliers'  => Supplier::orderBy('name')->get(['id', 'name']),
 
             'summary' => [
-                'this_month' => Expense::whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])->sum('amount'),
-                'this_year'  => Expense::whereYear('paid_at', now()->year)->sum('amount'),
-                'all_time'   => Expense::sum('amount'),
+                // Include tax so these match the Financial Reports totals.
+                'this_month' => Expense::whereBetween('paid_at', [now()->startOfMonth(), now()->endOfMonth()])->sum(\DB::raw('amount + tax')),
+                'this_year'  => Expense::whereYear('paid_at', now()->year)->sum(\DB::raw('amount + tax')),
+                'all_time'   => Expense::sum(\DB::raw('amount + tax')),
             ],
         ];
     }

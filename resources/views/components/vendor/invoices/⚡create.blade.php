@@ -28,6 +28,7 @@ new #[Layout('layouts.vendor', ['title' => 'New invoice'])] class extends Compon
     public function readings()
     {
         return Reading::query()
+            ->approved()
             ->whereDoesntHave('invoice')
             ->where('consumption', '>', 0)
             ->with(['meter.client'])
@@ -85,6 +86,7 @@ new #[Layout('layouts.vendor', ['title' => 'New invoice'])] class extends Compon
 
     public function generate(GenerateInvoiceFromReading $action): void
     {
+        $this->authorize('create', \App\Models\Invoice::class);
         $this->validate();
 
         $reading = Reading::findOrFail($this->reading_id);

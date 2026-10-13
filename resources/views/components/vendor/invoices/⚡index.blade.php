@@ -49,7 +49,7 @@ new #[Layout('layouts.vendor', ['title' => 'Invoices'])] class extends Component
             'clients' => Client::orderBy('name')->get(['id', 'name', 'account_no']),
 
             'summary' => [
-                'unpaid_total' => Invoice::whereIn('status', ['sent', 'overdue'])->sum('total'),
+                'unpaid_total' => Invoice::whereIn('status', ['sent', 'overdue'])->sum(\DB::raw('total - amount_paid')),
                 'paid_total' => Invoice::where('status', 'paid')->sum('total'),
                 'count' => Invoice::count(),
             ],

@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\Plan;
 use App\Models\User;
 use App\Models\Vendor;
+use App\Support\DefaultExpenseCategories;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
 
@@ -32,6 +33,7 @@ class DatabaseSeeder extends Seeder
             ['email' => 'admin@swb.test'],
             ['name' => 'Platform Admin', 'password' => Hash::make('password')]
         );
+        $admin->forceFill(['email_verified_at' => $admin->email_verified_at ?? now()])->save();
         $admin->syncRoles(['super_admin']);
 
         // Demo vendor + vendor user
@@ -44,6 +46,8 @@ class DatabaseSeeder extends Seeder
             'trial_ends_at' => now()->addDays(30),
         ]);
 
+        DefaultExpenseCategories::seedFor($vendor->id);
+
         $vendorUser = User::firstOrCreate(
             ['email' => 'vendor@swb.test'],
             [
@@ -52,6 +56,12 @@ class DatabaseSeeder extends Seeder
                 'password'  => Hash::make('password'),
             ]
         );
+        // vendor_id/email_verified_at are set explicitly so re-running the seeder
+        // also repairs a user created by the earlier (broken) version.
+        $vendorUser->forceFill([
+            'vendor_id'         => $vendor->id,
+            'email_verified_at' => $vendorUser->email_verified_at ?? now(),
+        ])->save();
         $vendorUser->syncRoles(['vendor']);
     }
 }

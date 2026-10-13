@@ -2,11 +2,12 @@
 
 use App\Models\Client;
 use App\Models\Payment;
+use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
 use Livewire\WithPagination;
 
-new class extends Component {
+new #[Layout('layouts.vendor', ['title' => 'Payments'])] class extends Component {
     use WithPagination;
 
     #[Url(as: 'q', history: true)]
@@ -34,21 +35,22 @@ new class extends Component {
     public function delete(int $id): void
     {
         $payment = Payment::findOrFail($id);
-        $this->authorize('update', $payment->invoice ?? \App\Models\Invoice::class);
+        $this->authorize('delete', $payment);
 
-        // Recompute the parent invoice's amount_paid
         $invoice = $payment->invoice;
-        $payment->delete();
+
+        \Illuminate\Support\Facades\DB::transaction(function () use ($payment, $invoice) {
+            $payment->delete();
+
+            // Recompute the parent invoice's amount_paid + status (paid / sent / overdue)
+            $invoice?->syncPayments();
+        });
 
         if ($invoice) {
-            $paid = $invoice->payments()->sum('amount');
-            $invoice->update([
-                'amount_paid' => $paid,
-                'status' => $paid >= (float) $invoice->total ? \App\Enums\InvoiceStatus::Paid : \App\Enums\InvoiceStatus::Sent,
-            ]);
+            rescue(fn () => app(\App\Services\InvoicePdfService::class)->regenerate($invoice));
         }
 
-        session()->flash('status', 'Payment deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Payment deleted.');
     }
 
     public function with(): array

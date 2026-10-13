@@ -13,7 +13,7 @@ new #[Layout('layouts.admin'), Title('Plans')] class extends Component
         $this->authorize('delete', $plan);
 
         $plan->delete();
-        session()->flash('status', 'Plan deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Plan deleted.');
     }
 
     public function with(): array

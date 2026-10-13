@@ -39,6 +39,12 @@ new #[Layout('layouts.vendor')] class extends Component {
         } else {
             $this->authorize('create', Expense::class);
             $this->paid_at = now()->format('Y-m-d\TH:i');
+
+            // Vendors created before categories existed (incl. the seeded demo
+            // vendor) have none, which makes this form impossible to submit.
+            if (! ExpenseCategory::exists()) {
+                \App\Support\DefaultExpenseCategories::seedFor(auth()->user()->vendor_id);
+            }
         }
     }
 
@@ -66,6 +72,7 @@ new #[Layout('layouts.vendor')] class extends Component {
 
     public function save(): void
     {
+        $this->authorize($this->expense ? 'update' : 'create', $this->expense ?? Expense::class);
         $this->validate();
 
         $payload = [

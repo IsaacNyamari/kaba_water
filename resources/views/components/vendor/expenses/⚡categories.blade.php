@@ -28,6 +28,15 @@ new #[Layout('layouts.vendor'), Title('Expense Categories')] class extends Compo
         'slate' => 'Slate',
     ];
 
+    public function mount(): void
+    {
+        $this->authorize('viewAny', ExpenseCategory::class);
+
+        if (! ExpenseCategory::exists()) {
+            \App\Support\DefaultExpenseCategories::seedFor(auth()->user()->vendor_id);
+        }
+    }
+
     public function openCreate(): void
     {
         $this->authorize('create', ExpenseCategory::class);
@@ -87,11 +96,11 @@ new #[Layout('layouts.vendor'), Title('Expense Categories')] class extends Compo
             $category = ExpenseCategory::findOrFail($this->editingId);
             $this->authorize('update', $category);
             $category->update($payload);
-            session()->flash('status', 'Category updated.');
+            \Flux\Flux::toast(variant: 'success', text: 'Category updated.');
         } else {
             $this->authorize('create', ExpenseCategory::class);
             ExpenseCategory::create($payload);
-            session()->flash('status', 'Category created.');
+            \Flux\Flux::toast(variant: 'success', text: 'Category created.');
         }
 
         $this->closeForm();
@@ -103,12 +112,12 @@ new #[Layout('layouts.vendor'), Title('Expense Categories')] class extends Compo
         $this->authorize('delete', $category);
 
         if ($category->expenses()->exists()) {
-            session()->flash('error', "Cannot delete '{$category->name}' — it has expenses linked to it.");
+            \Flux\Flux::toast(variant: 'danger', text: "Cannot delete '{$category->name}' — it has expenses linked to it.");
             return;
         }
 
         $category->delete();
-        session()->flash('status', 'Category deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Category deleted.');
     }
 
     public function with(): array

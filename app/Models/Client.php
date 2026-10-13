@@ -42,12 +42,11 @@ class Client extends Model
 
     public function balance(): float
     {
+        // Outstanding = what is still owed after partial payments.
         return (float) $this->invoices()
             ->whereIn('status', ['sent', 'overdue'])
-            ->sum('total');
+            ->sum(\Illuminate\Support\Facades\DB::raw('total - amount_paid'));
     }
-    // app/Models/Client.php
-
     public static function nextAccountNo(int $vendorId): string
     {
         $last = static::withoutGlobalScope('vendor')

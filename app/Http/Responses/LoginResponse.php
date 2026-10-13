@@ -9,6 +9,7 @@ class LoginResponse implements LoginResponseContract
 {
     public function toResponse($request): RedirectResponse
     {
-        return redirect()->intended($request->user()->homeRoute());
+        // /dashboard redirects each role to its own home (admin / vendor / portal).
+        return redirect()->intended(route('dashboard'));
     }
 }

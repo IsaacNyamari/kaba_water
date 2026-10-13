@@ -44,7 +44,7 @@ new #[Layout('layouts.app')] class extends Component {
         $this->authorize('delete', $client);
 
         if ($client->invoices()->exists()) {
-            session()->flash('error', 'Cannot delete a client that has invoices.');
+            \Flux\Flux::toast(variant: 'danger', text: 'Cannot delete a client that has invoices.');
             $this->deleteId = null;
             Flux::modal('delete-client')->close();
             return;
@@ -54,7 +54,7 @@ new #[Layout('layouts.app')] class extends Component {
 
         $this->deleteId = null;
         Flux::modal('delete-client')->close();
-        session()->flash('status', 'Client deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Client deleted.');
     }
 
     public function with(): array

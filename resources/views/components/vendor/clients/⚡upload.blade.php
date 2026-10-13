@@ -7,9 +7,10 @@ use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Validate;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Livewire\Attributes\Layout;
 use Maatwebsite\Excel\Facades\Excel;
 
-new class extends Component {
+new #[Layout('layouts.vendor', ['title' => 'Import clients'])] class extends Component {
     use WithFileUploads;
 
     #[Validate('required|file|mimes:xlsx,xls,csv|max:10240')]
@@ -20,6 +21,9 @@ new class extends Component {
 
     public function mount(): void
     {
+        // The route also admits view-only users — importing needs manage rights.
+        $this->authorize('create', Client::class);
+
         $this->rows = [$this->blankRow()];
     }
 
@@ -37,6 +41,7 @@ new class extends Component {
 
     public function uploadSheet(): void
     {
+        $this->authorize('create', Client::class);
         $this->validate();
 
         try {
@@ -73,6 +78,8 @@ new class extends Component {
 
     public function saveRows(): void
     {
+        $this->authorize('create', Client::class);
+
         $this->validate([
             'rows'           => 'required|array|min:1',
             'rows.*.name'    => 'required|string|max:255',
@@ -183,7 +190,7 @@ new class extends Component {
             </div>
 
             <flux:text size="sm" class="text-zinc-500">
-                <strong>name</strong> is required. <strong>status</strong> accepts <code>active</code> or <code>inactive</code> (defaults to <code>inactive</code>). Account numbers are generated automatically.
+                <strong>name</strong> is required. <strong>status</strong> accepts <code>active</code> or <code>inactive</code> (defaults to <code>active</code> when blank). Account numbers are generated automatically.
             </flux:text>
         </div>
 

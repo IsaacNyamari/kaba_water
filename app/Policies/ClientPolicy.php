@@ -24,7 +24,8 @@ class ClientPolicy
     }
     public function update(User $user, Client $client): bool
     {
-        return $this->view($user, $client);
+        // Viewing is not enough to edit — require the manage permission.
+        return $this->view($user, $client) && $user->hasPermissionTo('vendor.clients.manage');
     }
     public function delete(User $user, Client $client): bool
     {

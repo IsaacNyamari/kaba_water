@@ -80,6 +80,7 @@ new #[Layout('layouts.vendor')] class extends Component
 
     public function save(): void
     {
+        $this->authorize($this->workOrder ? 'update' : 'create', $this->workOrder ?? WorkOrder::class);
         $this->validate();
 
         $payload = [
@@ -100,6 +101,8 @@ new #[Layout('layouts.vendor')] class extends Component
 
         if ($this->status === 'completed' && ! $this->workOrder?->completed_at) {
             $payload['completed_at'] = now();
+        } elseif ($this->status !== 'completed') {
+            $payload['completed_at'] = null;
         }
         if ($this->status === 'in_progress' && ! $this->workOrder?->started_at) {
             $payload['started_at'] = now();
@@ -109,13 +112,8 @@ new #[Layout('layouts.vendor')] class extends Component
             $this->workOrder->update($payload);
             session()->flash('status', 'Work order updated.');
         } else {
-            $wo = WorkOrder::create($payload);
-            // Auto-generate number: WO-YYYY-NNNN per vendor
-            $next = WorkOrder::withoutGlobalScope('vendor')
-                ->where('vendor_id', auth()->user()->vendor_id)
-                ->where('number', 'like', 'WO-' . now()->year . '-%')
-                ->count() + 1;
-            $wo->update(['number' => 'WO-' . now()->year . '-' . str_pad((string) $next, 4, '0', STR_PAD_LEFT)]);
+            $payload['number'] = WorkOrder::nextNumber(auth()->user()->vendor_id);
+            WorkOrder::create($payload);
 
             session()->flash('status', 'Work order created.');
         }

@@ -21,6 +21,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'platform.suspend_vendor',
             'platform.manage_subscriptions',
             'platform.manage_plans',
+            'platform.manage_access_requests',
 
             // ─── Vendor — Workspace ────────────────────────────────
             'vendor.clients.view',

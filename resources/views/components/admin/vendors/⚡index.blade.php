@@ -30,7 +30,7 @@ new #[Layout('layouts.admin'), Title('Vendors')] class extends Component
         $this->authorize('suspend', $vendor);
 
         $vendor->update(['status' => VendorStatus::Suspended]);
-        session()->flash('status', "{$vendor->name} suspended.");
+        \Flux\Flux::toast(variant: 'success', text: "{$vendor->name} suspended.");
     }
 
     public function activate(int $id): void
@@ -39,7 +39,7 @@ new #[Layout('layouts.admin'), Title('Vendors')] class extends Component
         $this->authorize('suspend', $vendor);
 
         $vendor->update(['status' => VendorStatus::Active]);
-        session()->flash('status', "{$vendor->name} activated.");
+        \Flux\Flux::toast(variant: 'success', text: "{$vendor->name} activated.");
     }
 
     public function delete(int $id): void
@@ -49,7 +49,7 @@ new #[Layout('layouts.admin'), Title('Vendors')] class extends Component
 
         $name = $vendor->name;
         $vendor->delete();
-        session()->flash('status', "{$name} deleted.");
+        \Flux\Flux::toast(variant: 'success', text: "{$name} deleted.");
     }
 
     public function with(): array

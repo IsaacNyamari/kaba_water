@@ -28,6 +28,11 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
     {
         $this->authorize('send', $this->invoice);
 
+        if ($this->invoice->status !== InvoiceStatus::Draft) {
+            Flux::toast(variant: 'warning', heading: 'Not a draft', text: 'Only draft invoices can be sent.');
+            return;
+        }
+
         $this->invoice->update([
             'status' => InvoiceStatus::Sent,
             'issued_at' => $this->invoice->issued_at ?? now(),
@@ -52,9 +57,10 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
         $this->authorize('update', $this->invoice);
 
         try {
-            $payment = $action->handle($this->invoice, PaymentMethod::from($this->payment_method), $this->payment_reference ?: null);
+            $method = PaymentMethod::tryFrom($this->payment_method) ?? PaymentMethod::Other;
+            $payment = $action->handle($this->invoice, $method, mb_substr($this->payment_reference, 0, 100) ?: null);
 
-            Flux::toast(variant: 'success', text: 'Invoice marked as paid', text: 'Payment of ' . number_format($payment->amount, 2) . ' recorded.');
+            Flux::toast(variant: 'success', heading: 'Invoice marked as paid', text: 'Payment of ' . number_format($payment->amount, 2) . ' recorded.');
 
             $this->showMarkPaid = false;
             $this->invoice->refresh();
@@ -67,16 +73,27 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
     {
         $this->authorize('update', $this->invoice);
 
+        if ($this->invoice->payments()->exists()) {
+            Flux::toast(variant: 'danger', heading: 'Cannot void', text: 'This invoice has payments recorded. Delete the payments first.');
+            return;
+        }
+
         $this->invoice->update(['status' => InvoiceStatus::Void]);
         $pdf->regenerate($this->invoice);
 
-        Flux::toast(variant: 'warning', text: 'Invoice voided');
+        Flux::toast(variant: 'warning', heading: 'Voided', text: 'Invoice voided');
         $this->invoice->refresh();
     }
 
     public function delete(): void
     {
         $this->authorize('delete', $this->invoice);
+
+        // Deleting would orphan payment records — void it (or remove payments) instead.
+        if ($this->invoice->payments()->exists()) {
+            Flux::toast(variant: 'danger', heading: 'Cannot delete', text: 'This invoice has payments. Remove them first.');
+            return;
+        }
 
         $number = $this->invoice->number;
         $this->invoice->delete();

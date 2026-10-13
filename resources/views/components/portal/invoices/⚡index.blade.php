@@ -29,14 +29,14 @@ new #[Layout('layouts.portal'), Title('Invoices')] class extends Component {
     public function with(): array
     {
         return [
-            'invoices' => Invoice::query()->where('client_id', $this->client->id)->when($this->status, fn($q) => $q->where('status', $this->status))->latest('issued_at')->paginate(15),
+            'invoices' => Invoice::query()->where('client_id', $this->client->id)->where('status', '!=', 'draft')->when($this->status, fn($q) => $q->where('status', $this->status))->latest('issued_at')->paginate(15),
 
             'summary' => [
                 'unpaid' => Invoice::where('client_id', $this->client->id)
                     ->whereIn('status', ['sent', 'overdue'])
-                    ->sum('total'),
+                    ->sum(\DB::raw('total - amount_paid')),
                 'paid' => Invoice::where('client_id', $this->client->id)->where('status', 'paid')->sum('total'),
-                'count' => Invoice::where('client_id', $this->client->id)->count(),
+                'count' => Invoice::where('client_id', $this->client->id)->where('status', '!=', 'draft')->count(),
             ],
         ];
     }

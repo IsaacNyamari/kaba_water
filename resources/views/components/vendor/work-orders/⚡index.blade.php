@@ -43,8 +43,12 @@ new #[Layout('layouts.vendor'), Title('Work Orders')] class extends Component {
         $wo = WorkOrder::findOrFail($id);
         $this->authorize('update', $wo);
 
+        if (! WorkOrderStatus::tryFrom($status)) {
+            return;
+        }
+
         $payload = ['status' => $status];
-        if ($status === 'completed') {
+        if ($status === 'completed' && ! $wo->completed_at) {
             $payload['completed_at'] = now();
         }
         if ($status === 'in_progress' && !$wo->started_at) {
@@ -52,7 +56,7 @@ new #[Layout('layouts.vendor'), Title('Work Orders')] class extends Component {
         }
 
         $wo->update($payload);
-        session()->flash('status', "Work order {$wo->number} updated.");
+        \Flux\Flux::toast(variant: 'success', text: "Work order {$wo->number} updated.");
     }
 
     public function delete(int $id): void
@@ -61,7 +65,7 @@ new #[Layout('layouts.vendor'), Title('Work Orders')] class extends Component {
         $this->authorize('delete', $wo);
 
         $wo->delete();
-        session()->flash('status', 'Work order deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Work order deleted.');
     }
 
     public function with(): array

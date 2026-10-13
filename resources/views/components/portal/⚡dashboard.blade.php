@@ -50,7 +50,7 @@ use InteractsWithClient;
     {
         return (float) Invoice::where('client_id', $this->client->id)
             ->whereIn('status', [InvoiceStatus::Sent, InvoiceStatus::Overdue])
-            ->sum('total');
+            ->sum(\DB::raw('total - amount_paid'));
     }
 
     #[Computed]
@@ -77,7 +77,7 @@ use InteractsWithClient;
     #[Computed]
     public function recentInvoices()
     {
-        return Invoice::where('client_id', $this->client->id)->latest('issued_at')->limit(5)->get();
+        return Invoice::where('client_id', $this->client->id)->where('status', '!=', InvoiceStatus::Draft->value)->latest('issued_at')->limit(5)->get();
     }
 
     #[Computed]

@@ -22,7 +22,11 @@ new #[Layout('layouts.vendor'), Title('Liabilities')] class extends Component
         $liability = Liability::findOrFail($id);
         $this->authorize('update', $liability);
 
-        $pay = (float) $amount;
+        $pay = round((float) $amount, 2);
+        if ($pay <= 0) return;
+
+        // Never record more than is owed.
+        $pay = min($pay, $liability->outstanding());
         if ($pay <= 0) return;
 
         $liability->increment('amount_paid', $pay);
@@ -31,7 +35,7 @@ new #[Layout('layouts.vendor'), Title('Liabilities')] class extends Component
             $liability->update(['status' => 'paid']);
         }
 
-        session()->flash('status', 'Payment recorded against ' . $liability->name . '.');
+        \Flux\Flux::toast(variant: 'success', text: 'Payment recorded against ' . $liability->name . '.');
     }
 
     public function delete(int $id): void
@@ -40,7 +44,7 @@ new #[Layout('layouts.vendor'), Title('Liabilities')] class extends Component
         $this->authorize('delete', $liability);
 
         $liability->delete();
-        session()->flash('status', 'Liability deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Liability deleted.');
     }
 
     public function with(): array

@@ -38,6 +38,13 @@
                         {{ __('Vendors') }}
                     </flux:sidebar.item>
 
+                    @php $pendingAccess = \App\Models\AccessRequest::pending()->count(); @endphp
+                    <flux:sidebar.item icon="user-plus" :href="route('admin.access-requests.index')"
+                        :current="request()->routeIs('admin.access-requests.*')"
+                        :badge="$pendingAccess ?: null" wire:navigate>
+                        {{ __('Access Requests') }}
+                    </flux:sidebar.item>
+
                     <flux:sidebar.item icon="credit-card" :href="route('admin.plans.index')"
                         :current="request()->routeIs('admin.plans.*')" wire:navigate>
                         {{ __('Plans') }}
@@ -137,7 +144,14 @@
                     @can('vendor.finance.view')
                         <flux:sidebar.item icon="document-chart-bar" :href="route('vendor.finance.reports')"
                             :current="request()->routeIs('vendor.finance.*')" wire:navigate>
-                            {{ __('Reports') }}
+                            {{ __('Financial Reports') }}
+                        </flux:sidebar.item>
+                    @endcan
+
+                    @can('vendor.reports.view')
+                        <flux:sidebar.item icon="presentation-chart-line" :href="route('vendor.reports.index')"
+                            :current="request()->routeIs('vendor.reports.*')" wire:navigate>
+                            {{ __('Usage Reports') }}
                         </flux:sidebar.item>
                     @endcan
                 </flux:sidebar.group>
@@ -169,6 +183,13 @@
                         :current="request()->routeIs('portal.readings.*')" wire:navigate>
                         {{ __('Readings') }}
                     </flux:sidebar.item>
+
+                    @can('client.work_orders.view')
+                        <flux:sidebar.item icon="wrench-screwdriver" :href="route('portal.work-orders.index')"
+                            :current="request()->routeIs('portal.work-orders.*')" wire:navigate>
+                            {{ __('Work Orders') }}
+                        </flux:sidebar.item>
+                    @endcan
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('Billing')" class="grid">

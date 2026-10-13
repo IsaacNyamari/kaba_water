@@ -177,7 +177,7 @@ new #[Layout('layouts.portal')] class extends Component {
                 </div>
 
                 <div class="mt-4 space-y-2">
-                    <flux:button wire:click="downloadPdf" variant="filled" icon="arrow-down-tray" class="w-full">
+                    <flux:button href="{{ route('portal.invoices.pdf', $invoice) }}" target="_blank" variant="filled" icon="arrow-down-tray" class="w-full">
                         Download PDF
                     </flux:button>
 

@@ -1,16 +1,22 @@
 <?php
 
 use App\Models\Tariff;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-new class extends Component {
+new #[Layout('layouts.vendor', ['title' => 'Tariffs'])] class extends Component {
+    public function mount(): void
+    {
+        $this->authorize('viewAny', Tariff::class);
+    }
+
     public function toggleActive(int $id): void
     {
         $tariff = Tariff::findOrFail($id);
         $this->authorize('update', $tariff);
 
         $tariff->update(['is_active' => !$tariff->is_active]);
-        session()->flash('status', $tariff->is_active ? 'Tariff activated.' : 'Tariff deactivated.');
+        \Flux\Flux::toast(variant: 'success', text: $tariff->is_active ? 'Tariff activated.' : 'Tariff deactivated.');
     }
 
     public function delete(int $id): void
@@ -18,14 +24,9 @@ new class extends Component {
         $tariff = Tariff::findOrFail($id);
         $this->authorize('delete', $tariff);
 
-        if ($tariff->vendor->invoices()->exists() === false) {
-            $tariff->delete();
-            session()->flash('status', 'Tariff deleted.');
-            return;
-        }
-
+        // Invoices store their own line items, so deleting a tariff is safe.
         $tariff->delete();
-        session()->flash('status', 'Tariff deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Tariff deleted.');
     }
 
     public function with(): array

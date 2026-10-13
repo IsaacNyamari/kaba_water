@@ -4,11 +4,14 @@ use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
 use App\Models\Invoice;
 use App\Models\Payment;
+use App\Services\InvoicePdfService;
 use Flux\Flux;
+use Illuminate\Support\Facades\DB;
 use Livewire\Attributes\Computed;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-new class extends Component {
+new #[Layout('layouts.vendor', ['title' => 'Record payment'])] class extends Component {
     public ?int $invoice_id = null;
     public string $amount = '';
     public string $method = 'cash';
@@ -17,6 +20,8 @@ new class extends Component {
 
     public function mount(): void
     {
+        $this->authorize('create', Payment::class);
+
         $this->paid_at = now()->format('Y-m-d\TH:i');
 
         if ($invoiceId = request()->integer('invoice')) {
@@ -54,16 +59,22 @@ new class extends Component {
             'amount' => ['required', 'numeric', 'min:0.01'],
             'method' => ['required', 'in:' . collect(PaymentMethod::cases())->pluck('value')->implode(',')],
             'reference' => ['nullable', 'string', 'max:100'],
-            'paid_at' => ['required', 'date'],
+            'paid_at' => ['required', 'date', 'before_or_equal:now'],
         ];
     }
 
-    public function save(): void
+    public function save(InvoicePdfService $pdf): void
     {
+        $this->authorize('create', Payment::class);
         $this->validate();
 
         $invoice = Invoice::findOrFail($this->invoice_id);
-        $this->authorize('update', $invoice);
+        $this->authorize('view', $invoice);
+
+        if (! $invoice->status->isPayable()) {
+            $this->addError('invoice_id', 'Only sent or overdue invoices can receive payments.');
+            return;
+        }
 
         $amount = (float) $this->amount;
 
@@ -72,22 +83,23 @@ new class extends Component {
             return;
         }
 
-        $payment = Payment::create([
-            'invoice_id' => $invoice->id,
-            'client_id' => $invoice->client_id,
-            'amount' => $amount,
-            'method' => $this->method,
-            'reference' => $this->reference ?: null,
-            'paid_at' => $this->paid_at,
-            'recorded_by' => auth()->id(),
-        ]);
+        DB::transaction(function () use ($invoice, $amount) {
+            Payment::create([
+                'invoice_id' => $invoice->id,
+                'client_id' => $invoice->client_id,
+                'amount' => $amount,
+                'method' => $this->method,
+                'reference' => $this->reference ?: null,
+                'paid_at' => $this->paid_at,
+                'recorded_by' => auth()->id(),
+            ]);
 
-        // Recompute invoice totals
-        $paid = $invoice->payments()->sum('amount');
-        $invoice->update([
-            'amount_paid' => $paid,
-            'status' => $paid + 0.001 >= (float) $invoice->total ? InvoiceStatus::Paid : $invoice->status,
-        ]);
+            // Recompute amount_paid + status (paid / sent / overdue)
+            $invoice->syncPayments();
+        });
+
+        // Keep the stored PDF in step with the new balance / PAID stamp.
+        rescue(fn () => $pdf->regenerate($invoice));
 
         Flux::toast(variant: 'success', heading: 'Payment recorded', text: number_format($amount, 2) . ' against ' . $invoice->number);
 

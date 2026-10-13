@@ -27,7 +27,7 @@ new #[Layout('layouts.vendor'), Title('Dashboard')] class extends Component {
             'meters' => Meter::count(),
             'readings_30d' => Reading::where('read_at', '>=', now()->subDays(30))->count(),
             'revenue_30d' => Payment::where('paid_at', '>=', now()->subDays(30))->sum('amount'),
-            'unpaid' => Invoice::whereIn('status', [InvoiceStatus::Sent, InvoiceStatus::Overdue])->sum('total'),
+            'unpaid' => Invoice::whereIn('status', [InvoiceStatus::Sent, InvoiceStatus::Overdue])->sum(\DB::raw('total - amount_paid')),
             'overdue' => Invoice::where('status', InvoiceStatus::Overdue)->count(),
         ];
     }
@@ -118,8 +118,18 @@ new #[Layout('layouts.vendor'), Title('Dashboard')] class extends Component {
 
     {{-- KPI strip --}}
     <div class="grid auto-rows-min gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        @foreach ([['Clients', $this->stats['clients'], 'text-zinc-900 dark:text-zinc-100'], ['Meters', $this->stats['meters'], 'text-zinc-900 dark:text-zinc-100'], ['Readings (30d)', $this->stats['readings_30d'], 'text-zinc-900 dark:text-zinc-100'], ['Payments (30d)', number_format($this->stats['revenue_30d'], 2), 'text-accent-600'], ['Payments', number_format($this->stats['unpaid'], 2), 'text-brand-600'], ['Payments', $this->stats['overdue'], 'text-rose-600']] as [$label, $value, $color])
-            <flux:card href="{{ route('vendor.' . strtolower(strtok($label, ' ')) . '.index') }}"
+        @php
+            $kpis = [
+                ['Clients', number_format($this->stats['clients']), 'text-zinc-900 dark:text-zinc-100', route('vendor.clients.index')],
+                ['Meters', number_format($this->stats['meters']), 'text-zinc-900 dark:text-zinc-100', route('vendor.meters.index')],
+                ['Readings (30d)', number_format($this->stats['readings_30d']), 'text-zinc-900 dark:text-zinc-100', route('vendor.readings.index')],
+                ['Payments (30d)', number_format($this->stats['revenue_30d'], 2), 'text-accent-600', route('vendor.payments.index')],
+                ['Unpaid balance', number_format($this->stats['unpaid'], 2), 'text-brand-600', route('vendor.invoices.index', ['status' => 'sent'])],
+                ['Overdue invoices', number_format($this->stats['overdue']), 'text-rose-600', route('vendor.invoices.index', ['status' => 'overdue'])],
+            ];
+        @endphp
+        @foreach ($kpis as [$label, $value, $color, $href])
+            <flux:card wire:key="kpi-{{ $loop->index }}" href="{{ $href }}"
                 class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
                 <span class="text-xs uppercase tracking-wide text-zinc-500">{{ $label }}</span>
                 <div class="text-2xl font-semibold mt-1 {{ $color }}">{{ $value }}</div>

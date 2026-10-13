@@ -32,7 +32,9 @@ class FortifyServiceProvider extends ServiceProvider
         $this->configureActions();
         $this->configureViews();
         $this->configureRateLimiting();
-        $this->configureRedirects();
+        // Post-login / post-verification redirects go to /dashboard (config/fortify.php
+        // 'home'), which forwards each role to its own home. Note Fortify::redirects()
+        // only READS config — it can't be used to set redirects.
     }
 
     /**
@@ -56,27 +58,6 @@ class FortifyServiceProvider extends ServiceProvider
         Fortify::registerView(fn() => view('pages::auth.register'));
         Fortify::resetPasswordView(fn() => view('pages::auth.reset-password'));
         Fortify::requestPasswordResetLinkView(fn() => view('pages::auth.forgot-password'));
-    }
-
-    /**
-     * Role-based redirects — only for flows the LoginResponse contract
-     * does not already cover (login is handled by the contract binding).
-     */
-    private function configureRedirects(): void
-    {
-        // After confirming an email address.
-        Fortify::redirects('email-verification', fn() => auth()->user()->homeRoute());
-
-        // After logging out.
-        Fortify::redirects('logout', '/login');
-
-        // After resetting a forgotten password.
-        Fortify::redirects('password-reset', '/login');
-
-        // After registering — send the new user to their dashboard.
-        Fortify::redirects('register', function () {
-            return auth()->check() ? auth()->user()->homeRoute() : '/';
-        });
     }
 
     /**

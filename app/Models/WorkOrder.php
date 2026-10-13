@@ -41,6 +41,22 @@ class WorkOrder extends Model
     public function invoice(): BelongsTo   { return $this->belongsTo(Invoice::class); }
     public function expenses(): HasMany    { return $this->hasMany(Expense::class); }
 
+    /** Next per-vendor number, WO-YYYY-NNNN (based on the highest existing, not a count). */
+    public static function nextNumber(int $vendorId): string
+    {
+        $prefix = 'WO-' . now()->year . '-';
+
+        $last = static::withoutGlobalScope('vendor')
+            ->where('vendor_id', $vendorId)
+            ->where('number', 'like', $prefix . '%')
+            ->orderByDesc('number')
+            ->value('number');
+
+        $seq = $last ? ((int) substr($last, -4)) + 1 : 1;
+
+        return $prefix . str_pad((string) $seq, 4, '0', STR_PAD_LEFT);
+    }
+
     public function totalCost(): float
     {
         return (float) $this->materials_cost + (float) $this->labor_cost;

@@ -66,6 +66,50 @@ class Reading extends Model
         return $this->status === ReadingStatus::Approved;
     }
 
+    /**
+     * The most recent APPROVED reading value for a meter, optionally only
+     * readings taken at or before $before and excluding one reading id.
+     */
+    public static function lastApprovedValueFor(int $meterId, $before = null, ?int $exceptId = null): ?int
+    {
+        $value = static::withoutGlobalScope('vendor')
+            ->where('meter_id', $meterId)
+            ->where('status', ReadingStatus::Approved->value)
+            ->when($before, fn ($q) => $q->where('read_at', '<=', $before))
+            ->when($exceptId, fn ($q) => $q->where('id', '!=', $exceptId))
+            ->orderByDesc('read_at')
+            ->orderByDesc('id')
+            ->value('reading');
+
+        return $value === null ? null : (int) $value;
+    }
+
+    /**
+     * Approve a pending reading and recompute previous/consumption against
+     * the latest approved reading at that moment (other readings may have
+     * been approved since this one was submitted).
+     */
+    public function approve(): void
+    {
+        $previous = static::lastApprovedValueFor($this->meter_id, $this->read_at, $this->id)
+            ?? (int) ($this->previous_reading ?? 0);
+
+        $this->update([
+            'status'           => ReadingStatus::Approved,
+            'rejection_reason' => null,
+            'previous_reading' => $previous,
+            'consumption'      => max(0, (int) $this->reading - $previous),
+        ]);
+    }
+
+    public function reject(?string $reason = null): void
+    {
+        $this->update([
+            'status'           => ReadingStatus::Rejected,
+            'rejection_reason' => $reason ?: null,
+        ]);
+    }
+
     // ── Boot hooks ─────────────────────────────────────────
     protected static function booted(): void
     {
@@ -74,20 +118,19 @@ class Reading extends Model
             if (empty($r->status)) {
                 $user = auth()->user();
                 $r->status = ($user && $user->hasRole('client'))
-                    ? \App\Enums\ReadingStatus::Pending->value
-                    : \App\Enums\ReadingStatus::Approved->value;
+                    ? ReadingStatus::Pending->value
+                    : ReadingStatus::Approved->value;
             }
 
-            // Compute previous + consumption vs. last APPROVED reading.
+            // Previous = last APPROVED reading taken at or before this one,
+            // unless the caller seeded it (e.g. the first reading of a new meter).
             if ($r->previous_reading === null) {
-                $prev = static::withoutGlobalScope('vendor')
-                    ->where('meter_id', $r->meter_id)
-                    ->where('status', \App\Enums\ReadingStatus::Approved->value)
-                    ->latest('read_at')
-                    ->value('reading');
+                $r->previous_reading = static::lastApprovedValueFor($r->meter_id, $r->read_at) ?? 0;
+            }
 
-                $r->previous_reading = $prev ?? 0;
-                $r->consumption      = max(0, (int) $r->reading - (int) $r->previous_reading);
+            // Always derive consumption from the two readings.
+            if ($r->consumption === null) {
+                $r->consumption = max(0, (int) $r->reading - (int) $r->previous_reading);
             }
         });
     }

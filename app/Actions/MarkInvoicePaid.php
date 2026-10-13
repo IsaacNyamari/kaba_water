@@ -62,14 +62,7 @@ class MarkInvoicePaid
                 'recorded_by' => auth()->id(),
             ]);
 
-            $totalPaid = $invoice->payments()->sum('amount');
-
-            $invoice->update([
-                'amount_paid' => $totalPaid,
-                'status'      => $totalPaid + 0.001 >= (float) $invoice->total
-                    ? InvoiceStatus::Paid
-                    : $invoice->status,
-            ]);
+            $invoice->syncPayments();
 
             return $payment;
         });

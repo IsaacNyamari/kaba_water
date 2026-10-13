@@ -59,7 +59,8 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
             return;
         }
 
-        $last = Reading::where('meter_id', $this->meter_id)->latest('read_at')->value('reading');
+        // Same baseline the model uses to compute consumption: last APPROVED reading.
+        $last = Reading::lastApprovedValueFor((int) $this->meter_id);
 
         if ($last !== null) {
             $this->previous_reading = (string) $last;
@@ -84,7 +85,7 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
             return false;
         }
 
-        return !Reading::where('meter_id', $this->meter_id)->exists();
+        return ! Reading::where('meter_id', $this->meter_id)->approved()->exists();
     }
 
     protected function rules(): array
@@ -101,6 +102,9 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
         // Only require the previous reading when this meter is brand new.
         if ($this->isNewMeter) {
             $rules['previous_reading'] = ['required', 'integer', 'min:0', 'lte:reading'];
+        } elseif ($this->meter_id && ($last = Reading::lastApprovedValueFor((int) $this->meter_id)) !== null) {
+            // Meters only count up — a lower value is a misread.
+            $rules['reading'][] = 'gte:' . $last;
         }
 
         return $rules;
@@ -111,6 +115,7 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
         return [
             'previous_reading.required' => 'Enter the initial reading for this new meter.',
             'previous_reading.lte' => 'Previous reading cannot be greater than the current reading.',
+            'reading.gte' => 'The reading cannot be lower than the last approved reading (:value).',
         ];
     }
 
@@ -166,6 +171,7 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
 
     public function save(): void
     {
+        $this->authorize('create', Reading::class);
         $this->validate();
 
         $photoPath = null;
@@ -190,11 +196,11 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
             $payload['previous_reading'] = (int) $this->previous_reading;
         }
 
+        // The model computes previous_reading (when not seeded) and consumption.
         $reading = Reading::create($payload);
 
-        $consumed = $payload['previous_reading'] ? number_format((int) $payload['reading'] - $payload['previous_reading']) : number_format((int) $reading->consumption);
-        $reading->update(['consumption' => $consumed]);
-        session()->flash('status', "Reading recorded: {$reading->reading} m³ ({$consumed} m³ consumed since last reading).");
+        session()->flash('status', 'Reading recorded: ' . number_format($reading->reading) . ' m³ ('
+            . number_format((int) $reading->consumption) . ' m³ consumed since last reading).');
 
         $this->redirectRoute('vendor.readings.index', navigate: true);
     }

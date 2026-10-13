@@ -1,9 +1,10 @@
 <?php
 
 use App\Models\Tariff;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-new class extends Component {
+new #[Layout('layouts.vendor', ['title' => 'Tariff'])] class extends Component {
     public ?Tariff $tariff = null;
 
     public string $name = '';
@@ -42,6 +43,24 @@ new class extends Component {
             $base['tiers'] = ['required', 'array', 'min:1'];
             $base['tiers.*.up_to'] = ['nullable', 'integer', 'min:1'];
             $base['tiers.*.rate'] = ['required', 'numeric', 'min:0'];
+            $base['tiers'][] = function ($attribute, $value, $fail) {
+                $last = 0;
+                $count = count($value);
+                foreach (array_values($value) as $i => $tier) {
+                    $upTo = $tier['up_to'] ?? null;
+                    if (! filled($upTo)) {
+                        if ($i !== $count - 1) {
+                            $fail('Only the last band may be open-ended (blank "up to").');
+                        }
+                        continue;
+                    }
+                    if ((int) $upTo <= $last) {
+                        $fail('Band limits must increase from top to bottom.');
+                        return;
+                    }
+                    $last = (int) $upTo;
+                }
+            };
         }
 
         return $base;
@@ -60,6 +79,7 @@ new class extends Component {
 
     public function save(): void
     {
+        $this->authorize($this->tariff ? 'update' : 'create', $this->tariff ?? Tariff::class);
         $this->validate();
 
         $payload = [
@@ -71,7 +91,8 @@ new class extends Component {
                 $this->type === 'tiered'
                     ? array_map(
                         fn($t) => [
-                            'up_to' => $t['up_to'] !== '' ? (int) $t['up_to'] : null,
+                            // Blank / null = open-ended top band. (int) null would be 0 and drop all usage above the previous band.
+                            'up_to' => filled($t['up_to'] ?? null) ? (int) $t['up_to'] : null,
                             'rate' => (float) $t['rate'],
                         ],
                         $this->tiers,

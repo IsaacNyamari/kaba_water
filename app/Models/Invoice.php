@@ -42,6 +42,27 @@ class Invoice extends Model
 
     public function isOverdue(): bool
     {
-        return $this->status !== InvoiceStatus::Paid && $this->due_at->isPast();
+        return in_array($this->status, [InvoiceStatus::Sent, InvoiceStatus::Overdue], true)
+            && (bool) $this->due_at?->isPast();
+    }
+
+    /**
+     * Recompute amount_paid from the payments table and derive the status:
+     * paid when fully settled, otherwise sent/overdue based on the due date.
+     * Draft and void invoices keep their status.
+     */
+    public function syncPayments(): void
+    {
+        $paid = round((float) $this->payments()->sum('amount'), 2);
+
+        $status = match (true) {
+            $this->status === InvoiceStatus::Void              => InvoiceStatus::Void,
+            $paid + 0.001 >= (float) $this->total && $paid > 0 => InvoiceStatus::Paid,
+            $this->status === InvoiceStatus::Draft             => InvoiceStatus::Draft,
+            (bool) $this->due_at?->isPast()                    => InvoiceStatus::Overdue,
+            default                                            => InvoiceStatus::Sent,
+        };
+
+        $this->update(['amount_paid' => $paid, 'status' => $status]);
     }
 }

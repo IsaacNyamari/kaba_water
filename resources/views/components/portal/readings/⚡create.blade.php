@@ -89,7 +89,7 @@ new #[Layout('layouts.portal'), Title('Submit reading')] class extends Component
         // and computes previous_reading + consumption.
     
         Reading::create([
-            'vendor_id'=>Auth::user()->vendor->id,
+            'vendor_id' => $this->client->vendor_id,
             'meter_id' => $this->meter_id,
             'reading' => $this->reading,
             'source' => 'manual',

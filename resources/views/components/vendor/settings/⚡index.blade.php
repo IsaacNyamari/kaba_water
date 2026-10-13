@@ -2,9 +2,11 @@
 
 use Flux\Flux;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Validation\Rule;
+use Livewire\Attributes\Layout;
 use Livewire\Component;
 
-new class extends Component {
+new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component {
     public string $name = '';
     public string $email = '';
     public string $phone = '';
@@ -33,17 +35,19 @@ new class extends Component {
     {
         return [
             'name' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'email', 'max:150'],
+            'email' => ['required', 'email', 'max:150', Rule::unique('vendors', 'email')->ignore(auth()->user()->vendor_id)],
             'phone' => ['nullable', 'string', 'max:30'],
             'currency' => ['required', 'string', 'size:3'],
 
             'user_name' => ['required', 'string', 'max:150'],
-            'user_email' => ['required', 'email', 'max:150'],
+            'user_email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore(auth()->id())],
         ];
     }
 
     public function saveVendor(): void
     {
+        $this->authorize('vendor.settings.manage');
+
         $this->validateOnly('name');
         $this->validateOnly('email');
         $this->validateOnly('phone');
@@ -80,7 +84,7 @@ new class extends Component {
     {
         $this->validate([
             'current_password' => ['required'],
-            'new_password' => ['required', 'string', 'min:8'],
+            'new_password' => ['required', 'string', \Illuminate\Validation\Rules\Password::default()],
         ]);
 
         if (!Hash::check($this->current_password, auth()->user()->password)) {

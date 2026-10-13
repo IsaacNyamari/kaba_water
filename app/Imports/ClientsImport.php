@@ -29,20 +29,25 @@ class ClientsImport implements ToModel, WithHeadingRow, WithValidation, WithChun
         $name  = trim((string) ($row['name'] ?? ''));
         $phone = trim((string) ($row['phone'] ?? ''));
 
-        $exists = Client::withoutGlobalScope('vendor')
-            ->where('vendor_id', $this->vendorId)
-            ->where('phone', $phone)
-            ->exists();
+        // De-duplicate on phone only when a phone was given — otherwise every
+        // phone-less row after the first would be silently dropped.
+        if ($phone !== '') {
+            $exists = Client::withoutGlobalScope('vendor')
+                ->where('vendor_id', $this->vendorId)
+                ->where('phone', $phone)
+                ->exists();
 
-        if ($exists) {
-            return null;
+            if ($exists) {
+                return null;
+            }
         }
 
         return new Client([
             'vendor_id'  => $this->vendorId,
             'account_no' => $this->reserveAccountNo(),
             'name'       => $name,
-            'phone'      => $phone,
+            'phone'      => $phone !== '' ? $phone : null,
+            'email'      => filled($row['email'] ?? null) ? trim((string) $row['email']) : null,
             'status'     => $this->normalizeStatus($row['status'] ?? null),
         ]);
     }
@@ -65,7 +70,8 @@ class ClientsImport implements ToModel, WithHeadingRow, WithValidation, WithChun
     {
         return [
             'name'   => ['required', 'string', 'max:255'],
-            'phone'  => ['nullable', 'string', 'max:32'],
+            'phone'  => ['nullable', 'max:32'],
+            'email'  => ['nullable', 'email', 'max:255'],
             'status' => ['nullable', 'string'],
         ];
     }
@@ -73,8 +79,8 @@ class ClientsImport implements ToModel, WithHeadingRow, WithValidation, WithChun
     protected function normalizeStatus(?string $value): string
     {
         return match (Str::lower(trim((string) $value))) {
-            '1', 'active', 'enabled', 'yes' => 'active',
-            default                          => 'inactive',
+            '0', 'inactive', 'disabled', 'no' => 'inactive',
+            default                            => 'active', // blank or anything else
         };
     }
 

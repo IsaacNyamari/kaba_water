@@ -4,7 +4,7 @@ use App\Models\Client;
 use App\Models\User;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
-use Livewire\Form;
+use Illuminate\Support\Facades\DB;
 
 new #[Layout('layouts.vendor')] class extends Component {
     public ?Client $client = null;
@@ -39,10 +39,6 @@ new #[Layout('layouts.vendor')] class extends Component {
     public function fillDefaults(): void
     {
         $vendorId = auth()->user()->vendor_id;
-        $last = Client::withoutGlobalScope('vendor')
-            ->where('vendor_id', $vendorId)
-            ->orderByDesc('id')
-            ->value('account_no');
 
         $this->account_no = Client::nextAccountNo($vendorId);
     }
@@ -58,16 +54,19 @@ new #[Layout('layouts.vendor')] class extends Component {
         return [
             'account_no' => ['required', 'string', 'max:50', $unique],
             'name'       => ['required', 'string', 'max:150'],
-            'email'      => ['nullable', 'email', 'max:150'],
+            'email'      => $this->create_portal_account && ! $this->client
+                ? ['required', 'email', 'max:150', 'unique:users,email']
+                : ['nullable', 'email', 'max:150'],
             'phone'      => ['nullable', 'string', 'max:30'],
             'address'    => ['nullable', 'string', 'max:500'],
             'status'     => ['required', 'in:active,inactive'],
-            'password'   => [$this->create_portal_account ? 'required' : 'nullable', 'string', 'min:8'],
+            'password'   => [$this->create_portal_account && ! $this->client ? 'required' : 'nullable', 'string', 'min:8'],
         ];
     }
 
     public function save(): void
     {
+        $this->authorize($this->client ? 'update' : 'create', $this->client ?? Client::class);
         $this->validate();
 
         if ($this->client) {
@@ -81,27 +80,33 @@ new #[Layout('layouts.vendor')] class extends Component {
             ]);
             session()->flash('status', 'Client updated.');
         } else {
-            $userId = null;
-            if ($this->create_portal_account && $this->email) {
-                $user = User::create([
-                    'vendor_id' => auth()->user()->vendor_id,
-                    'name'      => $this->name,
-                    'email'     => $this->email,
-                    'password'  => $this->password,
-                ]);
-                $user->assignRole('client');
-                $userId = $user->id;
-            }
+            DB::transaction(function () {
+                $userId = null;
 
-            Client::create([
-                'user_id'    => $userId,
-                'account_no' => $this->account_no,
-                'name'       => $this->name,
-                'email'      => $this->email ?: null,
-                'phone'      => $this->phone ?: null,
-                'address'    => $this->address ?: null,
-                'status'     => $this->status,
-            ]);
+                if ($this->create_portal_account) {
+                    $user = User::create([
+                        'vendor_id' => auth()->user()->vendor_id,
+                        'name'      => $this->name,
+                        'email'     => $this->email,
+                        'password'  => $this->password,
+                    ]);
+                    // The vendor vouches for this address; without this the client is
+                    // stuck behind the "verified" middleware on the portal.
+                    $user->forceFill(['email_verified_at' => now()])->save();
+                    $user->assignRole('client');
+                    $userId = $user->id;
+                }
+
+                Client::create([
+                    'user_id'    => $userId,
+                    'account_no' => $this->account_no,
+                    'name'       => $this->name,
+                    'email'      => $this->email ?: null,
+                    'phone'      => $this->phone ?: null,
+                    'address'    => $this->address ?: null,
+                    'status'     => $this->status,
+                ]);
+            });
             session()->flash('status', 'Client created.');
         }
 

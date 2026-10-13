@@ -39,7 +39,8 @@ class Asset extends Model
             $asOf = now();
         }
 
-        $years = $this->purchase_date->floatDiffInYears($asOf);
+        // Future-dated purchases have no depreciation yet.
+        $years = max(0, $this->purchase_date->floatDiffInYears($asOf, false));
         $cost  = (float) $this->purchase_cost;
         $salv  = (float) $this->salvage_value;
         $rate  = (float) $this->depreciation_rate / 100;

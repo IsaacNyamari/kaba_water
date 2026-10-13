@@ -21,12 +21,12 @@ new #[Layout('layouts.vendor'), Title('Suppliers')] class extends Component
         $this->authorize('delete', $supplier);
 
         if ($supplier->expenses()->exists()) {
-            session()->flash('error', 'Cannot delete a supplier with linked expenses.');
+            \Flux\Flux::toast(variant: 'danger', text: 'Cannot delete a supplier with linked expenses.');
             return;
         }
 
         $supplier->delete();
-        session()->flash('status', 'Supplier deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Supplier deleted.');
     }
 
     public function with(): array

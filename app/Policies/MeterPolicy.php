@@ -24,7 +24,8 @@ class MeterPolicy
     }
     public function update(User $user, Meter $meter): bool
     {
-        return $this->view($user, $meter);
+        // Viewing is not enough to edit — require the manage permission.
+        return $this->view($user, $meter) && $user->hasPermissionTo('vendor.meters.manage');
     }
     public function delete(User $user, Meter $meter): bool
     {

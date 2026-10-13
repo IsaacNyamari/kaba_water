@@ -24,7 +24,7 @@ new #[Layout('layouts.vendor'), Title('Assets')] class extends Component
         $this->authorize('delete', $asset);
 
         $asset->delete();
-        session()->flash('status', 'Asset deleted.');
+        \Flux\Flux::toast(variant: 'success', text: 'Asset deleted.');
     }
 
     public function with(): array
