@@ -26,6 +26,40 @@
     --color-accent: var(--color-neutral-800);
     --color-accent-content: var(--color-neutral-800);
     --color-accent-foreground: var(--color-white);
+
+    /* Marketing site — aqua / deep navy / teal */
+    --color-navy: #0B2545;
+    --color-navy-deep: #071A33;
+    --color-navy-mid: #0E3A5C;
+    --color-teal: #0E7C86;
+    --color-aqua: #14B8A6;
+    --color-light-aqua: #5EEAD4;
+    --color-aqua-tint: #F0FDFA;
+    --color-aqua-mist: #ECFDF5;
+
+    --shadow-aqua: 0 24px 48px -24px rgb(14 124 134 / 0.35);
+    --shadow-aqua-lg: 0 40px 80px -32px rgb(14 124 134 / 0.45);
+}
+
+/* Marketing buttons (resources/views/marketing) */
+@utility btn-mk {
+    @apply inline-flex items-center justify-center gap-2 rounded-xl px-5 py-3 text-sm font-semibold transition duration-200 focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-aqua;
+}
+
+@utility btn-mk-primary {
+    @apply bg-aqua text-navy shadow-aqua hover:bg-light-aqua;
+}
+
+@utility btn-mk-secondary {
+    @apply border border-navy/20 text-navy hover:bg-aqua/10 dark:border-white/20 dark:text-white dark:hover:bg-white/10;
+}
+
+@utility btn-mk-on-dark {
+    @apply border border-white/25 text-white hover:bg-white/10;
+}
+
+@utility mk-card {
+    @apply rounded-2xl border border-teal/10 bg-white shadow-aqua dark:border-white/10 dark:bg-navy;
 }
 
 @layer theme {

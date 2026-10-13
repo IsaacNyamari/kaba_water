@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\Marketing\ContactController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -9,7 +10,19 @@ use Illuminate\Support\Facades\Route;
 |--------------------------------------------------------------------------
 */
 
-Route::view('/', 'welcome')->name('home');
+// Marketing site. `/` keeps the name `home` because the auth layouts link to it.
+Route::view('/', 'marketing.home')->name('home');
+
+Route::name('marketing.')->group(function () {
+    Route::view('/services', 'marketing.services')->name('services');
+    Route::redirect('/features', '/services', 301)->name('features');
+    Route::view('/pricing', 'marketing.pricing')->name('pricing');
+    Route::view('/about', 'marketing.about')->name('about');
+    Route::get('/contact', [ContactController::class, 'show'])->name('contact');
+    Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
+    Route::view('/terms', 'marketing.terms')->name('terms');
+    Route::view('/privacy', 'marketing.privacy')->name('privacy');
+});
 
 /*
 |--------------------------------------------------------------------------
