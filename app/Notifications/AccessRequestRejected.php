@@ -23,9 +23,6 @@ class AccessRequestRejected extends Notification
     {
         return (new MailMessage)
             ->subject('Your '.config('app.name').' access request')
-            ->greeting("Hello {$this->request->name},")
-            ->line('Unfortunately we could not approve your access request.')
-            ->when($this->request->rejection_reason, fn ($m) => $m->line('Reason: '.$this->request->rejection_reason))
-            ->line('If you think this is a mistake, reply to this email.');
+            ->markdown('mail.access.rejected', ['accessRequest' => $this->request]);
     }
 }

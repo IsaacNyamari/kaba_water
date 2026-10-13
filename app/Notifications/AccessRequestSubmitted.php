@@ -26,10 +26,9 @@ class AccessRequestSubmitted extends Notification
 
         return (new MailMessage)
             ->subject("Access request from {$r->name}")
-            ->greeting('New access request')
-            ->line("{$r->name} <{$r->email}> asked for a ".($r->requested_type === AccessRequest::TYPE_VENDOR ? 'vendor workspace' : 'client portal account').'.')
-            ->when($r->organization, fn ($m) => $m->line("Organisation: {$r->organization}"))
-            ->line('Email check: '.($r->email_check?->label() ?? 'not run'))
-            ->action('Review requests', route('admin.access-requests.index'));
+            ->markdown('mail.access.submitted', [
+                'accessRequest' => $r,
+                'reviewUrl' => route('admin.access-requests.index'),
+            ]);
     }
 }

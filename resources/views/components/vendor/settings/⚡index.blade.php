@@ -62,7 +62,7 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
                 'currency' => strtoupper($this->currency),
             ]);
 
-        Flux::toast(variant: 'success', heading: 'Workspace updated');
+        Flux::toast(variant: 'success', heading: 'Workspace updated',text:'workspace updated successfully!');
     }
 
     public function saveUser(): void

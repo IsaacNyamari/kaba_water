@@ -27,11 +27,10 @@ class AccessInvitation extends Notification
 
         return (new MailMessage)
             ->subject('Your '.config('app.name').' access has been approved')
-            ->greeting("Hello {$r->name},")
-            ->line("Your request for access{$where} has been approved.")
-            ->line('Use the button below to set your password and finish creating your account.')
-            ->action('Create my account', $this->url)
-            ->line('This link works once and expires on '.$r->invite_expires_at?->format('d M Y H:i').'.')
-            ->line('If you did not ask for access, you can ignore this email.');
+            ->markdown('mail.access.invitation', [
+                'accessRequest' => $r,
+                'workspace' => $r->vendor?->name,
+                'url' => $this->url,
+            ]);
     }
 }
