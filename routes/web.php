@@ -1,0 +1,217 @@
+<?php
+
+use App\Http\Controllers\InvoicePdfController;
+use Illuminate\Support\Facades\Route;
+
+/*
+|--------------------------------------------------------------------------
+| Public
+|--------------------------------------------------------------------------
+*/
+
+Route::view('/', 'welcome')->name('home');
+
+/*
+|--------------------------------------------------------------------------
+| Legacy /dashboard shim — role-aware redirect
+|--------------------------------------------------------------------------
+| Any bookmark or email link to /dashboard lands the user in the right place.
+*/
+
+Route::get('/dashboard', function () {
+    return auth()->check()
+        ? redirect(auth()->user()->homeRoute())
+        : redirect()->route('login');
+})->middleware(['auth', 'verified'])->name('dashboard');
+
+/*
+|--------------------------------------------------------------------------
+| Vendor billing notice — must be OUTSIDE the sub.active group
+|--------------------------------------------------------------------------
+| EnsureSubscriptionActive redirects here when a subscription is inactive.
+| If this route were inside that group, it would cause a redirect loop.
+*/
+
+// Route::middleware(['auth', 'verified', 'role:vendor', 'vendor.context'])
+//     ->livewire('/vendor/billing/notice', 'vendor.billing.notice')
+//     ->name('vendor.billing.notice');
+/*
+|--------------------------------------------------------------------------
+| Super Admin
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'verified', 'role:super_admin'])
+    ->prefix('admin')->name('admin.')
+    ->group(function () {
+        Route::livewire('/', 'admin.dashboard')->name('dashboard');
+
+        // Vendors
+        Route::livewire('/vendors',               'admin.vendors.index')->name('vendors.index');
+        Route::livewire('/vendors/create',        'admin.vendors.form')->name('vendors.create');
+        Route::livewire('/vendors/{vendor}/edit', 'admin.vendors.form')->name('vendors.edit');
+
+        // Plans
+        Route::livewire('/plans',             'admin.plans.index')->name('plans.index');
+        Route::livewire('/plans/create',      'admin.plans.form')->name('plans.create');
+        Route::livewire('/plans/{plan}/edit', 'admin.plans.form')->name('plans.edit');
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Vendor workspace
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'verified', 'role:vendor', 'vendor.context', 'sub.active'])
+    ->prefix('vendor')->name('vendor.')
+    ->group(function () {
+
+        // Dashboard (no permission gate — every vendor can see it)
+        Route::livewire('/', 'vendor.dashboard')->name('dashboard');
+
+        // ── Clients ─────────────────────────────────────────
+        Route::middleware('permission:vendor.clients.view|vendor.clients.manage')->group(function () {
+            Route::livewire('/clients',               'vendor.clients.index')->name('clients.index');
+            Route::livewire('/clients/create',        'vendor.clients.form')->name('clients.create');
+            Route::livewire('/clients/create/upload', 'vendor.clients.upload')->name('clients.upload');
+            Route::livewire('/clients/{client}/edit', 'vendor.clients.form')->name('clients.edit');
+        });
+
+        // ── Meters ──────────────────────────────────────────
+        Route::middleware('permission:vendor.meters.view|vendor.meters.manage')->group(function () {
+            Route::livewire('/meters',              'vendor.meters.index')->name('meters.index');
+            Route::livewire('/meters/create',       'vendor.meters.form')->name('meters.create');
+            Route::livewire('/meters/{meter}/edit', 'vendor.meters.form')->name('meters.edit');
+        });
+
+        // ── Readings ────────────────────────────────────────
+        Route::middleware('permission:vendor.readings.view|vendor.readings.manage')->group(function () {
+            Route::livewire('/readings',        'vendor.readings.index')->name('readings.index');
+            Route::livewire('/readings/create', 'vendor.readings.create')->name('readings.create');
+        });
+
+        // ── Work Orders ─────────────────────────────────────
+        Route::middleware('permission:vendor.work_orders.view|vendor.work_orders.manage')->group(function () {
+            Route::livewire('/work-orders',                  'vendor.work-orders.index')->name('work-orders.index');
+            Route::livewire('/work-orders/create',           'vendor.work-orders.form')->name('work-orders.create');
+            Route::livewire('/work-orders/{workOrder}/edit', 'vendor.work-orders.form')->name('work-orders.edit');
+        });
+
+        // ── Invoices ────────────────────────────────────────
+        Route::middleware('permission:vendor.invoices.view|vendor.invoices.manage')->group(function () {
+            Route::livewire('/invoices',           'vendor.invoices.index')->name('invoices.index');
+            Route::livewire('/invoices/create',    'vendor.invoices.create')->name('invoices.create');
+            Route::livewire('/invoices/{invoice}', 'vendor.invoices.show')->name('invoices.show');
+            Route::get('/invoices/{invoice}/pdf', InvoicePdfController::class)->name('invoices.pdf');
+        });
+
+        // ── Payments ────────────────────────────────────────
+        Route::middleware('permission:vendor.payments.view|vendor.payments.manage')->group(function () {
+            Route::livewire('/payments',        'vendor.payments.index')->name('payments.index');
+            Route::livewire('/payments/create', 'vendor.payments.create')->name('payments.create');
+        });
+
+        // ── Tariffs ─────────────────────────────────────────
+        Route::middleware('permission:vendor.tariffs.view|vendor.tariffs.manage')->group(function () {
+            Route::livewire('/tariffs',               'vendor.tariffs.index')->name('tariffs.index');
+            Route::livewire('/tariffs/create',        'vendor.tariffs.form')->name('tariffs.create');
+            Route::livewire('/tariffs/{tariff}/edit', 'vendor.tariffs.form')->name('tariffs.edit');
+        });
+
+        // ── Expenses ────────────────────────────────────────
+        Route::middleware('permission:vendor.expenses.view|vendor.expenses.manage')->group(function () {
+            Route::livewire('/expenses',                'vendor.expenses.index')->name('expenses.index');
+            Route::livewire('/expenses/create',         'vendor.expenses.form')->name('expenses.create');
+            Route::livewire('/expenses/{expense}/edit', 'vendor.expenses.form')->name('expenses.edit');
+            Route::livewire('/expenses/categories', 'vendor.expenses.categories')->name('expenses.categories');
+        });
+
+        // ── Suppliers ───────────────────────────────────────
+        Route::middleware('permission:vendor.suppliers.view|vendor.suppliers.manage')->group(function () {
+            Route::livewire('/suppliers',                 'vendor.suppliers.index')->name('suppliers.index');
+            Route::livewire('/suppliers/create',          'vendor.suppliers.form')->name('suppliers.create');
+            Route::livewire('/suppliers/{supplier}/edit', 'vendor.suppliers.form')->name('suppliers.edit');
+        });
+
+        // ── Assets ──────────────────────────────────────────
+        Route::middleware('permission:vendor.assets.view|vendor.assets.manage')->group(function () {
+            Route::livewire('/assets',              'vendor.assets.index')->name('assets.index');
+            Route::livewire('/assets/create',       'vendor.assets.form')->name('assets.create');
+            Route::livewire('/assets/{asset}/edit', 'vendor.assets.form')->name('assets.edit');
+        });
+
+        // ── Liabilities ─────────────────────────────────────
+        Route::middleware('permission:vendor.liabilities.view|vendor.liabilities.manage')->group(function () {
+            Route::livewire('/liabilities',                  'vendor.liabilities.index')->name('liabilities.index');
+            Route::livewire('/liabilities/create',           'vendor.liabilities.form')->name('liabilities.create');
+            Route::livewire('/liabilities/{liability}/edit', 'vendor.liabilities.form')->name('liabilities.edit');
+        });
+
+        // ── Financial Reports ───────────────────────────────
+        Route::middleware('permission:vendor.finance.view')->group(function () {
+            Route::livewire('/finance/reports', 'vendor.finance.reports')->name('finance.reports');
+        });
+
+        // ── Usage Reports ───────────────────────────────────
+        Route::middleware('permission:vendor.reports.view')->group(function () {
+            Route::livewire('/reports', 'vendor.reports.index')->name('reports.index');
+        });
+
+        // ── Settings ────────────────────────────────────────
+        Route::middleware('permission:vendor.settings.manage')->group(function () {
+            Route::livewire('/settings', 'vendor.settings.index')->name('settings.index');
+        });
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Client portal
+|--------------------------------------------------------------------------
+*/
+
+Route::middleware(['auth', 'verified', 'role:client', 'vendor.context'])
+    ->prefix('portal')->name('portal.')
+    ->group(function () {
+
+        Route::livewire('/',      'portal.dashboard')->name('dashboard');
+        Route::livewire('/meter', 'portal.meter')->name('meter');
+
+        // Readings
+        Route::middleware('permission:client.readings.view|client.readings.create')->group(function () {
+            Route::livewire('/readings', 'portal.readings.index')->name('readings.index');
+        });
+        Route::middleware('permission:client.readings.create')->group(function () {
+            Route::livewire('/readings/create', 'portal.readings.create')->name('readings.create');
+        });
+
+        // Invoices
+        Route::middleware('permission:client.invoices.view')->group(function () {
+            Route::livewire('/invoices',           'portal.invoices.index')->name('invoices.index');
+            Route::livewire('/invoices/{invoice}', 'portal.invoices.show')->name('invoices.show');
+            Route::get('/invoices/{invoice}/pdf', InvoicePdfController::class)->name('invoices.pdf');
+        });
+
+        // Payments
+        Route::middleware('permission:client.payments.view')->group(function () {
+            Route::livewire('/payments', 'portal.payments.index')->name('payments.index');
+        });
+
+        // Work Orders (client's own)
+        Route::middleware('permission:client.work_orders.view')->group(function () {
+            Route::livewire('/work-orders', 'portal.work-orders.index')->name('work-orders.index');
+        });
+
+        // Profile
+        Route::middleware('permission:client.profile.manage')->group(function () {
+            Route::livewire('/profile', 'portal.profile')->name('profile');
+        });
+    });
+
+/*
+|--------------------------------------------------------------------------
+| Starter kit settings routes (profile, password, appearance)
+|--------------------------------------------------------------------------
+*/
+
+require __DIR__ . '/settings.php';
