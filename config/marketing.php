@@ -16,8 +16,8 @@ return [
 
     /* Contact details shown on /contact and in the footer. */
     'contact' => [
-        'phone' => '+254 700 000 000',
-        'email' => env('MAIL_SALES_ADDRESS', 'sales@example.com'),
+        'phones' => ['+254 725 742 737', '+254 711 777 992'],
+        'email' => 'info@humsols.com',
         'address' => ['Kaba Water', 'Westlands', 'Nairobi, Kenya'],
         'hours' => [
             'Monday – Friday' => '8:00 am – 5:30 pm',

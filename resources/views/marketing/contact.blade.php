@@ -26,7 +26,9 @@
                             <span class="flex size-10 shrink-0 items-center justify-center rounded-xl bg-white/10 text-light-aqua"><flux:icon.phone variant="mini" class="size-5" /></span>
                             <span>
                                 <span class="block text-xs uppercase tracking-widest text-light-aqua">Phone</span>
-                                <a href="tel:{{ preg_replace('/\s+/', '', $contact['phone']) }}" class="mt-0.5 block font-semibold hover:text-light-aqua">{{ $contact['phone'] }}</a>
+                                @foreach ($contact['phones'] as $phone)
+                                    <a href="tel:{{ preg_replace('/\s+/', '', $phone) }}" class="mt-0.5 block font-semibold hover:text-light-aqua">{{ $phone }}</a>
+                                @endforeach
                             </span>
                         </li>
                         <li class="flex gap-4">

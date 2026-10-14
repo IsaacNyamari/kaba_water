@@ -19,7 +19,7 @@ While you wait, you can see what {{ config('app.name') }} does and how plans are
 Explore our services
 </x-mail::button>
 
-If something is urgent, call us on {{ config('marketing.contact.phone') }} or simply reply to this email.
+If something is urgent, call us on {{ implode(' or ', config('marketing.contact.phones')) }} or simply reply to this email.
 
 Regards,<br>
 The {{ config('app.name') }} team

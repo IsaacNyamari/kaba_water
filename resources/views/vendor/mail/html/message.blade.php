@@ -23,7 +23,7 @@
 <x-mail::footer>
 {{ implode(', ', config('marketing.contact.address', [config('app.name')])) }}
 
-[{{ parse_url(config('app.url'), PHP_URL_HOST) }}]({{ config('app.url') }}) · [{{ config('marketing.contact.email') }}](mailto:{{ config('marketing.contact.email') }}) · {{ config('marketing.contact.phone') }}
+[{{ parse_url(config('app.url'), PHP_URL_HOST) }}]({{ config('app.url') }}) · [{{ config('marketing.contact.email') }}](mailto:{{ config('marketing.contact.email') }}) · {{ implode(' / ', config('marketing.contact.phones')) }}
 
 © {{ date('Y') }} {{ config('app.name') }}. {{ __('All rights reserved.') }}
 </x-mail::footer>
