@@ -44,7 +44,7 @@ new #[Layout('layouts.admin'), Title('Platform settings')] class extends Compone
         $this->loadValues();
         $this->testRecipient = auth()->user()->email;
 
-        if ($this->tab !== 'branding' && ! array_key_exists($this->tab, EnvSettings::groups())) {
+        if (! in_array($this->tab, ['branding', 'seo'], true) && ! array_key_exists($this->tab, EnvSettings::groups())) {
             $this->tab = 'branding';
         }
     }
@@ -275,7 +275,7 @@ new #[Layout('layouts.admin'), Title('Platform settings')] class extends Compone
     <div class="grid gap-6 lg:grid-cols-[14rem_1fr]">
         {{-- Section menu --}}
         <nav class="flex gap-2 overflow-x-auto lg:flex-col lg:overflow-visible" aria-label="Settings sections">
-            @foreach (['branding' => ['title' => 'Branding', 'icon' => 'swatch']] + $groups as $key => $group)
+            @foreach (['branding' => ['title' => 'Branding', 'icon' => 'swatch'], 'seo' => ['title' => 'SEO', 'icon' => 'magnifying-glass']] + $groups as $key => $group)
                 <button type="button" wire:click="$set('tab', '{{ $key }}')" wire:key="tab-{{ $key }}"
                     class="flex shrink-0 items-center gap-2.5 rounded-xl px-3.5 py-2.5 text-left text-sm font-medium transition
                         {{ $tab === $key ? 'bg-brand-500 text-white shadow-sm' : 'text-zinc-600 hover:bg-brand-50 hover:text-brand-700 dark:text-zinc-300 dark:hover:bg-brand-500/10 dark:hover:text-brand-300' }}">
@@ -290,7 +290,9 @@ new #[Layout('layouts.admin'), Title('Platform settings')] class extends Compone
 
         {{-- Section body --}}
         <div wire:key="panel-{{ $tab }}">
-            @if ($tab === 'branding')
+            @if ($tab === 'seo')
+                <livewire:admin.settings.seo />
+            @elseif ($tab === 'branding')
                 <form wire:submit="saveBranding" class="app-card space-y-6 p-6">
                     <div>
                         <flux:heading size="sm">Branding</flux:heading>

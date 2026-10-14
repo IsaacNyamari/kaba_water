@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Auth\PhoneLoginController;
 use App\Http\Controllers\InvoicePdfController;
+use App\Http\Controllers\SeoController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -12,6 +13,10 @@ use Illuminate\Support\Facades\Route;
 
 // Marketing site. `/` keeps the name `home` because the auth layouts link to it.
 Route::view('/', 'marketing.home')->name('home');
+
+// Search engines: generated from Admin → Settings → SEO.
+Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
+Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
 
 Route::name('marketing.')->group(function () {
     Route::view('/services', 'marketing.services')->name('services');

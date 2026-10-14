@@ -14,6 +14,7 @@ use App\Observers\InvoiceObserver;
 use App\Observers\PaymentObserver;
 use App\Observers\VendorObserver;
 use App\Observers\WorkOrderObserver;
+use App\Services\Seo\SeoManager;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -27,7 +28,8 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // One instance per request so SEO settings are read once per page.
+        $this->app->scoped(SeoManager::class);
     }
 
     /**
