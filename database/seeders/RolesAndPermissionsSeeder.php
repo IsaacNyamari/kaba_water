@@ -74,6 +74,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'projects.expenses.submit',
             'projects.expenses.approve',  // approve / reject / pay expenses, approve progress reports
             'projects.materials.manage',  // orders, receipts, issues, returns, wastage
+            'projects.suppliers.manage',  // the project supplier list (separate from billing suppliers)
             'projects.budget.revise',
             'projects.close',             // close and reopen projects
 
@@ -140,7 +141,7 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // Procurement officer: purchase orders, deliveries and supplier bills.
         Role::firstOrCreate(['name' => 'procurement_officer', 'guard_name' => 'web'])->syncPermissions([
-            'projects.view', 'projects.materials.manage', 'projects.expenses.submit',
+            'projects.view', 'projects.materials.manage', 'projects.expenses.submit', 'projects.suppliers.manage',
         ]);
 
         // Office staff: day-to-day customer work, read-only accounting.

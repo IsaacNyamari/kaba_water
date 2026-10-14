@@ -40,7 +40,7 @@ class ProjectExpense extends Model
 
     public function supplier(): BelongsTo
     {
-        return $this->belongsTo(Supplier::class);
+        return $this->belongsTo(ProjectSupplier::class, 'supplier_id');
     }
 
     public function submitter(): BelongsTo

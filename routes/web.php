@@ -260,8 +260,13 @@ Route::middleware(['auth', 'verified', 'vendor.context', 'sub.active'])->group(f
     Route::middleware('permission:projects.view')->prefix('projects')->name('projects.')->group(function () {
         Route::livewire('/', 'projects.index')->name('index');
         Route::livewire('/create', 'projects.form')->middleware('permission:projects.manage')->name('create');
-        Route::livewire('/{project}', 'projects.show')->name('show');
-        Route::livewire('/{project}/edit', 'projects.form')->middleware('permission:projects.manage')->name('edit');
+
+        // The project module's own suppliers and equipment (independent of Water Billing).
+        Route::livewire('/suppliers', 'projects.suppliers.index')->name('suppliers.index');
+        Route::livewire('/equipment', 'projects.equipment.index')->name('equipment.index');
+
+        Route::livewire('/{project}', 'projects.show')->whereNumber('project')->name('show');
+        Route::livewire('/{project}/edit', 'projects.form')->whereNumber('project')->middleware('permission:projects.manage')->name('edit');
     });
 });
 

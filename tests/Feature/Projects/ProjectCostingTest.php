@@ -1,7 +1,7 @@
 <?php
 
 use App\Models\Project;
-use App\Models\Supplier;
+use App\Models\ProjectSupplier;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\Projects\ExpenseWorkflow;
@@ -26,11 +26,11 @@ beforeEach(function () {
         'vendor_id' => $this->vendor->id, 'reference' => 'BH-2026-001', 'name' => 'Test borehole', 'status' => 'drilling',
         'original_budget' => '100000.00', 'current_budget' => '100000.00', 'contingency' => '5000.00',
     ]);
-    $this->supplier = Supplier::create(['vendor_id' => $this->vendor->id, 'name' => 'Pipes Ltd']);
+    $this->supplier = ProjectSupplier::create(['vendor_id' => $this->vendor->id, 'name' => 'Pipes Ltd']);
 });
 
 /** Materials, expenses, labour, equipment and tasks for one project — see expected figures below. */
-function buildCostScenario(Project $project, Supplier $supplier): void
+function buildCostScenario(Project $project, ProjectSupplier $supplier): void
 {
     $ledger = app(MaterialLedger::class);
     $casing = $project->materials()->create(['name' => 'Casing', 'unit' => 'pcs', 'reorder_level' => '0']);

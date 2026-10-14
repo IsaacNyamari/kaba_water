@@ -3,7 +3,7 @@
 namespace Database\Seeders;
 
 use App\Models\Project;
-use App\Models\Supplier;
+use App\Models\ProjectSupplier;
 use App\Models\User;
 use App\Models\Vendor;
 use App\Services\Projects\ExpenseWorkflow;
@@ -65,7 +65,7 @@ class DemoProjectSeeder extends Seeder
         }
         $project->log('created', "Project {$project->reference} registered (demo data)");
 
-        $supplier = Supplier::firstOrCreate(['vendor_id' => $vendor->id, 'name' => 'Davis & Shirtliff Kitengela'], ['phone' => '+254700111222']);
+        $supplier = ProjectSupplier::firstOrCreate(['vendor_id' => $vendor->id, 'name' => 'Davis & Shirtliff Kitengela'], ['phone' => '+254700111222', 'category' => 'materials']);
         $ledger = app(MaterialLedger::class);
         $casing = $project->materials()->create(['name' => '6" uPVC casing (6 m)', 'sku' => 'CAS-6', 'unit' => 'lengths', 'reorder_level' => '5']);
         $ledger->record($casing, ['type' => 'ordered', 'quantity' => '30', 'unit_cost' => '4000', 'supplier_id' => $supplier->id, 'reference' => 'PO-001', 'movement_date' => $start->addDays(2)->toDateString()]);

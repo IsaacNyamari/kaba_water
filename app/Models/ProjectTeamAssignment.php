@@ -7,13 +7,13 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 /**
- * Labour (a team member or casual worker) or equipment (one of the vendor's
- * assets, or hired) on a project. Cost = rate × units worked + extra cost.
+ * Labour (a team member or casual worker) or equipment (from the project
+ * equipment register, or hired ad hoc) on a project. Cost = rate × units worked + extra cost.
  */
 class ProjectTeamAssignment extends Model
 {
     protected $fillable = [
-        'project_id', 'kind', 'user_id', 'asset_id', 'name', 'role', 'start_date', 'end_date',
+        'project_id', 'kind', 'user_id', 'equipment_id', 'name', 'role', 'start_date', 'end_date',
         'rate', 'rate_unit', 'units_worked', 'extra_cost', 'downtime_units', 'notes',
     ];
 
@@ -36,9 +36,9 @@ class ProjectTeamAssignment extends Model
         return $this->belongsTo(User::class);
     }
 
-    public function asset(): BelongsTo
+    public function equipment(): BelongsTo
     {
-        return $this->belongsTo(Asset::class);
+        return $this->belongsTo(ProjectEquipment::class, 'equipment_id');
     }
 
     public function cost(): string

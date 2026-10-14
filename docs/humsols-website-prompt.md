@@ -185,10 +185,20 @@ The site replaces the holding page at **https://humsols.com** on our existing se
 
 - Ubuntu 24.04, nginx, certbot (a Let's Encrypt certificate for `humsols.com` and `www.humsols.com` already exists), BIND for DNS, Node.js 22 already installed.
 - The server also runs other services — **do not use or change these ports**: 80/443 (nginx), 3306 (MySQL), 6001 (Reverb for HS Water Billing), 8080 (Stalwart mail admin), 25/465/587/993/995/4190 (mail).
-- Run the Next.js app on **127.0.0.1:3000** as a systemd service (or PM2) under a non-root user, behind nginx (`proxy_pass`, gzip, cache headers for `/_next/static`).
-- Install **MongoDB Community** bound to `127.0.0.1` only, with authentication enabled and a dedicated user for the `humsols` database; nightly `mongodump` backup with 14-day retention.
-- The nginx site for `humsols.com` currently serves `/var/www/humsols.com` (static holding page); switch it to the Node app without breaking the existing certificate or the `water-billing.humsols.com` and `mail.humsols.com` sites.
-- Provide an update/redeploy script (`git pull`, `npm ci`, `npm run build`, restart service).
+**The server is already prepared.** Build the app to fit this setup; do not reinstall or reconfigure it:
+
+| Item | Already in place |
+|---|---|
+| App folder | `/var/www/humsols` (repository root), owned by system user `humsols` |
+| Uploads | `/var/www/humsols-data/uploads` (use `UPLOAD_DIR`) |
+| Environment | `/etc/humsols/humsols.env`: all variables from section 9, with `MONGODB_URI`, `AUTH_SECRET`, `PORT=3000`, `HOSTNAME=127.0.0.1` filled in. Loaded by systemd and the deploy script; the app must not need a `.env` file in production. |
+| MongoDB | 8.0, `127.0.0.1:27017` only, authentication on; app user `humsols` with `readWrite` on database `humsols` |
+| Service | `humsols-web.service` runs `node node_modules/next/dist/bin/next start -H 127.0.0.1 -p 3000` as `humsols`, so the app must work with plain `next start` (no PM2, no custom server) |
+| nginx | `humsols.com` / `www` proxy to `127.0.0.1:3000` over HTTPS, `/_next/static` cached for a year; falls back to the holding page when the app is down |
+| Deploy | `sudo humsols-deploy` pulls `REPO_URL` (set in `/etc/humsols/deploy.conf`) as `humsols`, runs `npm ci` and `npm run build` with the env loaded, restarts the service and checks `:3000` responds |
+| Backups | nightly `mongodump` of `humsols` to `/var/backups/humsols`, 14-day retention |
+
+So the app must provide: `npm ci`, `npm run build`, `npm run start` (plain `next start`) and `npm run seed`. Write `DEPLOYMENT.md` around these existing pieces.
 
 ---
 

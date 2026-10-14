@@ -68,19 +68,23 @@
                     @endcan
                 </flux:sidebar.group>
 
-                @canany(['vendor.suppliers.view', 'vendor.assets.view', 'vendor.team.manage'])
-                    <flux:sidebar.group :heading="__('Shared')" class="grid">
-                        @can('vendor.suppliers.view')
-                            <flux:sidebar.item icon="truck" :href="route('vendor.suppliers.index')" wire:navigate>{{ __('Suppliers') }}</flux:sidebar.item>
-                        @endcan
-                        @can('vendor.assets.view')
-                            <flux:sidebar.item icon="building-office" :href="route('vendor.assets.index')" wire:navigate>{{ __('Equipment & assets') }}</flux:sidebar.item>
-                        @endcan
-                        @can('vendor.team.manage')
-                            <flux:sidebar.item icon="user-group" :href="route('vendor.team.index')" wire:navigate>{{ __('Team') }}</flux:sidebar.item>
-                        @endcan
+                <flux:sidebar.group :heading="__('Resources')" class="grid">
+                    <flux:sidebar.item icon="truck" :href="route('projects.suppliers.index')"
+                        :current="request()->routeIs('projects.suppliers.*')" wire:navigate>
+                        {{ __('Suppliers') }}
+                    </flux:sidebar.item>
+                    <flux:sidebar.item icon="wrench-screwdriver" :href="route('projects.equipment.index')"
+                        :current="request()->routeIs('projects.equipment.*')" wire:navigate>
+                        {{ __('Equipment') }}
+                    </flux:sidebar.item>
+                </flux:sidebar.group>
+
+                {{-- Team members (logins) are shared by both modules. --}}
+                @can('vendor.team.manage')
+                    <flux:sidebar.group :heading="__('Workspace')" class="grid">
+                        <flux:sidebar.item icon="user-group" :href="route('vendor.team.index')" wire:navigate>{{ __('Team') }}</flux:sidebar.item>
                     </flux:sidebar.group>
-                @endcanany
+                @endcan
             @endif
 
             @if ($currentModule === 'water')

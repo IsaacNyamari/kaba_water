@@ -2,7 +2,7 @@
 
 use App\Models\Project;
 use App\Models\ProjectExpense;
-use App\Models\Supplier;
+use App\Models\ProjectSupplier;
 use App\Services\Projects\ExpenseWorkflow;
 use App\Services\Projects\ProjectFinancials;
 use App\Support\Money\MoneyMath;
@@ -70,7 +70,7 @@ new class extends Component {
             'justification' => ['nullable', 'string', 'max:2000'],
             'expense_date' => ['required', 'date', 'before_or_equal:today'],
             'amount' => ['required', 'numeric', 'gt:0', 'max:9999999999999'],
-            'supplier_id' => ['nullable', 'exists:suppliers,id,vendor_id,'.$this->project->vendor_id],
+            'supplier_id' => ['nullable', 'exists:project_suppliers,id,vendor_id,'.$this->project->vendor_id],
             'payee_name' => ['nullable', 'required_without:supplier_id', 'string', 'max:255'],
             'payment_method' => ['nullable', Rule::in(array_keys(ProjectExpense::PAYMENT_METHODS))],
             'reference' => ['nullable', 'string', 'max:100'],
@@ -158,7 +158,7 @@ new class extends Component {
                 ->when($this->filterStatus, fn ($q) => $q->where('status', $this->filterStatus))
                 ->when($this->filterCategory, fn ($q) => $q->where('category', $this->filterCategory))
                 ->latest('expense_date')->latest('id')->paginate(15),
-            'suppliers' => Supplier::query()->where('vendor_id', $this->project->vendor_id)->orderBy('name')->get(['id', 'name']),
+            'suppliers' => ProjectSupplier::query()->where('vendor_id', $this->project->vendor_id)->active()->orderBy('name')->get(['id', 'name']),
         ];
     }
 };

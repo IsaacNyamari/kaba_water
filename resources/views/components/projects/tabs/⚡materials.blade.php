@@ -3,7 +3,7 @@
 use App\Models\Project;
 use App\Models\ProjectMaterial;
 use App\Models\ProjectMaterialMovement;
-use App\Models\Supplier;
+use App\Models\ProjectSupplier;
 use App\Services\Projects\MaterialLedger;
 use App\Support\Money\MoneyMath;
 use Flux\Flux;
@@ -108,7 +108,7 @@ new class extends Component {
             'type' => ['required', Rule::in(array_keys(ProjectMaterialMovement::TYPES))],
             'quantity' => ['required', 'numeric', 'gt:0', 'max:9999999999'],
             'unit_cost' => [Rule::requiredIf(in_array($this->type, ['received', 'ordered'], true)), 'nullable', 'numeric', 'min:0'],
-            'supplier_id' => ['nullable', 'exists:suppliers,id,vendor_id,'.$this->project->vendor_id],
+            'supplier_id' => ['nullable', 'exists:project_suppliers,id,vendor_id,'.$this->project->vendor_id],
             'reference' => ['nullable', 'string', 'max:100'],
             'movement_date' => ['required', 'date', 'before_or_equal:today'],
             'notes' => ['nullable', 'string', 'max:255'],
@@ -140,7 +140,7 @@ new class extends Component {
         return [
             'materials' => $materials,
             'summaries' => $materials->mapWithKeys(fn ($m) => [$m->id => $ledger->summary($m)]),
-            'suppliers' => Supplier::query()->where('vendor_id', $this->project->vendor_id)->orderBy('name')->get(['id', 'name']),
+            'suppliers' => ProjectSupplier::query()->where('vendor_id', $this->project->vendor_id)->active()->orderBy('name')->get(['id', 'name']),
         ];
     }
 };

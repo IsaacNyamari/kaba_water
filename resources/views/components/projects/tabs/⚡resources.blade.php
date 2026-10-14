@@ -1,6 +1,6 @@
 <?php
 
-use App\Models\Asset;
+use App\Models\ProjectEquipment;
 use App\Models\Project;
 use App\Models\ProjectTeamAssignment;
 use App\Models\User;
@@ -11,9 +11,9 @@ use Illuminate\Validation\Rule;
 use Livewire\Component;
 
 /*
- * Labour and equipment on the project. Team members and the vendor's own
- * assets are linked (not re-created); casual workers / hired equipment are
- * entered by name. Cost = rate × units worked + extra cost.
+ * Labour and equipment on the project. Team members and machines from the
+ * project equipment register are linked (not re-created); casual workers and
+ * one-off hires are entered by name. Cost = rate × units worked + extra cost.
  */
 new class extends Component {
     public Project $project;
@@ -21,7 +21,7 @@ new class extends Component {
     public ?int $editingId = null;
     public string $kind = 'labour';
     public string $user_id = '';
-    public string $asset_id = '';
+    public string $equipment_id = '';
     public string $name = '';
     public string $role = '';
     public string $start_date = '';
@@ -41,7 +41,7 @@ new class extends Component {
     public function startAdd(string $kind): void
     {
         $this->authorize('update', $this->project);
-        $this->reset('editingId', 'user_id', 'asset_id', 'name', 'role', 'end_date', 'notes');
+        $this->reset('editingId', 'user_id', 'equipment_id', 'name', 'role', 'end_date', 'notes');
         $this->kind = $kind;
         $this->rate = $this->units_worked = $this->extra_cost = $this->downtime_units = '0';
         $this->rate_unit = 'day';
@@ -58,7 +58,7 @@ new class extends Component {
         foreach (['kind', 'name', 'role', 'rate_unit', 'notes'] as $f) {
             $this->{$f} = (string) ($a->{$f} ?? '');
         }
-        foreach (['user_id', 'asset_id', 'rate', 'units_worked', 'extra_cost', 'downtime_units'] as $f) {
+        foreach (['user_id', 'equipment_id', 'rate', 'units_worked', 'extra_cost', 'downtime_units'] as $f) {
             $this->{$f} = (string) ($a->{$f} ?? '');
         }
         $this->start_date = $a->start_date?->toDateString() ?? '';
@@ -74,10 +74,16 @@ new class extends Component {
         }
     }
 
-    public function updatedAssetId(): void
+    /** Picking a machine fills in its name, type and default hire rate. */
+    public function updatedEquipmentId(): void
     {
-        if ($this->asset_id && $asset = Asset::query()->find($this->asset_id)) {
-            $this->name = $asset->name.($asset->identifier ? " ({$asset->identifier})" : '');
+        if ($this->equipment_id && $machine = ProjectEquipment::query()->find($this->equipment_id)) {
+            $this->name = $machine->label();
+            $this->role = (string) $machine->type;
+            if ((float) $machine->default_rate > 0) {
+                $this->rate = (string) $machine->default_rate;
+                $this->rate_unit = $machine->rate_unit;
+            }
         }
     }
 
@@ -87,7 +93,7 @@ new class extends Component {
         $data = $this->validate([
             'kind' => ['required', Rule::in(['labour', 'equipment'])],
             'user_id' => ['nullable', 'exists:users,id,vendor_id,'.$this->project->vendor_id],
-            'asset_id' => ['nullable', 'exists:assets,id,vendor_id,'.$this->project->vendor_id],
+            'equipment_id' => ['nullable', 'exists:project_equipment,id,vendor_id,'.$this->project->vendor_id],
             'name' => ['required', 'string', 'max:200'],
             'role' => ['nullable', 'string', 'max:100'],
             'start_date' => ['nullable', 'date'],
@@ -104,7 +110,7 @@ new class extends Component {
         $data['rate'] = MoneyMath::str($this->rate);
         $data['extra_cost'] = MoneyMath::str($this->extra_cost);
         if ($data['kind'] === 'labour') {
-            $data['asset_id'] = null;
+            $data['equipment_id'] = null;
         } else {
             $data['user_id'] = null;
         }
@@ -133,21 +139,21 @@ new class extends Component {
 
     public function with(): array
     {
-        $assignments = $this->project->assignments()->with(['user', 'asset'])->orderBy('kind')->orderBy('name')->get();
+        $assignments = $this->project->assignments()->with(['user', 'equipment'])->orderBy('kind')->orderBy('name')->get();
 
-        // How many other active projects each linked person / asset is on.
+        // How many other active projects each linked person / machine is on.
         $elsewhere = ProjectTeamAssignment::query()
             ->whereHas('project', fn ($q) => $q->active()->where('vendor_id', $this->project->vendor_id)->whereKeyNot($this->project->id))
             ->whereNull('end_date')
-            ->get(['user_id', 'asset_id']);
+            ->get(['user_id', 'equipment_id']);
 
         return [
             'labour' => $assignments->where('kind', 'labour'),
             'equipment' => $assignments->where('kind', 'equipment'),
             'busyUsers' => $elsewhere->whereNotNull('user_id')->countBy('user_id'),
-            'busyAssets' => $elsewhere->whereNotNull('asset_id')->countBy('asset_id'),
+            'busyEquipment' => $elsewhere->whereNotNull('equipment_id')->countBy('equipment_id'),
             'team' => User::query()->where('vendor_id', $this->project->vendor_id)->whereHas('roles')->orderBy('name')->get(['id', 'name']),
-            'assets' => Asset::query()->where('vendor_id', $this->project->vendor_id)->orderBy('name')->get(['id', 'name', 'identifier']),
+            'machines' => ProjectEquipment::query()->where('vendor_id', $this->project->vendor_id)->where('status', '!=', 'retired')->orderBy('name')->get(['id', 'name', 'identifier', 'ownership']),
         ];
     }
 };
@@ -180,12 +186,12 @@ new class extends Component {
                 </flux:table.columns>
                 <flux:table.rows>
                     @forelse ($rows as $a)
-                        @php $busy = $a->user_id ? ($busyUsers[$a->user_id] ?? 0) : ($a->asset_id ? ($busyAssets[$a->asset_id] ?? 0) : 0); @endphp
+                        @php $busy = $a->user_id ? ($busyUsers[$a->user_id] ?? 0) : ($a->equipment_id ? ($busyEquipment[$a->equipment_id] ?? 0) : 0); @endphp
                         <flux:table.row :key="$a->id">
                             <flux:table.cell>
                                 <div class="font-medium text-zinc-900 dark:text-zinc-100">{{ $a->name }}</div>
                                 <div class="text-xs text-zinc-500">
-                                    {{ $a->role ?: ($a->user ? 'Team member' : ($a->asset ? 'Own asset' : ($kindKey === 'labour' ? 'Casual' : 'Hired'))) }}
+                                    {{ $a->role ?: ($a->user ? 'Team member' : ($a->equipment ? ($a->equipment->ownership === 'hired' ? 'Hired (register)' : 'Own equipment') : ($kindKey === 'labour' ? 'Casual' : 'Hired'))) }}
                                     @if ($busy) · <span class="text-amber-600">also on {{ $busy }} other project(s)</span> @endif
                                 </div>
                             </flux:table.cell>
@@ -222,9 +228,9 @@ new class extends Component {
                         @foreach ($team as $u) <flux:select.option value="{{ $u->id }}">{{ $u->name }}</flux:select.option> @endforeach
                     </flux:select>
                 @else
-                    <flux:select wire:model.live="asset_id" label="Own equipment (asset)">
-                        <flux:select.option value="">— Hired equipment —</flux:select.option>
-                        @foreach ($assets as $as) <flux:select.option value="{{ $as->id }}">{{ $as->name }}{{ $as->identifier ? ' ('.$as->identifier.')' : '' }}</flux:select.option> @endforeach
+                    <flux:select wire:model.live="equipment_id" label="From the equipment register">
+                        <flux:select.option value="">— One-off hire (not in the register) —</flux:select.option>
+                        @foreach ($machines as $machine) <flux:select.option value="{{ $machine->id }}">{{ $machine->label() }}{{ $machine->ownership === 'hired' ? ' · hired' : '' }}</flux:select.option> @endforeach
                     </flux:select>
                 @endif
                 <flux:input wire:model="name" label="Name" />
