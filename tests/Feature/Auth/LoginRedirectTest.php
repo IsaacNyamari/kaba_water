@@ -44,9 +44,11 @@ test('each role lands on its own dashboard after logging in', function (string $
     $this->assertAuthenticatedAs($user);
 })->with([
     'platform admin' => ['super_admin', 'admin.dashboard'],
-    'vendor owner' => ['vendor', 'vendor.dashboard'],
-    'accountant' => ['accountant', 'vendor.accounting.dashboard'],
-    'vendor staff' => ['vendor_staff', 'vendor.accounting.dashboard'],
+    'vendor owner' => ['vendor', 'modules'],
+    'accountant' => ['accountant', 'modules'],
+    'office staff' => ['vendor_staff', 'vendor.dashboard'],
+    'technician' => ['technician', 'vendor.jobs.index'],
+    'meter reader' => ['meter_reader', 'vendor.readings.create'],
     'client' => ['client', 'portal.dashboard'],
 ]);
 
@@ -56,9 +58,11 @@ test('each dashboard actually opens for its role', function (string $role, strin
     $this->actingAs($user)->get(route($route))->assertOk();
 })->with([
     'platform admin' => ['super_admin', 'admin.dashboard'],
-    'vendor owner' => ['vendor', 'vendor.dashboard'],
-    'accountant' => ['accountant', 'vendor.accounting.dashboard'],
-    'vendor staff' => ['vendor_staff', 'vendor.accounting.dashboard'],
+    'vendor owner' => ['vendor', 'modules'],
+    'accountant' => ['accountant', 'modules'],
+    'office staff' => ['vendor_staff', 'vendor.dashboard'],
+    'technician' => ['technician', 'vendor.jobs.index'],
+    'meter reader' => ['meter_reader', 'vendor.readings.create'],
     'client' => ['client', 'portal.dashboard'],
 ]);
 
@@ -80,7 +84,7 @@ test('accountants are not sent back to non-accounting vendor pages', function ()
     $accountant = userWithRole('accountant', $this->vendor->id);
 
     $this->get(route('vendor.payments.index'))->assertRedirect(route('login'));
-    login($accountant)->assertRedirect(route('vendor.accounting.dashboard'));
+    login($accountant)->assertRedirect(route('modules'));
 });
 
 test('two-factor and passkey logins use the same role redirect', function () {

@@ -11,3 +11,4 @@ Artisan::command('inspire', function () {
 // Requires the scheduler: run `php artisan schedule:work` locally, or a cron
 // entry for `php artisan schedule:run` every minute in production.
 Schedule::command('invoices:mark-overdue')->dailyAt('00:15');
+Schedule::command('projects:alerts')->dailyAt('07:00');

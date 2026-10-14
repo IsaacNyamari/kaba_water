@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Enums\ReadingStatus;
 use App\Models\Client;
 use App\Models\Meter;
@@ -13,7 +15,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 new #[Layout('layouts.vendor'), Title('Readings')] class extends Component {
-    use WithPagination;
+    use WithPagination, RefreshesOnActivity;
 
     #[Url(as: 'meter', history: true)]
     public ?int $meterId = null;

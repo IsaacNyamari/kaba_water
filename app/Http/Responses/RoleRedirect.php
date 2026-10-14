@@ -17,9 +17,13 @@ final class RoleRedirect
     /** URL prefixes each role may be sent back to. */
     private const AREAS = [
         'super_admin' => ['/admin', '/settings'],
-        'vendor' => ['/vendor', '/settings'],
-        'accountant' => ['/vendor/accounting', '/settings'],
+        'vendor' => ['/vendor', '/projects', '/modules', '/settings'],
+        'accountant' => ['/vendor/accounting', '/projects', '/modules', '/settings'],
         'vendor_staff' => ['/vendor/accounting', '/settings'],
+        'project_manager' => ['/projects', '/settings'],
+        'site_engineer' => ['/projects', '/settings'],
+        'storekeeper' => ['/projects', '/settings'],
+        'procurement_officer' => ['/projects', '/settings'],
         'client' => ['/portal', '/settings'],
     ];
 

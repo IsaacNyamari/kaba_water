@@ -2,11 +2,14 @@
 
 namespace App\Models;
 
+use App\Support\Modules;
 use Database\Factories\UserFactory;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Attributes\Hidden;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -36,7 +39,7 @@ use Spatie\Permission\Traits\HasRoles;
 class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
 {
     /** @use HasFactory<UserFactory> */
-    use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, TwoFactorAuthenticatable, SoftDeletes;
+    use HasFactory, HasRoles, Notifiable, PasskeyAuthenticatable, SoftDeletes, TwoFactorAuthenticatable;
 
     /**
      * Get the attributes that should be cast.
@@ -59,15 +62,16 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         $initials = Str::initials($this->name, true);
 
         return Str::length($initials) > 1
-            ? Str::substr($initials, 0, 1) . Str::substr($initials, -1)
+            ? Str::substr($initials, 0, 1).Str::substr($initials, -1)
             : $initials;
     }
-    public function vendor(): \Illuminate\Database\Eloquent\Relations\BelongsTo
+
+    public function vendor(): BelongsTo
     {
         return $this->belongsTo(Vendor::class);
     }
 
-    public function client(): \Illuminate\Database\Eloquent\Relations\HasOne
+    public function client(): HasOne
     {
         return $this->hasOne(Client::class);
     }
@@ -76,22 +80,34 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
     {
         return $this->hasRole('super_admin');
     }
+
     public function isVendor(): bool
     {
         return $this->hasRole('vendor');
     }
+
     public function isClient(): bool
     {
         return $this->hasRole('client');
     }
+
     public function homeRoute(): string
     {
-        return match (true) {
-            $this->hasRole('super_admin') => route('admin.dashboard'),
-            $this->hasRole('vendor')      => route('vendor.dashboard'),
-            $this->hasRole('client')      => route('portal.dashboard'),
-            $this->hasAnyRole(['accountant', 'vendor_staff']) => route('vendor.accounting.dashboard'),
-            default                       => '/',
+        if ($this->hasRole('super_admin')) {
+            return route('admin.dashboard');
+        }
+
+        if ($this->hasRole('client')) {
+            return route('portal.dashboard');
+        }
+
+        // Vendor side: the module portal when there is a choice, otherwise straight in.
+        $modules = Modules::for($this);
+
+        return match (count($modules)) {
+            0 => '/',
+            1 => reset($modules)['url'],
+            default => route('modules'),
         };
     }
 }

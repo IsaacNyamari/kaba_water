@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Enums\WorkOrderStatus;
 use App\Livewire\Concerns\InteractsWithClient;
 use App\Models\WorkOrder;
@@ -14,7 +16,7 @@ use Livewire\WithPagination;
  * Client portal — work orders raised against the signed-in client's account.
  */
 new #[Layout('layouts.portal'), Title('Work Orders')] class extends Component {
-    use InteractsWithClient, WithPagination;
+    use InteractsWithClient, WithPagination, RefreshesOnActivity;
 
     #[Url(history: true)]
     public string $status = '';

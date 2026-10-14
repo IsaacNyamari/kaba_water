@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Actions\AccessRequests\ApproveAccessRequest;
 use App\Actions\AccessRequests\RejectAccessRequest;
 use App\Enums\AccessRequestStatus;
@@ -16,7 +18,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component {
-    use WithPagination;
+    use WithPagination, RefreshesOnActivity;
 
     #[Url(history: true)]
     public string $status = 'pending';

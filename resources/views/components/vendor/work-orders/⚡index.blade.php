@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Enums\WorkOrderPriority;
 use App\Enums\WorkOrderStatus;
 use App\Enums\WorkOrderType;
@@ -12,7 +14,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 new #[Layout('layouts.vendor'), Title('Work Orders')] class extends Component {
-    use WithPagination;
+    use WithPagination, RefreshesOnActivity;
 
     #[Url(as: 'q', history: true)]
     public string $search = '';

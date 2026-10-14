@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Enums\ReadingStatus;
 use App\Livewire\Concerns\InteractsWithClient;
 use App\Models\Meter;
@@ -16,7 +18,7 @@ use Livewire\WithPagination;
  * (Approval/rejection lives in the vendor workspace: vendor/readings/index.)
  */
 new #[Layout('layouts.portal'), Title('Readings')] class extends Component {
-    use InteractsWithClient, WithPagination;
+    use InteractsWithClient, WithPagination, RefreshesOnActivity;
 
     #[Url(as: 'meter', history: true)]
     public ?int $meterId = null;

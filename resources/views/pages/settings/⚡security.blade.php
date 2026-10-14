@@ -137,7 +137,7 @@ new #[Title('Security settings')] class extends Component {
 
     <flux:heading level="2" class="sr-only">{{ __('Security settings') }}</flux:heading>
 
-    <x-pages::settings.layout :heading="__('Security')" :subheading="__('Two-factor authentication and passkeys. Change your password on the Profile page.')">
+    <x-pages::settings.layout :heading="__('Security')" :subheading="__('Extra protection for signing in. To change your password, use the Profile page.')">
         @if ($canManageTwoFactor)
             <section class="mt-12">
                 <flux:heading>{{ __('Two-factor authentication') }}</flux:heading>

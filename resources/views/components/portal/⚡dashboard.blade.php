@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Enums\InvoiceStatus;
 use App\Livewire\Concerns\InteractsWithClient;
 use App\Models\Invoice;
@@ -13,7 +15,7 @@ use Livewire\Component;
 use App\Services\ClientAnalytics;
 
 new #[Layout('layouts.portal'), Title('Dashboard')] class extends Component {
-use InteractsWithClient;
+use InteractsWithClient, RefreshesOnActivity;
     #[Computed]
     public function analytics(): ClientAnalytics
     {

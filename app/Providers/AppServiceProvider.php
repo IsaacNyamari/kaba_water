@@ -2,6 +2,18 @@
 
 namespace App\Providers;
 
+use App\Models\Expense;
+use App\Models\Invoice;
+use App\Models\Payment;
+use App\Models\Reading;
+use App\Models\Vendor;
+use App\Models\WorkOrder;
+use App\Observers\ActivityObserver;
+use App\Observers\ExpenseObserver;
+use App\Observers\InvoiceObserver;
+use App\Observers\PaymentObserver;
+use App\Observers\VendorObserver;
+use App\Observers\WorkOrderObserver;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -30,13 +42,19 @@ class AppServiceProvider extends ServiceProvider
     /** Auto-posting to the double-entry ledger (see docs/accounting.md). */
     protected function registerAccountingObservers(): void
     {
-        \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
-        \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
-        \App\Models\Expense::observe(\App\Observers\ExpenseObserver::class);
+        Invoice::observe(InvoiceObserver::class);
+        Payment::observe(PaymentObserver::class);
+        Expense::observe(ExpenseObserver::class);
 
-        // Work order notifications (database + Reverb broadcast).
-        \App\Models\WorkOrder::observe(\App\Observers\WorkOrderObserver::class);
-        \App\Models\Vendor::observe(\App\Observers\VendorObserver::class);
+        // In-app notifications (database + live over Reverb).
+        WorkOrder::observe(WorkOrderObserver::class);
+
+        $activity = ActivityObserver::class;
+        Reading::created(fn ($reading) => app($activity)->readingCreated($reading));
+        Reading::updated(fn ($reading) => app($activity)->readingUpdated($reading));
+        Invoice::saved(fn ($invoice) => app($activity)->invoiceSaved($invoice));
+        Payment::created(fn ($payment) => app($activity)->paymentCreated($payment));
+        Vendor::observe(VendorObserver::class);
     }
 
     /**

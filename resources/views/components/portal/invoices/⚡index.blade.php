@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Livewire\Concerns\InteractsWithClient;
 use App\Models\Invoice;
 use Livewire\Attributes\Computed;
@@ -10,7 +12,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 new #[Layout('layouts.portal'), Title('Invoices')] class extends Component {
-    use InteractsWithClient, WithPagination;
+    use InteractsWithClient, WithPagination, RefreshesOnActivity;
 
     #[Url(history: true)]
     public string $status = '';

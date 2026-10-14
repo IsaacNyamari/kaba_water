@@ -14,7 +14,7 @@ test('users without a role are sent to the home page', function () {
         ->assertRedirect('/');
 });
 
-test('vendors are sent to their workspace dashboard', function () {
+test('vendors are sent to the module portal', function () {
     $this->seed(RolesAndPermissionsSeeder::class);
 
     $vendor = Vendor::create(['name' => 'Acme Water', 'slug' => 'acme', 'email' => 'acme@example.com', 'status' => 'active']);
@@ -23,7 +23,7 @@ test('vendors are sent to their workspace dashboard', function () {
 
     $this->actingAs($user)
         ->get(route('dashboard'))
-        ->assertRedirect(route('vendor.dashboard'));
+        ->assertRedirect(route('modules'));
 });
 
 test('super admins are sent to the admin dashboard', function () {

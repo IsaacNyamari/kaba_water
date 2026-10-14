@@ -24,12 +24,16 @@ class RolesAndPermissionsSeeder extends Seeder
             'platform.manage_access_requests',
 
             // ─── Vendor — Workspace ────────────────────────────────
+            'vendor.dashboard.view',    // business dashboard (revenue, balances)
+            'vendor.team.manage',       // add / change / remove team members
+            'vendor.jobs.view',         // "My jobs": work orders assigned to me (start / complete)
             'vendor.clients.view',
             'vendor.clients.manage',
             'vendor.meters.view',
             'vendor.meters.manage',
             'vendor.readings.view',
             'vendor.readings.manage',   // covers create + approve/reject/delete
+            'vendor.readings.create',   // record readings only (meter readers)
             'vendor.tariffs.view',
             'vendor.tariffs.manage',
             'vendor.settings.manage',
@@ -63,6 +67,16 @@ class RolesAndPermissionsSeeder extends Seeder
             'accounting.close-period',
             'accounting.reopen-period',
 
+            // ─── Project Management (borehole projects) ────────────
+            'projects.view',
+            'projects.manage',            // create/edit projects, stages, milestones, tasks, team & equipment
+            'projects.report',            // submit daily progress reports and technical records
+            'projects.expenses.submit',
+            'projects.expenses.approve',  // approve / reject / pay expenses, approve progress reports
+            'projects.materials.manage',  // orders, receipts, issues, returns, wastage
+            'projects.budget.revise',
+            'projects.close',             // close and reopen projects
+
             // ─── Client portal ─────────────────────────────────────
             'client.dashboard.view',
             'client.invoices.view',
@@ -81,28 +95,75 @@ class RolesAndPermissionsSeeder extends Seeder
 
         // ─── Roles ────────────────────────────────────────────────
         $superAdmin = Role::firstOrCreate(['name' => 'super_admin', 'guard_name' => 'web']);
-        $vendor     = Role::firstOrCreate(['name' => 'vendor',      'guard_name' => 'web']);
-        $client     = Role::firstOrCreate(['name' => 'client',      'guard_name' => 'web']);
+        $vendor = Role::firstOrCreate(['name' => 'vendor',      'guard_name' => 'web']);
+        $client = Role::firstOrCreate(['name' => 'client',      'guard_name' => 'web']);
 
         // Super admin: only platform.*
         $superAdmin->syncPermissions(
             Permission::where('name', 'like', 'platform.%')->get()
         );
 
-        // Vendor (workspace owner): every vendor.* and accounting.* permission
+        // Vendor (workspace owner): every vendor.*, accounting.* and projects.* permission
         $vendor->syncPermissions(
             Permission::where('name', 'like', 'vendor.%')
                 ->orWhere('name', 'like', 'accounting.%')
+                ->orWhere('name', 'like', 'projects.%')
                 ->get()
         );
 
-        // Accountant: full accounting, nothing operational
+        // ─── Vendor team roles (see App\Support\TeamRoles) ──────────────
+        // Accountant: full accounting, read-only billing and finance, and project cost approval.
         Role::firstOrCreate(['name' => 'accountant', 'guard_name' => 'web'])->syncPermissions(
-            Permission::where('name', 'like', 'accounting.%')->get()
+            Permission::where('name', 'like', 'accounting.%')
+                ->orWhereIn('name', [
+                    'vendor.invoices.view', 'vendor.payments.view', 'vendor.expenses.view', 'vendor.finance.view',
+                    'projects.view', 'projects.expenses.approve',
+                ])
+                ->get()
         );
 
-        // Vendor staff: read-only accounting
-        Role::firstOrCreate(['name' => 'vendor_staff', 'guard_name' => 'web'])->syncPermissions(['accounting.view']);
+        // ─── Project roles ───────────────────────────────────────────
+        // Project manager: runs projects end to end.
+        Role::firstOrCreate(['name' => 'project_manager', 'guard_name' => 'web'])->syncPermissions(
+            Permission::where('name', 'like', 'projects.%')->get()
+        );
+
+        // Site engineer / supervisor: daily reports, site expenses and materials.
+        Role::firstOrCreate(['name' => 'site_engineer', 'guard_name' => 'web'])->syncPermissions([
+            'projects.view', 'projects.report', 'projects.expenses.submit', 'projects.materials.manage',
+        ]);
+
+        // Storekeeper: receives, issues and returns materials.
+        Role::firstOrCreate(['name' => 'storekeeper', 'guard_name' => 'web'])->syncPermissions([
+            'projects.view', 'projects.materials.manage',
+        ]);
+
+        // Procurement officer: purchase orders, deliveries and supplier bills.
+        Role::firstOrCreate(['name' => 'procurement_officer', 'guard_name' => 'web'])->syncPermissions([
+            'projects.view', 'projects.materials.manage', 'projects.expenses.submit',
+        ]);
+
+        // Office staff: day-to-day customer work, read-only accounting.
+        Role::firstOrCreate(['name' => 'vendor_staff', 'guard_name' => 'web'])->syncPermissions([
+            'vendor.dashboard.view',
+            'vendor.clients.view', 'vendor.clients.manage',
+            'vendor.meters.view', 'vendor.meters.manage',
+            'vendor.readings.view', 'vendor.readings.manage', 'vendor.readings.create',
+            'vendor.work_orders.view', 'vendor.work_orders.manage', 'vendor.jobs.view',
+            'vendor.invoices.view', 'vendor.invoices.manage',
+            'vendor.payments.view', 'vendor.payments.manage',
+            'accounting.view',
+        ]);
+
+        // Field technician: only the jobs assigned to them.
+        Role::firstOrCreate(['name' => 'technician', 'guard_name' => 'web'])->syncPermissions([
+            'vendor.jobs.view',
+        ]);
+
+        // Meter reader: record readings on the meters.
+        Role::firstOrCreate(['name' => 'meter_reader', 'guard_name' => 'web'])->syncPermissions([
+            'vendor.readings.view', 'vendor.readings.create', 'vendor.meters.view',
+        ]);
 
         // Client: every client.* permission
         $client->syncPermissions(

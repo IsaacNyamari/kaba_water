@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Enums\InvoiceStatus;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -9,7 +11,7 @@ use Livewire\Component;
 use Livewire\WithPagination;
 
 new #[Layout('layouts.vendor', ['title' => 'Invoices'])] class extends Component {
-    use WithPagination;
+    use WithPagination, RefreshesOnActivity;
 
     #[Url(as: 'q', history: true)]
     public string $search = '';

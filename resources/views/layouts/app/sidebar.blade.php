@@ -8,13 +8,9 @@
 <body class="min-h-screen bg-white dark:bg-zinc-800">
     @php
         $user = auth()->user();
-        $homeRoute = match (true) {
-            $user?->hasRole('super_admin') => route('admin.dashboard'),
-            $user?->hasRole('vendor') => route('vendor.dashboard'),
-            $user?->hasRole('client') => route('portal.dashboard'),
-            $user?->hasAnyRole(['accountant', 'vendor_staff']) => route('vendor.accounting.dashboard'),
-            default => url('/'),
-        };
+        $homeRoute = $user?->homeRoute() ?? url('/');
+        $modules = \App\Support\Modules::for($user);
+        $currentModule = \App\Support\Modules::current();
     @endphp
 
     <flux:sidebar sticky collapsible="mobile"
@@ -27,7 +23,67 @@
             <flux:sidebar.collapse class="lg:hidden" />
         </flux:sidebar.header>
 
+        {{-- Module switcher (Water Billing ⇄ Project Management) --}}
+        @if (count($modules) > 1)
+            <flux:dropdown position="bottom" align="start" class="w-full">
+                <button type="button" data-test="module-switcher"
+                    class="flex w-full items-center gap-3 rounded-xl bg-white px-3 py-2 text-start shadow-xs ring-1 ring-zinc-200 transition hover:ring-brand-400 dark:bg-white/5 dark:ring-white/10">
+                    <span class="flex size-8 shrink-0 items-center justify-center rounded-lg {{ $currentModule === 'projects' ? 'bg-amber-500' : 'bg-brand-500' }} text-white">
+                        <flux:icon :name="$modules[$currentModule]['icon'] ?? 'squares-2x2'" variant="mini" class="size-4" />
+                    </span>
+                    <span class="min-w-0 flex-1">
+                        <span class="block text-[11px] font-medium uppercase tracking-wide text-zinc-500">{{ __('Module') }}</span>
+                        <span class="block truncate text-sm font-semibold text-zinc-900 dark:text-zinc-100">{{ $modules[$currentModule]['name'] ?? __('Choose a module') }}</span>
+                    </span>
+                    <flux:icon.chevron-up-down variant="mini" class="size-4 text-zinc-400" />
+                </button>
+
+                <flux:menu class="min-w-64">
+                    @foreach ($modules as $key => $module)
+                        <flux:menu.item :href="$module['url']" :icon="$module['icon']" wire:navigate
+                            :icon-trailing="$key === $currentModule ? 'check' : null">
+                            {{ $module['name'] }}
+                        </flux:menu.item>
+                    @endforeach
+                    <flux:menu.separator />
+                    <flux:menu.item :href="route('modules')" icon="squares-2x2" wire:navigate>{{ __('All modules') }}</flux:menu.item>
+                </flux:menu>
+            </flux:dropdown>
+        @endif
+
         <flux:sidebar.nav>
+
+            {{-- ═══════════ PROJECT MANAGEMENT ═══════════ --}}
+            @if ($currentModule === 'projects' || (isset($modules['projects']) && ! isset($modules['water'])))
+                <flux:sidebar.group :heading="__('Projects')" class="grid">
+                    <flux:sidebar.item icon="squares-2x2" :href="route('projects.index')"
+                        :current="request()->routeIs('projects.index')" wire:navigate>
+                        {{ __('Dashboard & projects') }}
+                    </flux:sidebar.item>
+                    @can('projects.manage')
+                        <flux:sidebar.item icon="plus-circle" :href="route('projects.create')"
+                            :current="request()->routeIs('projects.create')" wire:navigate>
+                            {{ __('New project') }}
+                        </flux:sidebar.item>
+                    @endcan
+                </flux:sidebar.group>
+
+                @canany(['vendor.suppliers.view', 'vendor.assets.view', 'vendor.team.manage'])
+                    <flux:sidebar.group :heading="__('Shared')" class="grid">
+                        @can('vendor.suppliers.view')
+                            <flux:sidebar.item icon="truck" :href="route('vendor.suppliers.index')" wire:navigate>{{ __('Suppliers') }}</flux:sidebar.item>
+                        @endcan
+                        @can('vendor.assets.view')
+                            <flux:sidebar.item icon="building-office" :href="route('vendor.assets.index')" wire:navigate>{{ __('Equipment & assets') }}</flux:sidebar.item>
+                        @endcan
+                        @can('vendor.team.manage')
+                            <flux:sidebar.item icon="user-group" :href="route('vendor.team.index')" wire:navigate>{{ __('Team') }}</flux:sidebar.item>
+                        @endcan
+                    </flux:sidebar.group>
+                @endcanany
+            @endif
+
+            @if ($currentModule === 'water')
 
             {{-- ═══════════ SUPER ADMIN ═══════════ --}}
             @role('super_admin')
@@ -62,12 +118,22 @@
             @endrole
 
             {{-- ═══════════ VENDOR ═══════════ --}}
-            @role('vendor')
+            {{-- The vendor's whole team; each link below checks its own permission. --}}
+            @hasanyrole('vendor|vendor_staff|technician|meter_reader|accountant')
                 <flux:sidebar.group :heading="__('Workspace')" class="grid">
-                    <flux:sidebar.item icon="home" :href="route('vendor.dashboard')"
-                        :current="request()->routeIs('vendor.dashboard')" wire:navigate>
-                        {{ __('Dashboard') }}
-                    </flux:sidebar.item>
+                    @can('vendor.dashboard.view')
+                        <flux:sidebar.item icon="home" :href="route('vendor.dashboard')"
+                            :current="request()->routeIs('vendor.dashboard')" wire:navigate>
+                            {{ __('Dashboard') }}
+                        </flux:sidebar.item>
+                    @endcan
+
+                    @can('vendor.jobs.view')
+                        <flux:sidebar.item icon="clipboard-document-check" :href="route('vendor.jobs.index')"
+                            :current="request()->routeIs('vendor.jobs.*')" wire:navigate>
+                            {{ __('My jobs') }}
+                        </flux:sidebar.item>
+                    @endcan
 
                     @canany(['vendor.clients.view', 'vendor.clients.manage'])
                         <flux:sidebar.item icon="users" :href="route('vendor.clients.index')"
@@ -98,6 +164,7 @@
                     @endcanany
                 </flux:sidebar.group>
 
+                @canany(['vendor.invoices.view', 'vendor.invoices.manage', 'vendor.payments.view', 'vendor.payments.manage', 'vendor.tariffs.view', 'vendor.tariffs.manage'])
                 <flux:sidebar.group :heading="__('Billing')" class="grid">
                     @canany(['vendor.invoices.view', 'vendor.invoices.manage'])
                         <flux:sidebar.item icon="document-text" :href="route('vendor.invoices.index')"
@@ -120,7 +187,9 @@
                         </flux:sidebar.item>
                     @endcanany
                 </flux:sidebar.group>
+                @endcanany
 
+                @canany(['vendor.expenses.view', 'vendor.expenses.manage', 'vendor.suppliers.view', 'vendor.suppliers.manage', 'vendor.assets.view', 'vendor.assets.manage', 'vendor.liabilities.view', 'vendor.liabilities.manage', 'vendor.finance.view', 'vendor.reports.view'])
                 <flux:sidebar.group :heading="__('Finance')" class="grid">
                     @canany(['vendor.expenses.view', 'vendor.expenses.manage'])
                         <flux:sidebar.item icon="receipt-percent" :href="route('vendor.expenses.index')"
@@ -164,16 +233,25 @@
                         </flux:sidebar.item>
                     @endcan
                 </flux:sidebar.group>
+                @endcanany
 
-                @can('vendor.settings.manage')
+                @canany(['vendor.team.manage', 'vendor.settings.manage'])
                     <flux:sidebar.group :heading="__('Configuration')" class="grid">
-                        <flux:sidebar.item icon="adjustments-horizontal" :href="route('vendor.settings.index')"
-                            :current="request()->routeIs('vendor.settings.*')" wire:navigate>
-                            {{ __('Settings') }}
-                        </flux:sidebar.item>
+                        @can('vendor.team.manage')
+                            <flux:sidebar.item icon="user-group" :href="route('vendor.team.index')"
+                                :current="request()->routeIs('vendor.team.*')" wire:navigate>
+                                {{ __('Team') }}
+                            </flux:sidebar.item>
+                        @endcan
+                        @can('vendor.settings.manage')
+                            <flux:sidebar.item icon="adjustments-horizontal" :href="route('vendor.settings.index')"
+                                :current="request()->routeIs('vendor.settings.*')" wire:navigate>
+                                {{ __('Settings') }}
+                            </flux:sidebar.item>
+                        @endcan
                     </flux:sidebar.group>
-                @endcan
-            @endrole
+                @endcanany
+            @endhasanyrole
 
             {{-- ═══════════ ACCOUNTING (owner, accountant, staff) ═══════════ --}}
             @hasanyrole('vendor|accountant|vendor_staff')
@@ -222,6 +300,8 @@
                     </flux:sidebar.group>
                 @endcan
             @endhasanyrole
+
+            @endif
 
             {{-- ═══════════ CLIENT ═══════════ --}}
             @role('client')

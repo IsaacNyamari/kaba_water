@@ -1,5 +1,7 @@
 <?php
 
+use App\Livewire\Concerns\RefreshesOnActivity;
+
 use App\Enums\InvoiceStatus;
 use App\Models\Client;
 use App\Models\Invoice;
@@ -13,6 +15,8 @@ use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Layout('layouts.vendor'), Title('Dashboard')] class extends Component {
+    use RefreshesOnActivity;
+
     #[Computed]
     public function analytics(): VendorAnalytics
     {

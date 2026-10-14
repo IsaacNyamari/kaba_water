@@ -2,6 +2,7 @@
 
 use App\Models\JournalEntry;
 use App\Models\User;
+use App\Support\Modules;
 use Livewire\Livewire;
 
 beforeEach(function () {
@@ -32,7 +33,9 @@ test('accountants get accounting but not operations', function () {
 
     $this->actingAs($accountant)->get(route('vendor.accounting.journal.create'))->assertOk();
     $this->actingAs($accountant)->get(route('vendor.clients.index'))->assertForbidden();
-    expect($accountant->homeRoute())->toBe(route('vendor.accounting.dashboard'));
+    // Accountants also approve project costs, so they land on the module portal.
+    expect($accountant->homeRoute())->toBe(route('modules'))
+        ->and(Modules::waterHome($accountant))->toBe(route('vendor.accounting.dashboard'));
 });
 
 test('staff can view but not post', function () {

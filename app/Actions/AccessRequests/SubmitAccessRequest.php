@@ -7,6 +7,7 @@ use App\Models\AccessRequest;
 use App\Models\User;
 use App\Notifications\AccessRequestSubmitted;
 use App\Services\EmailDeliverabilityChecker;
+use App\Support\Notifier;
 use Illuminate\Support\Facades\Notification;
 
 /**
@@ -58,6 +59,16 @@ class SubmitAccessRequest
             User::role('super_admin')->get(),
             new AccessRequestSubmitted($request),
         ));
+
+        // In-app + live (Reverb) alongside the email.
+        Notifier::send(
+            Notifier::admins(),
+            'Access request from '.$request->name,
+            ($request->requested_type === AccessRequest::TYPE_VENDOR ? 'Vendor workspace' : 'Client portal').($request->organization ? ' · '.$request->organization : ''),
+            route('admin.access-requests.index'),
+            'user-plus',
+            'access_request',
+        );
 
         return $request;
     }

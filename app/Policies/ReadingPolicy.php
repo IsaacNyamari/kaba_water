@@ -26,6 +26,7 @@ class ReadingPolicy
     public function create(User $user): bool
     {
         return $user->hasPermissionTo('vendor.readings.manage')
+            || $user->hasPermissionTo('vendor.readings.create')
             || $user->hasPermissionTo('client.readings.create');
     }
 

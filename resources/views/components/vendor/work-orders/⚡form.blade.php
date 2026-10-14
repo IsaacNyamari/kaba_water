@@ -89,7 +89,8 @@ new #[Layout('layouts.vendor')] class extends Component
             'assigned_to'    => $this->assigned_to ?: null,
             'type'           => $this->type,
             'priority'       => $this->priority,
-            'status'         => $this->status,
+            // Giving a pending job to someone moves it to "assigned".
+            'status'         => $this->assigned_to && $this->status === 'pending' ? 'assigned' : $this->status,
             'title'          => $this->title,
             'description'    => $this->description ?: null,
             'resolution'     => $this->resolution ?: null,
@@ -128,9 +129,13 @@ new #[Layout('layouts.vendor')] class extends Component
             'meters'  => $this->client_id
                 ? Meter::where('client_id', $this->client_id)->get(['id', 'serial'])
                 : collect(),
+            // Anyone on the team who can be sent on a job: technicians first, then office staff and owners.
             'staff'   => User::where('vendor_id', auth()->user()->vendor_id)
-                ->whereHas('roles', fn ($q) => $q->where('name', 'vendor'))
-                ->orderBy('name')->get(['id', 'name']),
+                ->whereHas('roles', fn ($q) => $q->whereIn('name', ['technician', 'vendor_staff', 'vendor']))
+                ->with('roles')
+                ->get(['id', 'name'])
+                ->sortBy(fn ($u) => [$u->hasRole('technician') ? 0 : 1, $u->name])
+                ->values(),
         ];
     }
 };
@@ -188,7 +193,7 @@ new #[Layout('layouts.vendor')] class extends Component
             <flux:select wire:model="assigned_to" label="Assign to" searchable placeholder="— Unassigned —">
                 <flux:select.option value="">— Unassigned —</flux:select.option>
                 @foreach ($staff as $s)
-                    <flux:select.option value="{{ $s->id }}">{{ $s->name }}</flux:select.option>
+                    <flux:select.option value="{{ $s->id }}">{{ $s->name }} · {{ \App\Support\TeamRoles::label($s->roles->pluck('name')->first(fn ($r) => in_array($r, ['technician', 'vendor_staff', 'vendor'], true))) }}</flux:select.option>
                 @endforeach
             </flux:select>
 

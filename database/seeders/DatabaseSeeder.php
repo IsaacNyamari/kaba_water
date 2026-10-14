@@ -38,11 +38,11 @@ class DatabaseSeeder extends Seeder
 
         // Demo vendor + vendor user
         $vendor = Vendor::firstOrCreate(['slug' => 'demo-water'], [
-            'name'          => 'Demo Water Co.',
-            'email'         => 'hello@demowater.test',
-            'phone'         => '+254700000000',
-            'status'        => 'active',
-            'plan_id'       => $starter->id,
+            'name' => 'Demo Water Co.',
+            'email' => 'hello@demowater.test',
+            'phone' => '+254700000000',
+            'status' => 'active',
+            'plan_id' => $starter->id,
             'trial_ends_at' => now()->addDays(30),
         ]);
 
@@ -52,14 +52,14 @@ class DatabaseSeeder extends Seeder
             ['email' => 'vendor@swb.test'],
             [
                 'vendor_id' => $vendor->id,
-                'name'      => 'Vendor Owner',
-                'password'  => Hash::make('password'),
+                'name' => 'Vendor Owner',
+                'password' => Hash::make('password'),
             ]
         );
         // vendor_id/email_verified_at are set explicitly so re-running the seeder
         // also repairs a user created by the earlier (broken) version.
         $vendorUser->forceFill([
-            'vendor_id'         => $vendor->id,
+            'vendor_id' => $vendor->id,
             'email_verified_at' => $vendorUser->email_verified_at ?? now(),
         ])->save();
         $vendorUser->syncRoles(['vendor']);
@@ -67,5 +67,8 @@ class DatabaseSeeder extends Seeder
         // Accounting: standard chart for every vendor + demo ledger activity.
         $this->call(ChartOfAccountsSeeder::class);
         $this->call(DemoAccountingSeeder::class);
+
+        // Project Management: one demo borehole project.
+        $this->call(DemoProjectSeeder::class);
     }
 }
