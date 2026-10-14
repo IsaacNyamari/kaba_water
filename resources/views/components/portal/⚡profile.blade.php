@@ -17,7 +17,7 @@ new #[Layout('layouts.portal'), Title('Profile')] class extends Component {
         $client = $user->client;
 
         $this->name = $user->name;
-        $this->email = $user->email;
+        $this->email = $user->email ?? '';
         $this->phone = $client?->phone ?? '';
         $this->address = $client?->address ?? '';
     }
@@ -28,14 +28,15 @@ new #[Layout('layouts.portal'), Title('Profile')] class extends Component {
 
         $this->validate([
             'name' => ['required', 'string', 'max:150'],
-            'email' => ['required', 'email', 'max:150', 'unique:users,email,' . $user->id],
-            'phone' => ['nullable', 'string', 'max:30'],
+            // Email is optional, but without one the phone number is how they sign in.
+            'email' => ['nullable', 'required_without:phone', 'email', 'max:150', 'unique:users,email,' . $user->id],
+            'phone' => ['nullable', 'required_without:email', 'string', 'max:30'],
             'address' => ['nullable', 'string', 'max:500'],
         ]);
 
         $user->update([
             'name' => $this->name,
-            'email' => $this->email,
+            'email' => $this->email ?: null,
         ]);
 
         if ($user->client) {

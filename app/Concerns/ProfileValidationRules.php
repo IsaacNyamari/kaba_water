@@ -38,8 +38,11 @@ trait ProfileValidationRules
      */
     protected function emailRules(?int $userId = null): array
     {
+        // Clients may have no email: they sign in with phone + meter number + PIN.
+        $optional = $userId !== null && (bool) User::find($userId)?->hasRole('client');
+
         return [
-            'required',
+            $optional ? 'nullable' : 'required',
             'string',
             'email',
             'max:255',

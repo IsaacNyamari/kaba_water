@@ -21,6 +21,9 @@
         class="border-e border-zinc-200 bg-zinc-50 dark:border-zinc-700 dark:bg-zinc-900">
         <flux:sidebar.header>
             <x-app-logo :sidebar="true" :href="$homeRoute" wire:navigate />
+            <div class="ms-auto hidden lg:block">
+                <livewire:notification-bell />
+            </div>
             <flux:sidebar.collapse class="lg:hidden" />
         </flux:sidebar.header>
 
@@ -278,6 +281,8 @@
         <flux:sidebar.toggle class="lg:hidden" icon="bars-2" inset="left" />
 
         <flux:spacer />
+
+        <livewire:notification-bell :toasts="false" />
 
         <flux:dropdown position="top" align="end">
             <flux:profile :initials="$user->initials()" icon-trailing="chevron-down" />

@@ -19,6 +19,9 @@ new #[Layout('layouts.vendor')] class extends Component {
     public bool $create_portal_account = false;
     public string $password = '';
 
+    /** Edit mode: set a new PIN/password for the client's existing portal login. */
+    public string $new_pin = '';
+
     public function mount(?Client $client = null): void
     {
         if ($client && $client->exists) {
@@ -43,6 +46,12 @@ new #[Layout('layouts.vendor')] class extends Component {
         $this->account_no = Client::nextAccountNo($vendorId);
     }
 
+    /** True when this save should create a portal login (new client, or an existing one without a login). */
+    protected function creatingLogin(): bool
+    {
+        return $this->create_portal_account && ! $this->client?->user_id;
+    }
+
     protected function rules(): array
     {
         $vendorId = auth()->user()->vendor_id;
@@ -54,14 +63,43 @@ new #[Layout('layouts.vendor')] class extends Component {
         return [
             'account_no' => ['required', 'string', 'max:50', $unique],
             'name'       => ['required', 'string', 'max:150'],
-            'email'      => $this->create_portal_account && ! $this->client
-                ? ['required', 'email', 'max:150', 'unique:users,email']
+            // A login needs an email OR a phone number (phone logins use phone + meter number + PIN).
+            'email'      => $this->creatingLogin()
+                ? ['nullable', 'required_without:phone', 'email', 'max:150', 'unique:users,email']
                 : ['nullable', 'email', 'max:150'],
-            'phone'      => ['nullable', 'string', 'max:30'],
+            'phone'      => $this->creatingLogin()
+                ? ['nullable', 'required_without:email', 'string', 'max:30']
+                : ['nullable', 'string', 'max:30'],
             'address'    => ['nullable', 'string', 'max:500'],
             'status'     => ['required', 'in:active,inactive'],
-            'password'   => [$this->create_portal_account && ! $this->client ? 'required' : 'nullable', 'string', 'min:8'],
+            'password'   => [$this->creatingLogin() ? 'required' : 'nullable', 'string', 'min:6', 'max:255'],
+            'new_pin'    => ['nullable', 'string', 'min:6', 'max:255'],
         ];
+    }
+
+    protected function messages(): array
+    {
+        return [
+            'email.required_without' => 'Give an email or a phone number so the client can sign in.',
+            'phone.required_without' => 'Give an email or a phone number so the client can sign in.',
+        ];
+    }
+
+    /** Create the client's portal login. Email is optional: phone-only clients sign in with phone + meter + PIN. */
+    protected function createPortalUser(): User
+    {
+        $user = User::create([
+            'vendor_id' => auth()->user()->vendor_id,
+            'name'      => $this->name,
+            'email'     => $this->email ?: null,
+            'password'  => $this->password,
+        ]);
+        // The vendor vouches for this person; without this the client is
+        // stuck behind the "verified" middleware on the portal.
+        $user->forceFill(['email_verified_at' => now()])->save();
+        $user->assignRole('client');
+
+        return $user;
     }
 
     public function save(): void
@@ -70,32 +108,28 @@ new #[Layout('layouts.vendor')] class extends Component {
         $this->validate();
 
         if ($this->client) {
-            $this->client->update([
-                'account_no' => $this->account_no,
-                'name'       => $this->name,
-                'email'      => $this->email ?: null,
-                'phone'      => $this->phone ?: null,
-                'address'    => $this->address ?: null,
-                'status'     => $this->status,
-            ]);
-            session()->flash('status', 'Client updated.');
+            DB::transaction(function () {
+                $this->client->update([
+                    'account_no' => $this->account_no,
+                    'name'       => $this->name,
+                    'email'      => $this->email ?: null,
+                    'phone'      => $this->phone ?: null,
+                    'address'    => $this->address ?: null,
+                    'status'     => $this->status,
+                ]);
+
+                if ($this->creatingLogin()) {
+                    $this->client->update(['user_id' => $this->createPortalUser()->id]);
+                } elseif ($this->client->user_id && $this->new_pin !== '') {
+                    // Phone-only clients can't use "forgot password" — the vendor sets a new PIN.
+                    User::whereKey($this->client->user_id)->first()?->update(['password' => $this->new_pin]);
+                }
+            });
+
+            session()->flash('status', $this->new_pin !== '' ? 'Client updated and new PIN set.' : 'Client updated.');
         } else {
             DB::transaction(function () {
-                $userId = null;
-
-                if ($this->create_portal_account) {
-                    $user = User::create([
-                        'vendor_id' => auth()->user()->vendor_id,
-                        'name'      => $this->name,
-                        'email'     => $this->email,
-                        'password'  => $this->password,
-                    ]);
-                    // The vendor vouches for this address; without this the client is
-                    // stuck behind the "verified" middleware on the portal.
-                    $user->forceFill(['email_verified_at' => now()])->save();
-                    $user->assignRole('client');
-                    $userId = $user->id;
-                }
+                $userId = $this->create_portal_account ? $this->createPortalUser()->id : null;
 
                 Client::create([
                     'user_id'    => $userId,
@@ -143,23 +177,44 @@ new #[Layout('layouts.vendor')] class extends Component {
             </div>
         </div>
 
-        @unless ($client)
         <div class="card">
             <div class="card-header">
                 <flux:heading size="sm">Portal account (optional)</flux:heading>
             </div>
             <div class="card-body space-y-4">
-                <flux:checkbox wire:model.live="create_portal_account"
-                    label="Create a client portal login"
-                    description="They'll be able to view invoices, readings and make payments." />
+                @if ($client?->user_id)
+                    <flux:text class="text-sm">
+                        This client has a portal login.
+                        @if ($client->email)
+                            They sign in with <strong>{{ $client->email }}</strong>, or with their phone and meter number.
+                        @else
+                            They sign in with their <strong>phone number, meter number and PIN</strong>.
+                        @endif
+                    </flux:text>
 
-                @if ($create_portal_account)
-                <flux:input wire:model="password" label="Initial password"
-                    description="Share this with the client — they can change it after login." />
+                    <flux:input wire:model="new_pin" type="password" viewable autocomplete="new-password"
+                        label="Set a new PIN or password (optional)"
+                        description="Use this if they've forgotten it. At least 6 characters. Leave blank to keep the current one." />
+                @else
+                    <flux:checkbox wire:model.live="create_portal_account"
+                        label="Create a client portal login"
+                        description="They'll be able to view invoices, readings and make payments." />
+
+                    @if ($create_portal_account)
+                        <flux:input wire:model="password" label="Initial PIN or password"
+                            description="At least 6 characters. Share it with the client — they can change it after logging in." />
+
+                        <flux:callout icon="device-phone-mobile" color="sky">
+                            <flux:callout.text>
+                                No email? Leave it blank and fill in the phone number. The client then signs in on the
+                                <strong>Phone &amp; meter</strong> tab with their phone number, their meter number and this PIN.
+                                Add their meter after saving.
+                            </flux:callout.text>
+                        </flux:callout>
+                    @endif
                 @endif
             </div>
         </div>
-        @endunless
 
         <div class="flex items-center justify-end gap-3">
             <flux:button variant="ghost" href="{{ route('vendor.clients.index') }}">Cancel</flux:button>

@@ -48,12 +48,18 @@ new #[Layout('layouts.portal'), Title('Work Orders')] class extends Component {
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
         <flux:heading size="lg">Work orders</flux:heading>
 
+        <div class="flex flex-col gap-3 sm:flex-row sm:items-center">
         <flux:select wire:model.live="status" class="sm:w-48">
             <flux:select.option value="">All statuses</flux:select.option>
             @foreach (WorkOrderStatus::cases() as $s)
                 <flux:select.option value="{{ $s->value }}">{{ $s->label() }}</flux:select.option>
             @endforeach
         </flux:select>
+
+        @can('client.work_orders.create')
+            <flux:button :href="route('portal.work-orders.create')" wire:navigate variant="primary" icon="plus">Request a repair</flux:button>
+        @endcan
+        </div>
     </div>
 
     <flux:table :paginate="$workOrders">

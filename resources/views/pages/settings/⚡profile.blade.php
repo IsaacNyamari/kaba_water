@@ -27,7 +27,7 @@ new #[Title('Profile settings')] class extends Component {
     public function mount(): void
     {
         $this->name = Auth::user()->name;
-        $this->email = Auth::user()->email;
+        $this->email = Auth::user()->email ?? '';
     }
 
     /**
@@ -38,10 +38,12 @@ new #[Title('Profile settings')] class extends Component {
         $user = Auth::user();
 
         $validated = $this->validate($this->profileRules($user->id));
+        $validated['email'] = ($validated['email'] ?? '') ?: null;
 
         $user->fill($validated);
 
-        if ($user->isDirty('email')) {
+        // A new address must be verified; removing one (phone-only clients) must not lock them out.
+        if ($user->isDirty('email') && $user->email !== null) {
             $user->email_verified_at = null;
         }
 
@@ -117,7 +119,10 @@ new #[Title('Profile settings')] class extends Component {
             <flux:input wire:model="name" :label="__('Name')" type="text" required autofocus autocomplete="name" />
 
             <div>
-                <flux:input wire:model="email" :label="__('Email')" type="email" required autocomplete="email" />
+                {{-- Clients may have no email (they sign in with phone + meter number + PIN). --}}
+                <flux:input wire:model="email" :label="__('Email')" type="email" autocomplete="email"
+                    :required="! auth()->user()->hasRole('client')"
+                    :description="auth()->user()->hasRole('client') ? __('Optional. Without one you sign in with your phone number, meter number and PIN.') : null" />
 
                 @if ($this->hasUnverifiedEmail)
                     <div>

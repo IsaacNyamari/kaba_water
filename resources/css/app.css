@@ -361,3 +361,8 @@ select:focus[data-flux-control] {
         padding-block: 0.75rem;
     }
 }
+
+/* Alpine: hide x-cloak elements until Alpine has initialised them. */
+[x-cloak] {
+    display: none !important;
+}

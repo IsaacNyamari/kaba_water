@@ -33,6 +33,9 @@ Route::name('marketing.')->group(function () {
 */
 
 Route::middleware('guest')->group(function () {
+    // Clients without an email: phone number + meter number + PIN.
+    Route::post('/login/phone', [\App\Http\Controllers\Auth\PhoneLoginController::class, 'store'])->name('login.phone');
+
     Route::livewire('/request-access', 'access.request')->name('access.request');
     Route::livewire('/access/{accessRequest}/accept', 'access.accept')->name('access.accept');
 });
@@ -265,6 +268,9 @@ Route::middleware(['auth', 'verified', 'role:client', 'vendor.context'])
         // Work Orders (client's own)
         Route::middleware('permission:client.work_orders.view')->group(function () {
             Route::livewire('/work-orders', 'portal.work-orders.index')->name('work-orders.index');
+        });
+        Route::middleware('permission:client.work_orders.create')->group(function () {
+            Route::livewire('/work-orders/create', 'portal.work-orders.create')->name('work-orders.create');
         });
 
         // Profile

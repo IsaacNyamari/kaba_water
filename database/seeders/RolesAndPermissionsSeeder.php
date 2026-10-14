@@ -71,6 +71,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'client.readings.view',
             'client.readings.create',      // clients can submit readings
             'client.work_orders.view',     // clients see their own work orders
+            'client.work_orders.create',   // clients can request repairs / service
             'client.profile.manage',
         ];
 

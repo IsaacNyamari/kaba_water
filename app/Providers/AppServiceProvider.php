@@ -33,6 +33,9 @@ class AppServiceProvider extends ServiceProvider
         \App\Models\Invoice::observe(\App\Observers\InvoiceObserver::class);
         \App\Models\Payment::observe(\App\Observers\PaymentObserver::class);
         \App\Models\Expense::observe(\App\Observers\ExpenseObserver::class);
+
+        // Work order notifications (database + Reverb broadcast).
+        \App\Models\WorkOrder::observe(\App\Observers\WorkOrderObserver::class);
         \App\Models\Vendor::observe(\App\Observers\VendorObserver::class);
     }
 
