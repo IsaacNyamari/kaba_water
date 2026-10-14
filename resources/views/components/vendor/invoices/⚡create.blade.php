@@ -68,7 +68,8 @@ new #[Layout('layouts.vendor', ['title' => 'New invoice'])] class extends Compon
             'subtotal' => $subtotal,
             'tax' => $tax,
             'total' => round($subtotal + $tax, 2),
-            'due_at' => now()->addDays($this->due_days),
+            'issued_at' => GenerateInvoiceFromReading::issueDateFor($reading),
+            'due_at' => GenerateInvoiceFromReading::issueDateFor($reading)->addDays($this->due_days),
         ];
     }
 
@@ -285,6 +286,15 @@ new #[Layout('layouts.vendor', ['title' => 'New invoice'])] class extends Compon
                         <div class="flex items-center justify-between rounded-lg bg-gradient-to-r from-brand-600 to-brand-500 px-3 py-3 text-white shadow-sm">
                             <span class="text-xs font-semibold uppercase tracking-wide opacity-90">Total</span>
                             <span class="font-mono text-lg font-bold">{{ number_format($p['total'], 2) }}</span>
+                        </div>
+
+                        {{-- Invoice date (a past month's reading is billed in that month) --}}
+                        <div class="flex items-center justify-between text-xs text-slate-500">
+                            <span class="flex items-center gap-1.5">
+                                <flux:icon.calendar class="size-3.5" />
+                                Invoice date
+                            </span>
+                            <span>{{ $p['issued_at']->format('d M Y') }}</span>
                         </div>
 
                         {{-- Due --}}

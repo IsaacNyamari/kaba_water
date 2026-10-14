@@ -12,7 +12,11 @@ use Livewire\WithFileUploads;
 new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
     use WithFileUploads;
 
+    /** How many months back a reading can be recorded (current month included). */
+    public const MONTHS_AVAILABLE = 12;
+
     public string $meter_id = '';
+    public string $billing_month = '';
     public string $previous_reading = '';
     public string $reading = '';
     public string $read_at = '';
@@ -26,12 +30,50 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
     public function mount(): void
     {
         $this->authorize('create', Reading::class);
+        $this->billing_month = now()->format('Y-m');
         $this->read_at = now()->format('Y-m-d\TH:i');
 
         if ($meterId = request()->integer('meter')) {
             $this->meter_id = (string) $meterId;
             $this->syncMeterState();
         }
+    }
+
+    /**
+     * The current month plus the previous eleven, newest first, so a new
+     * vendor can bring in a year of history.
+     *
+     * @return array<string, string> Y-m => label
+     */
+    #[Computed]
+    public function billingMonths(): array
+    {
+        $months = [];
+
+        for ($i = 0; $i < self::MONTHS_AVAILABLE; $i++) {
+            $month = now()->startOfMonth()->subMonthsNoOverflow($i);
+            $months[$month->format('Y-m')] = $month->format('F Y').($i === 0 ? ' (this month)' : '');
+        }
+
+        return $months;
+    }
+
+    /**
+     * First and last moment of the selected billing month.
+     *
+     * @return array{0: \Illuminate\Support\Carbon, 1: \Illuminate\Support\Carbon}
+     */
+    public function monthBounds(): array
+    {
+        $month = \Illuminate\Support\Carbon::createFromFormat('!Y-m', $this->billing_month);
+
+        return [$month->copy()->startOfMonth(), $month->copy()->endOfMonth()];
+    }
+
+    #[Computed]
+    public function isBackdated(): bool
+    {
+        return $this->billing_month !== '' && $this->billing_month !== now()->format('Y-m');
     }
 
     /** Re-check the meter whenever the selection changes. */
@@ -41,30 +83,83 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
     }
 
     /**
-     * Reset reading fields and pre-fill the previous reading when the
-     * selected meter already has history.
+     * Picking a month moves the reading date into it: now for the current
+     * month, otherwise the last day of that month (a typical meter-read day).
      */
-    protected function syncMeterState(): void
+    public function updatedBillingMonth(): void
     {
-        $this->reading = '';
-        $this->previous_reading = '';
-        $this->extractedReading = null;
-        $this->ocrError = null;
-
-        if ($this->source === 'ocr') {
-            $this->source = 'manual';
+        if (! array_key_exists($this->billing_month, $this->billingMonths)) {
+            $this->billing_month = now()->format('Y-m');
         }
 
-        if (!$this->meter_id) {
+        $this->read_at = $this->isBackdated
+            ? $this->monthBounds()[1]->setTime(12, 0)->format('Y-m-d\TH:i')
+            : now()->format('Y-m-d\TH:i');
+
+        $this->syncMeterState(resetReading: false);
+    }
+
+    public function updatedReadAt(): void
+    {
+        $this->syncMeterState(resetReading: false);
+    }
+
+    /**
+     * Pre-fill the previous reading from the last approved reading taken
+     * BEFORE the chosen date, so backdated readings measure consumption
+     * from the right point.
+     */
+    protected function syncMeterState(bool $resetReading = true): void
+    {
+        if ($resetReading) {
+            $this->reading = '';
+            $this->extractedReading = null;
+            $this->ocrError = null;
+
+            if ($this->source === 'ocr') {
+                $this->source = 'manual';
+            }
+        }
+
+        $this->previous_reading = '';
+        unset($this->isNewMeter, $this->nextReading, $this->readingThisMonth);
+
+        if (!$this->meter_id || !$this->readAtIsValid()) {
             return;
         }
 
-        // Same baseline the model uses to compute consumption: last APPROVED reading.
-        $last = Reading::lastApprovedValueFor((int) $this->meter_id);
+        $last = Reading::lastApprovedValueFor((int) $this->meter_id, $this->read_at);
 
         if ($last !== null) {
             $this->previous_reading = (string) $last;
         }
+    }
+
+    protected function readAtIsValid(): bool
+    {
+        return $this->read_at !== '' && strtotime($this->read_at) !== false;
+    }
+
+    /** The approved reading that comes after the chosen date, if any. */
+    #[Computed]
+    public function nextReading(): ?Reading
+    {
+        if (!$this->meter_id || !$this->readAtIsValid()) {
+            return null;
+        }
+
+        return Reading::nextApprovedFor((int) $this->meter_id, $this->read_at)?->loadMissing('invoice');
+    }
+
+    /** A reading already recorded for this meter in the chosen month. */
+    #[Computed]
+    public function readingThisMonth(): ?Reading
+    {
+        if (!$this->meter_id || $this->billing_month === '') {
+            return null;
+        }
+
+        return Reading::inMonthFor((int) $this->meter_id, $this->monthBounds()[0]);
     }
 
     #[Computed]
@@ -77,34 +172,53 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
         return Meter::with('client')->find($this->meter_id);
     }
 
-    /** True when the selected meter has never had a reading recorded. */
+    /**
+     * True when the meter has no approved reading at or before the chosen
+     * date — a brand-new meter, or the earliest month being backfilled —
+     * so a starting (baseline) value is needed.
+     */
     #[Computed]
     public function isNewMeter(): bool
     {
-        if (!$this->meter_id) {
+        if (!$this->meter_id || !$this->readAtIsValid()) {
             return false;
         }
 
-        return ! Reading::where('meter_id', $this->meter_id)->approved()->exists();
+        return Reading::lastApprovedValueFor((int) $this->meter_id, $this->read_at) === null;
     }
 
     protected function rules(): array
     {
         $vendorId = auth()->user()->vendor_id;
+        [$monthStart, $monthEnd] = $this->monthBounds();
 
         $rules = [
-            'meter_id' => ['required', "exists:meters,id,vendor_id,{$vendorId}"],
+            'meter_id' => ['required', "exists:meters,id,vendor_id,{$vendorId}", function (string $attribute, mixed $value, \Closure $fail) {
+                if ($existing = $this->readingThisMonth) {
+                    $fail('This meter already has a reading for '.$existing->read_at->format('F Y').' ('.number_format((int) $existing->reading).' m³). Each meter is read once a month.');
+                }
+
+                if ($this->nextReading?->invoice) {
+                    $fail('A later reading for this meter ('.$this->nextReading->read_at->format('F Y').') is already invoiced, so an earlier month can no longer be added in front of it.');
+                }
+            }],
+            'billing_month' => ['required', \Illuminate\Validation\Rule::in(array_keys($this->billingMonths))],
             'reading' => ['required', 'integer', 'min:0'],
-            'read_at' => ['required', 'date'],
+            'read_at' => ['required', 'date', 'after_or_equal:'.$monthStart->format('Y-m-d H:i:s'), 'before_or_equal:'.min($monthEnd, now())->format('Y-m-d H:i:s')],
             'photo' => ['nullable', 'image', 'max:4096', 'mimes:jpeg,png,jpg,webp'],
         ];
 
-        // Only require the previous reading when this meter is brand new.
+        // A baseline is only needed when nothing was recorded before this date.
         if ($this->isNewMeter) {
             $rules['previous_reading'] = ['required', 'integer', 'min:0', 'lte:reading'];
-        } elseif ($this->meter_id && ($last = Reading::lastApprovedValueFor((int) $this->meter_id)) !== null) {
+        } elseif ($this->previous_reading !== '') {
             // Meters only count up — a lower value is a misread.
-            $rules['reading'][] = 'gte:' . $last;
+            $rules['reading'][] = 'gte:'.(int) $this->previous_reading;
+        }
+
+        // ...and the reading cannot exceed the one recorded after it.
+        if ($next = $this->nextReading) {
+            $rules['reading'][] = 'lte:'.(int) $next->reading;
         }
 
         return $rules;
@@ -113,9 +227,12 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
     protected function messages(): array
     {
         return [
-            'previous_reading.required' => 'Enter the initial reading for this new meter.',
+            'previous_reading.required' => 'Enter the meter value at the start of this period (the baseline).',
             'previous_reading.lte' => 'Previous reading cannot be greater than the current reading.',
-            'reading.gte' => 'The reading cannot be lower than the last approved reading (:value).',
+            'reading.gte' => 'The reading cannot be lower than the previous approved reading (:value).',
+            'reading.lte' => 'The reading cannot be higher than the next recorded reading (:value) — meters only count up.',
+            'read_at.after_or_equal' => 'The reading date must fall inside the selected billing month.',
+            'read_at.before_or_equal' => 'The reading date must fall inside the selected billing month and cannot be in the future.',
         ];
     }
 
@@ -196,11 +313,12 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
             $payload['previous_reading'] = (int) $this->previous_reading;
         }
 
-        // The model computes previous_reading (when not seeded) and consumption.
-        $reading = Reading::create($payload);
+        // The model computes previous_reading (when not seeded) and consumption,
+        // and re-links any later reading to this one when backfilling.
+        $reading = \Illuminate\Support\Facades\DB::transaction(fn () => Reading::create($payload));
 
-        session()->flash('status', 'Reading recorded: ' . number_format($reading->reading) . ' m³ ('
-            . number_format((int) $reading->consumption) . ' m³ consumed since last reading).');
+        session()->flash('status', 'Reading for ' . $reading->read_at->format('F Y') . ' recorded: '
+            . number_format($reading->reading) . ' m³ (' . number_format((int) $reading->consumption) . ' m³ consumed).');
 
         $this->redirectRoute('vendor.readings.index', navigate: true);
     }
@@ -233,20 +351,68 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
                 @endforelse
             </flux:select>
 
-            <flux:input type="datetime-local" wire:model="read_at" label="Reading date & time" />
+            @php [$monthStart, $monthEnd] = $this->monthBounds(); @endphp
 
-            {{-- New meter badge --}}
+            <div class="grid gap-4 sm:grid-cols-2">
+                <flux:select wire:model.live="billing_month" label="Billing month"
+                    description="Pick an earlier month to bring in past readings.">
+                    @foreach ($this->billingMonths as $value => $label)
+                        <flux:select.option value="{{ $value }}">{{ $label }}</flux:select.option>
+                    @endforeach
+                </flux:select>
+
+                <flux:input type="datetime-local" wire:model.live.blur="read_at" label="Reading date & time"
+                    min="{{ $monthStart->format('Y-m-d\TH:i') }}"
+                    max="{{ min($monthEnd, now())->format('Y-m-d\TH:i') }}" />
+            </div>
+
+            {{-- Backdated reading --}}
+            @if ($this->isBackdated)
+                <div
+                    class="flex items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/20 dark:bg-sky-500/10">
+                    <flux:icon.clock class="mt-0.5 size-4 shrink-0 text-sky-600 dark:text-sky-400" />
+                    <div class="text-sm">
+                        <div class="font-medium text-sky-800 dark:text-sky-300">
+                            Recording a past month: {{ $monthStart->format('F Y') }}
+                        </div>
+                        <div class="text-sky-700 dark:text-sky-400/90 mt-0.5">
+                            Consumption is measured from the reading before this date, and an invoice for it will be
+                            dated in {{ $monthStart->format('F Y') }} so payments and reports land in the right month.
+                            Work oldest month first when bringing in a year of history.
+                        </div>
+                    </div>
+                </div>
+            @endif
+
+            {{-- Already read this month --}}
+            @if ($existing = $this->readingThisMonth)
+                <div
+                    class="flex items-start gap-3 rounded-lg border border-rose-200 bg-rose-50 p-3 dark:border-rose-500/20 dark:bg-rose-500/10">
+                    <flux:icon.exclamation-triangle class="mt-0.5 size-4 shrink-0 text-rose-600 dark:text-rose-400" />
+                    <div class="text-sm text-rose-700 dark:text-rose-300">
+                        This meter already has a {{ $existing->status->value }} reading for {{ $existing->read_at->format('F Y') }}
+                        ({{ number_format((int) $existing->reading) }} m³ on {{ $existing->read_at->format('d M') }}). Choose another month.
+                    </div>
+                </div>
+            @endif
+
+            {{-- New meter / earliest backfilled month --}}
             @if ($this->isNewMeter)
                 <div
                     class="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-500/20 dark:bg-amber-500/10">
                     <flux:icon.sparkles class="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
                     <div class="text-sm">
                         <div class="font-medium text-amber-800 dark:text-amber-300">
-                            New meter detected
+                            {{ $this->nextReading ? 'No earlier reading' : 'New meter detected' }}
                         </div>
                         <div class="text-amber-700 dark:text-amber-400/90 mt-0.5">
-                            This meter has no reading history. Enter the initial reading below — it will be stored as
-                            the baseline.
+                            @if ($this->nextReading)
+                                This meter has no reading before {{ $monthStart->format('F Y') }}. Enter its value at the
+                                start of the month below — it becomes the baseline.
+                            @else
+                                This meter has no reading history. Enter the initial reading below — it will be stored as
+                                the baseline.
+                            @endif
                         </div>
                     </div>
                 </div>
@@ -359,9 +525,21 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
                     </div>
                 @endif
 
-                <flux:input wire:model.live="reading" label="Current reading"
+                <flux:input wire:model.live="reading" label="{{ $this->isBackdated ? 'Reading for '.$monthStart->format('F Y') : 'Current reading' }}"
                     description="Whole cubic meters only — ignore red digits and fraction dials."
                     placeholder="e.g. 012806" class="font-mono text-lg" inputmode="numeric" pattern="[0-9]*" />
+
+                @if ($next = $this->nextReading)
+                    <p class="text-xs text-zinc-500">
+                        Next recorded reading: <span class="font-mono font-semibold">{{ number_format((int) $next->reading) }} m³</span>
+                        on {{ $next->read_at->format('d M Y') }}.
+                        @if ($next->invoice)
+                            It is already invoiced, so this month cannot be added before it.
+                        @else
+                            This reading must not be higher, and that reading's consumption will be recalculated from this one.
+                        @endif
+                    </p>
+                @endif
 
                 {{-- Live consumption preview --}}
                 @if ($previous_reading !== '' && $reading !== '' && is_numeric($previous_reading) && is_numeric($reading))
