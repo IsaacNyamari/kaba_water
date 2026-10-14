@@ -43,10 +43,10 @@
                 </p>
 
                 <div class="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
-                    <a href="{{ route('access.request') }}" class="btn-mk btn-mk-primary w-full sm:w-auto">
+                    <a href="{{ route('access.request') }}" wire:navigate class="btn-mk btn-mk-primary w-full sm:w-auto">
                         Start free <flux:icon.arrow-right variant="micro" class="size-4" />
                     </a>
-                    <a href="{{ route('marketing.contact') }}" class="btn-mk btn-mk-secondary w-full sm:w-auto">Book a demo</a>
+                    <a href="{{ route('marketing.contact') }}" wire:navigate class="btn-mk btn-mk-secondary w-full sm:w-auto">Book a demo</a>
                 </div>
 
                 <ul class="mt-8 flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-sm text-zinc-500 lg:justify-start dark:text-zinc-400">
@@ -123,7 +123,7 @@
 
         <div class="mt-14 grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
             @foreach ($features as [$icon, $title, $text, $anchor])
-                <a href="{{ route('marketing.services') }}#{{ $anchor }}"
+                <a href="{{ route('marketing.services') }}#{{ $anchor }}" wire:navigate
                     class="mk-card group p-7 transition duration-200 hover:-translate-y-1 hover:border-aqua/40 hover:shadow-aqua-lg">
                     <span class="flex size-12 items-center justify-center rounded-2xl bg-aqua-mist text-teal transition group-hover:bg-aqua group-hover:text-navy dark:bg-aqua/15 dark:text-light-aqua">
                         <flux:icon :name="$icon" class="size-6" />
@@ -219,7 +219,7 @@
 
         <p class="mt-12 text-center text-sm text-zinc-600 dark:text-zinc-300">
             Want the full comparison?
-            <a href="{{ route('marketing.pricing') }}" class="font-semibold text-teal underline underline-offset-4 dark:text-light-aqua">See every feature by plan</a>
+            <a href="{{ route('marketing.pricing') }}" wire:navigate class="font-semibold text-teal underline underline-offset-4 dark:text-light-aqua">See every feature by plan</a>
         </p>
     @endcomponent
 

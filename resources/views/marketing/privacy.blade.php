@@ -51,7 +51,7 @@
 
             <h2>6. Your rights</h2>
             <p>
-                Under the Kenya Data Protection Act, 2019 you can ask to see the personal information held about you, have it corrected or deleted, and object to how it is used. If your water vendor uses Kaba Water, contact them first, as they hold your billing records. For anything we hold directly, <a href="{{ route('marketing.contact') }}">contact us</a>.
+                Under the Kenya Data Protection Act, 2019 you can ask to see the personal information held about you, have it corrected or deleted, and object to how it is used. If your water vendor uses Kaba Water, contact them first, as they hold your billing records. For anything we hold directly, <a href="{{ route('marketing.contact') }}" wire:navigate>contact us</a>.
             </p>
 
             <h2>7. Cookies</h2>

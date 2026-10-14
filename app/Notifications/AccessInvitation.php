@@ -23,7 +23,6 @@ class AccessInvitation extends Notification
     public function toMail(object $notifiable): MailMessage
     {
         $r = $this->request;
-        $where = $r->vendor?->name ? " for {$r->vendor->name}" : '';
 
         return (new MailMessage)
             ->subject('Your '.config('app.name').' access has been approved')

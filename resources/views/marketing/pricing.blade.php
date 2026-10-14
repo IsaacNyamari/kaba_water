@@ -112,7 +112,7 @@
 
         <p class="mt-10 text-center text-sm text-zinc-600 dark:text-zinc-300">
             Something else?
-            <a href="{{ route('marketing.contact') }}" class="font-semibold text-teal underline underline-offset-4 dark:text-light-aqua">Ask us directly</a>
+            <a href="{{ route('marketing.contact') }}" wire:navigate class="font-semibold text-teal underline underline-offset-4 dark:text-light-aqua">Ask us directly</a>
         </p>
     @endcomponent
 

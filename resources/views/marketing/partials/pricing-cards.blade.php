@@ -55,7 +55,7 @@
                 @endforeach
             </ul>
 
-            <a href="{{ $plan['monthly'] ? route('access.request') : route('marketing.contact') }}"
+            <a href="{{ $plan['monthly'] ? route('access.request') : route('marketing.contact') }}" wire:navigate
                 class="btn-mk mt-8 w-full {{ $featured ? 'btn-mk-primary' : 'btn-mk-secondary' }}">
                 {{ $plan['cta'] }}
             </a>

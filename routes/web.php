@@ -1,7 +1,6 @@
 <?php
 
 use App\Http\Controllers\InvoicePdfController;
-use App\Http\Controllers\Marketing\ContactController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -18,8 +17,7 @@ Route::name('marketing.')->group(function () {
     Route::redirect('/features', '/services', 301)->name('features');
     Route::view('/pricing', 'marketing.pricing')->name('pricing');
     Route::view('/about', 'marketing.about')->name('about');
-    Route::get('/contact', [ContactController::class, 'show'])->name('contact');
-    Route::post('/contact', [ContactController::class, 'store'])->middleware('throttle:5,1')->name('contact.store');
+    Route::view('/contact', 'marketing.contact')->name('contact');
     Route::view('/terms', 'marketing.terms')->name('terms');
     Route::view('/privacy', 'marketing.privacy')->name('privacy');
 });

@@ -16,7 +16,7 @@
         <nav class="hidden items-center gap-1 lg:flex" aria-label="Main">
             @foreach ($links as [$label, $href, $routeName])
                 @php $current = $routeName && request()->routeIs($routeName); @endphp
-                <a href="{{ $href }}" @if ($current) aria-current="page" @endif
+                <a href="{{ $href }}" wire:navigate @if ($current) aria-current="page" @endif
                     class="rounded-lg px-3 py-2 text-sm font-medium transition hover:bg-aqua/10 hover:text-teal dark:hover:text-light-aqua {{ $current ? 'text-teal dark:text-light-aqua' : 'text-zinc-600 dark:text-zinc-300' }}">
                     {{ $label }}
                 </a>
@@ -31,12 +31,12 @@
             </button>
 
             @auth
-                <a href="{{ route('dashboard') }}" class="btn-mk btn-mk-primary hidden py-2.5 sm:inline-flex">Go to dashboard</a>
+                <a href="{{ route('dashboard') }}" wire:navigate class="btn-mk btn-mk-primary hidden py-2.5 sm:inline-flex">Go to dashboard</a>
             @else
-                <a href="{{ route('login') }}" class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-navy transition hover:text-teal sm:inline-flex dark:text-white dark:hover:text-light-aqua">
+                <a href="{{ route('login') }}" wire:navigate class="hidden rounded-lg px-3 py-2 text-sm font-semibold text-navy transition hover:text-teal sm:inline-flex dark:text-white dark:hover:text-light-aqua">
                     Sign in
                 </a>
-                <a href="{{ route('access.request') }}" class="btn-mk btn-mk-primary hidden py-2.5 sm:inline-flex">Get started</a>
+                <a href="{{ route('access.request') }}" wire:navigate class="btn-mk btn-mk-primary hidden py-2.5 sm:inline-flex">Get started</a>
             @endauth
 
             <button type="button" x-on:click="open = ! open" x-bind:aria-expanded="open.toString()" aria-controls="mobile-menu" aria-label="Menu"
@@ -51,7 +51,7 @@
         class="border-t border-navy/5 bg-white px-5 pb-6 pt-3 lg:hidden dark:border-white/10 dark:bg-navy-deep">
         <nav class="grid gap-1" aria-label="Mobile">
             @foreach ($links as [$label, $href, $routeName])
-                <a href="{{ $href }}" x-on:click="open = false"
+                <a href="{{ $href }}" wire:navigate x-on:click="open = false"
                     class="rounded-xl px-3 py-3 text-base font-medium text-navy transition hover:bg-aqua/10 dark:text-white">
                     {{ $label }}
                 </a>
@@ -59,10 +59,10 @@
         </nav>
         <div class="mt-4 grid gap-3 sm:hidden">
             @auth
-                <a href="{{ route('dashboard') }}" class="btn-mk btn-mk-primary">Go to dashboard</a>
+                <a href="{{ route('dashboard') }}" wire:navigate class="btn-mk btn-mk-primary">Go to dashboard</a>
             @else
-                <a href="{{ route('access.request') }}" class="btn-mk btn-mk-primary">Get started</a>
-                <a href="{{ route('login') }}" class="btn-mk btn-mk-secondary">Sign in</a>
+                <a href="{{ route('access.request') }}" wire:navigate class="btn-mk btn-mk-primary">Get started</a>
+                <a href="{{ route('login') }}" wire:navigate class="btn-mk btn-mk-secondary">Sign in</a>
             @endauth
         </div>
     </div>

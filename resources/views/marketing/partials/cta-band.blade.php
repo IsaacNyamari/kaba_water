@@ -8,10 +8,10 @@
             {{ $lead ?? 'Set up your clients, meters and tariffs once. Kaba Water takes it from the reading to the receipt.' }}
         </p>
         <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
-            <a href="{{ route('access.request') }}" class="btn-mk btn-mk-primary w-full sm:w-auto">
+            <a href="{{ route('access.request') }}" wire:navigate class="btn-mk btn-mk-primary w-full sm:w-auto">
                 Start free <flux:icon.arrow-right variant="micro" class="size-4" />
             </a>
-            <a href="{{ route('marketing.contact') }}" class="btn-mk btn-mk-on-dark w-full sm:w-auto">Book a demo</a>
+            <a href="{{ route('marketing.contact') }}" wire:navigate class="btn-mk btn-mk-on-dark w-full sm:w-auto">Book a demo</a>
         </div>
     </div>
 </section>

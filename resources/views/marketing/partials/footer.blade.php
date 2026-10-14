@@ -51,7 +51,7 @@
                         <h3 class="text-sm font-semibold text-white">{{ $heading }}</h3>
                         <ul class="mt-4 space-y-3 text-sm">
                             @foreach ($items as [$label, $href])
-                                <li><a href="{{ $href }}" class="text-zinc-400 transition hover:text-light-aqua">{{ $label }}</a></li>
+                                <li><a href="{{ $href }}" wire:navigate class="text-zinc-400 transition hover:text-light-aqua">{{ $label }}</a></li>
                             @endforeach
                         </ul>
                     </div>
@@ -61,7 +61,6 @@
 
         <div class="mt-14 flex flex-col gap-3 border-t border-white/10 pt-8 text-sm text-zinc-500 sm:flex-row sm:items-center sm:justify-between">
             <p>&copy; {{ now()->year }} {{ config('app.name') }}. All rights reserved.</p>
-            <p>Made in Nairobi for water vendors everywhere.</p>
         </div>
     </div>
 </footer>
