@@ -69,7 +69,7 @@ new #[Layout('layouts.portal')] class extends Component {
         <div class="lg:col-span-2 space-y-4">
 
             {{-- Parties --}}
-            <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+            <div class="app-card p-5">
                 <div class="grid gap-6 sm:grid-cols-2">
                     <div>
                         <div class="text-xs uppercase tracking-wide text-zinc-500 font-semibold">From</div>
@@ -105,7 +105,7 @@ new #[Layout('layouts.portal')] class extends Component {
 
             {{-- Items --}}
             <div
-                class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+                class="overflow-hidden app-card">
                 <table class="w-full text-sm">
                     <thead>
                         <tr
@@ -134,7 +134,7 @@ new #[Layout('layouts.portal')] class extends Component {
             </div>
 
             @if ($invoice->notes)
-                <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+                <div class="app-card p-5">
                     <div class="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Notes</div>
                     <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{{ $invoice->notes }}</p>
                 </div>
@@ -143,7 +143,7 @@ new #[Layout('layouts.portal')] class extends Component {
 
         {{-- Right: totals + actions --}}
         <div class="space-y-4">
-            <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+            <div class="app-card p-5">
                 <div class="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Summary</div>
                 <div class="mt-3 space-y-2 text-sm">
                     <div class="flex justify-between">
@@ -191,7 +191,7 @@ new #[Layout('layouts.portal')] class extends Component {
             </div>
 
             @if ($invoice->payments->count())
-                <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+                <div class="app-card p-5">
                     <div class="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Payments received</div>
                     <flux:table class="p-2">
                         <flux:table.columns>

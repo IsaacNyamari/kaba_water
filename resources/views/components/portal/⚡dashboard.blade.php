@@ -109,7 +109,7 @@ use InteractsWithClient;
     {{-- KPI cards --}}
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Balance due</div>
             <div class="text-2xl font-semibold mt-1 {{ $this->balance > 0 ? 'text-rose-600' : 'text-accent-600' }}">
                 {{ number_format($this->balance, 2) }}
@@ -124,7 +124,7 @@ use InteractsWithClient;
             @endif
         </div>
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Last reading</div>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 @if ($this->latestReading)
@@ -139,7 +139,7 @@ use InteractsWithClient;
             </div>
         </div>
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Last consumption</div>
             <div class="text-2xl font-semibold text-brand-600 mt-1">
                 @if ($this->latestReading?->consumption)
@@ -152,7 +152,7 @@ use InteractsWithClient;
             <div class="text-xs text-zinc-500 mt-1">Since previous reading</div>
         </div>
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Meters</div>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ $this->meterCount }}
@@ -167,7 +167,7 @@ use InteractsWithClient;
     <div class="grid gap-4 lg:grid-cols-2">
 
         {{-- Recent invoices --}}
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div class="app-card">
             <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
                 <h2 class="font-semibold text-zinc-900 dark:text-zinc-100">Recent Invoices</h2>
                 <a href="{{ route('portal.invoices.index') }}"
@@ -220,7 +220,7 @@ use InteractsWithClient;
             <x-chart :data="$this->consumptionChart" height="16rem" />
         </flux:card>
         {{-- Recent payments --}}
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+        <div class="app-card">
             <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
                 <h2 class="font-semibold text-zinc-900 dark:text-zinc-100">Recent Payments</h2>
                 <a href="{{ route('portal.payments.index') }}"

@@ -105,7 +105,7 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
 
     {{-- Workspace --}}
     <form wire:submit="saveVendor"
-        class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 space-y-5">
+        class="app-card p-6 space-y-5">
         <div>
             <flux:heading size="sm">Workspace</flux:heading>
             <flux:text class="text-sm text-zinc-500">
@@ -128,7 +128,7 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
 
     {{-- Your profile --}}
     <form wire:submit="saveUser"
-        class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 space-y-5">
+        class="app-card p-6 space-y-5">
         <div>
             <flux:heading size="sm">Your profile</flux:heading>
             <flux:text class="text-sm text-zinc-500">
@@ -146,7 +146,7 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
 
     {{-- Password --}}
     <form wire:submit="updatePassword"
-        class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 space-y-5">
+        class="app-card p-6 space-y-5">
         <div>
             <flux:heading size="sm">Password</flux:heading>
             <flux:text class="text-sm text-zinc-500">

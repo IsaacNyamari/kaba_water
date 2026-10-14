@@ -267,8 +267,9 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
 
             \Flux::toast(variant: 'success', heading: 'OCR complete', text: "Extracted: {$digits}");
         } catch (\Throwable $e) {
-            $this->ocrError = 'OCR failed: ' . $e->getMessage();
-            \Log::error('Reading OCR failed', ['error' => $e->getMessage()]);
+            // Never show raw exception text: it can carry provider details.
+            $this->ocrError = 'Could not read the photo automatically. Enter the reading manually, or try a clearer photo.';
+            \Log::error('Reading OCR failed', ['error' => class_basename($e)]);
         } finally {
             $this->scanning = false;
         }

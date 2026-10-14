@@ -145,7 +145,7 @@ new #[Layout('layouts.vendor'), Title('Expense Categories')] class extends Compo
     </div>
 
     {{-- Categories list --}}
-    <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
+    <div class="app-card overflow-hidden">
         <flux:table>
             <flux:table.columns>
                 <flux:table.column>Category</flux:table.column>

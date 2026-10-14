@@ -118,31 +118,31 @@ new #[Layout('layouts.vendor'), Title('Dashboard')] class extends Component {
 
     {{-- KPI strip --}}
     <div class="grid auto-rows-min gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Clients</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($this->stats['clients']) }}</div>
         </div>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Meters</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($this->stats['meters']) }}</div>
         </div>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Readings (30d)</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($this->stats['readings_30d']) }}</div>
         </div>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Revenue (30d)</span>
             <div class="text-2xl font-semibold text-accent-600 mt-1">{{ number_format($this->stats['revenue_30d'], 2) }}
             </div>
         </div>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Unpaid</span>
             <div class="text-2xl font-semibold text-brand-600 mt-1">{{ number_format($this->stats['unpaid'], 2) }}</div>
         </div>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Overdue</span>
             <div class="text-2xl font-semibold text-rose-600 mt-1">{{ $this->stats['overdue'] }}</div>
         </div>

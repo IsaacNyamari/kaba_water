@@ -93,6 +93,24 @@
         --color-accent: var(--color-brand-400);
         --color-accent-content: var(--color-brand-400);
         --color-accent-foreground: var(--color-brand-950);
+
+        /*
+         * Dark mode runs on deep navy instead of grey. The app and Flux paint
+         * dark surfaces with the zinc / neutral scales, so their dark shades
+         * are re-tinted to navy here; light mode is untouched.
+         */
+        --color-zinc-400: #a7b4c6;
+        --color-zinc-500: #7f90a8;
+        --color-zinc-600: #4b6385;
+        --color-zinc-700: #1f3a5c;
+        --color-zinc-800: #0b2545;
+        --color-zinc-900: #071a33;
+        --color-zinc-950: #04111f;
+
+        --color-neutral-700: #1f3a5c;
+        --color-neutral-800: #0b2545;
+        --color-neutral-900: #071a33;
+        --color-neutral-950: #04111f;
     }
 }
 
@@ -124,3 +142,82 @@ select:focus[data-flux-control] {
 /* \[:where(&)\]:size-4 {
     @apply size-4;
 } */
+
+/* ─────────────────────────────────────────────────────────────
+   Cards — one look for every card in the app
+   ───────────────────────────────────────────────────────────── */
+
+@keyframes card-in {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Shared surface: soft brand-tinted gradient, light edge, gentle shadow. */
+@utility app-card {
+    @apply rounded-2xl border border-brand-900/8 bg-linear-to-br from-white via-white to-brand-50/60 shadow-sm shadow-brand-900/5 dark:border-white/8 dark:from-zinc-900 dark:via-zinc-900 dark:to-brand-500/8 dark:shadow-black/20;
+}
+
+/* Legacy .card / .card-header / .card-body markup (e.g. Bill a reading). */
+.card {
+    @apply app-card overflow-hidden;
+}
+
+.card-header {
+    @apply border-b border-brand-900/8 bg-brand-50/50 px-5 py-4 dark:border-white/8 dark:bg-brand-500/5;
+}
+
+.card-body {
+    @apply p-5;
+}
+
+/* Flux cards (default variant) get the same surface. Unlayered so it wins over Flux's :where() defaults. */
+[data-flux-card][data-flux-card-variant='default'] {
+    @apply border-brand-900/8 bg-linear-to-br from-white via-white to-brand-50/60 shadow-sm shadow-brand-900/5 dark:border-white/8 dark:from-zinc-900 dark:via-zinc-900 dark:to-brand-500/8 dark:shadow-black/20;
+}
+
+/* Motion: fade up on first paint (staggered across siblings) and a soft hover. */
+.app-card,
+.card,
+.mk-card,
+[data-flux-card] {
+    animation: card-in 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(2) { animation-delay: 40ms; }
+:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(3) { animation-delay: 80ms; }
+:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(4) { animation-delay: 120ms; }
+:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(5) { animation-delay: 160ms; }
+:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(n + 6) { animation-delay: 200ms; }
+
+:is(.app-card, .card, [data-flux-card]):hover {
+    @apply border-brand-500/25 shadow-md shadow-brand-900/8 dark:border-brand-400/20;
+}
+
+/* Clickable cards also lift a little. */
+:is(a.app-card, a.card, a[data-flux-card], .mk-card:is(a)):hover {
+    transform: translateY(-2px);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-card,
+    .card,
+    .mk-card,
+    [data-flux-card] {
+        animation: none;
+        transition: none;
+    }
+
+    :is(a.app-card, a.card, a[data-flux-card], .mk-card:is(a)):hover {
+        transform: none;
+    }
+}

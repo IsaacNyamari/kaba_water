@@ -88,13 +88,13 @@ new #[Layout('layouts.portal'), Title('Payments')] class extends Component {
 
     {{-- Summary --}}
     <div class="grid gap-4 sm:grid-cols-2">
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Paid this month</div>
             <div class="text-2xl font-semibold text-accent-600 mt-1">
                 {{ number_format($summary['this_month'], 2) }}
             </div>
         </div>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Total paid</div>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($summary['total'], 2) }}
@@ -113,7 +113,7 @@ new #[Layout('layouts.portal'), Title('Payments')] class extends Component {
     </div>
 
     {{-- Table --}}
-    <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <div class="overflow-hidden app-card">
         <table class="w-full text-sm">
             <thead>
                 <tr

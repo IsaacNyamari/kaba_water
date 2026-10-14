@@ -174,7 +174,7 @@ new #[Layout('layouts.vendor'), Title('Readings')] class extends Component {
     </div>
 
     {{-- Table --}}
-    <div class="overflow-hidden rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900">
+    <div class="overflow-hidden app-card">
         <table class="w-full text-sm">
             <thead>
                 <tr

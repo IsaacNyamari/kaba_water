@@ -83,7 +83,7 @@ new #[Layout('layouts.portal'), Title('Profile')] class extends Component {
 
     {{-- Profile --}}
     <form wire:submit="saveProfile"
-        class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 space-y-5">
+        class="app-card p-6 space-y-5">
         <flux:heading size="sm">Your details</flux:heading>
 
         <flux:input wire:model="name" label="Full name" />
@@ -102,7 +102,7 @@ new #[Layout('layouts.portal'), Title('Profile')] class extends Component {
 
     {{-- Password --}}
     <form wire:submit="updatePassword"
-        class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 space-y-5">
+        class="app-card p-6 space-y-5">
         <div>
             <flux:heading size="sm">Password</flux:heading>
             <flux:text class="text-sm text-zinc-500">Use at least 8 characters.</flux:text>

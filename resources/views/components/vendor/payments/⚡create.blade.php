@@ -124,7 +124,7 @@ new #[Layout('layouts.vendor', ['title' => 'Record payment'])] class extends Com
 <div class="p-4 lg:p-6 max-w-2xl">
     <form wire:submit="save" class="space-y-6">
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-6 space-y-5">
+        <div class="app-card p-6 space-y-5">
             <flux:heading size="sm">Payment details</flux:heading>
 
             <flux:select wire:model.live="invoice_id" label="Invoice" searchable placeholder="— Pick an unpaid invoice —">

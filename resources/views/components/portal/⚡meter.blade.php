@@ -34,7 +34,7 @@ new #[Layout('layouts.portal'), Title('My Meter')] class extends Component {
 
     @forelse ($this->meters as $meter)
         <div wire:key="meter-{{ $meter->id }}"
-            class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
+            class="app-card overflow-hidden">
 
             <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
                 <div>
@@ -97,7 +97,7 @@ new #[Layout('layouts.portal'), Title('My Meter')] class extends Component {
             @endif
         </div>
     @empty
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-12 text-center">
+        <div class="app-card p-12 text-center">
             <flux:icon name="cog-6-tooth" class="w-12 h-12 mx-auto text-zinc-300" />
             <div class="mt-4 font-medium text-zinc-700 dark:text-zinc-300">No meters on your account</div>
             <p class="text-sm text-zinc-500 mt-1">

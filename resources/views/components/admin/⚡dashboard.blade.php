@@ -46,7 +46,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
 
     {{-- KPI strip --}}
     <div class="grid auto-rows-min gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Total vendors</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($this->stats['vendors_total']) }}
@@ -58,7 +58,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
             </div>
         </div>
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Monthly recurring revenue</span>
             <div class="text-2xl font-semibold text-accent-600 mt-1">
                 {{ number_format($this->stats['mrr'], 2) }}
@@ -66,7 +66,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
             <div class="text-xs text-zinc-500 mt-1">From active subscriptions</div>
         </div>
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">End clients</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($this->stats['clients']) }}
@@ -74,7 +74,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
             <div class="text-xs text-zinc-500 mt-1">Across all vendors</div>
         </div>
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Invoices issued</span>
             <div class="text-2xl font-semibold text-brand-600 mt-1">
                 {{ number_format($this->stats['invoices_issued']) }}
@@ -88,7 +88,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
     {{-- Plan breakdown --}}
     <div class="grid gap-4 lg:grid-cols-3">
         <div
-            class="lg:col-span-2 rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 overflow-hidden">
+            class="lg:col-span-2 app-card overflow-hidden">
             <div class="flex items-center justify-between px-5 py-4 border-b border-zinc-200 dark:border-zinc-700">
                 <h2 class="font-semibold text-zinc-900 dark:text-zinc-100">Recent Vendors</h2>
                 <a href="{{ route('admin.vendors.index') }}" class="text-sm text-brand-600 hover:underline">View all</a>
@@ -133,7 +133,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
             </flux:table>
         </div>
 
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <h2 class="font-semibold text-zinc-900 dark:text-zinc-100 mb-4">Plans</h2>
             <div class="space-y-4">
                 @foreach ($this->planBreakdown as $plan)

@@ -78,15 +78,15 @@ new #[Layout('layouts.vendor'), Title('Expenses')] class extends Component
 
     {{-- Summary --}}
     <div class="grid gap-4 sm:grid-cols-3">
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">This month</span>
             <div class="text-2xl font-semibold text-rose-600 mt-1">{{ number_format($summary['this_month'], 2) }}</div>
         </div>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">This year</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{{ number_format($summary['this_year'], 2) }}</div>
         </div>
-        <div class="rounded-xl border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-900 p-5">
+        <div class="app-card p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">All time</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{{ number_format($summary['all_time'], 2) }}</div>
         </div>

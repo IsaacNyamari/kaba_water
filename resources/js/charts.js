@@ -97,7 +97,7 @@ window.chart = (data = null, options = {}) => ({
     applyTheme(data, options) {
         const dark = document.documentElement.classList.contains('dark');
         const grid = dark ? 'rgba(255,255,255,0.06)' : 'rgba(15,23,42,0.06)';
-        const tick = dark ? '#a1a1aa' : '#71717a';
+        const tick = dark ? '#a7b4c6' : '#71717a';
 
         const scales = data.type === 'doughnut' ? {} : {
             x: {
@@ -137,10 +137,10 @@ window.chart = (data = null, options = {}) => ({
                         labels: { color: tick, boxWidth: 10, boxHeight: 10, padding: 12, usePointStyle: true },
                     },
                     tooltip: {
-                        backgroundColor: dark ? '#18181b' : '#ffffff',
+                        backgroundColor: dark ? '#071a33' : '#ffffff',
                         titleColor: dark ? '#fafafa' : '#0f172a',
                         bodyColor: dark ? '#d4d4d8' : '#334155',
-                        borderColor: dark ? '#27272a' : '#e2e8f0',
+                        borderColor: dark ? '#1f3a5c' : '#e2e8f0',
                         borderWidth: 1,
                         padding: 10,
                         cornerRadius: 8,
