@@ -50,6 +50,11 @@
                         :current="request()->routeIs('admin.plans.*')" wire:navigate>
                         {{ __('Plans') }}
                     </flux:sidebar.item>
+
+                    <flux:sidebar.item icon="adjustments-horizontal" :href="route('admin.settings.index')"
+                        :current="request()->routeIs('admin.settings.*')">
+                        {{ __('Settings') }}
+                    </flux:sidebar.item>
                 </flux:sidebar.group>
             @endrole
 

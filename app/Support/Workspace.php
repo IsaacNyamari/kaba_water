@@ -27,8 +27,8 @@ final class Workspace
             return [
                 'name' => (string) config('app.name'),
                 'initials' => self::initials((string) config('app.name')),
-                'logo' => null,
-                'icon' => null,
+                'logo' => self::url(config('platform.logo')),
+                'icon' => self::url(config('platform.icon')),
                 'platform' => true,
             ];
         }

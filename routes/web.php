@@ -85,6 +85,9 @@ Route::middleware(['auth', 'verified', 'role:super_admin'])
         Route::livewire('/plans',             'admin.plans.index')->name('plans.index');
         Route::livewire('/plans/create',      'admin.plans.form')->name('plans.create');
         Route::livewire('/plans/{plan}/edit', 'admin.plans.form')->name('plans.edit');
+
+        // Platform settings (.env + branding) — re-confirm the password first.
+        Route::livewire('/settings', 'admin.settings.index')->middleware('password.confirm')->name('settings.index');
     });
 
 /*

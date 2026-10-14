@@ -1,19 +1,25 @@
 <?php
 
+use App\Concerns\PasswordValidationRules;
 use App\Concerns\ProfileValidationRules;
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Flux\Flux;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Session;
+use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Computed;
 use Livewire\Attributes\Title;
 use Livewire\Component;
 
 new #[Title('Profile settings')] class extends Component {
-    use ProfileValidationRules;
+    use PasswordValidationRules, ProfileValidationRules;
 
     public string $name = '';
     public string $email = '';
+
+    public string $current_password = '';
+    public string $password = '';
+    public string $password_confirmation = '';
 
     /**
      * Mount the component.
@@ -42,6 +48,31 @@ new #[Title('Profile settings')] class extends Component {
         $user->save();
 
         Flux::toast(variant: 'success', text: __('Profile updated.'));
+    }
+
+    /**
+     * Update the password for the currently authenticated user.
+     */
+    public function updatePassword(): void
+    {
+        try {
+            $validated = $this->validate([
+                'current_password' => $this->currentPasswordRules(),
+                'password' => $this->passwordRules(),
+            ]);
+        } catch (ValidationException $e) {
+            $this->reset('current_password', 'password', 'password_confirmation');
+
+            throw $e;
+        }
+
+        Auth::user()->update([
+            'password' => $validated['password'],
+        ]);
+
+        $this->reset('current_password', 'password', 'password_confirmation');
+
+        Flux::toast(variant: 'success', text: __('Password updated.'));
     }
 
     /**
@@ -116,6 +147,46 @@ new #[Title('Profile settings')] class extends Component {
 
             </div>
         </form>
+
+        <section class="mt-12">
+            <flux:heading>{{ __('Update password') }}</flux:heading>
+            <flux:subheading>{{ __('Ensure your account is using a long, random password to stay secure') }}</flux:subheading>
+
+        <form method="POST" wire:submit="updatePassword" class="mt-6 space-y-6">
+            <flux:input
+                wire:model="current_password"
+                :label="__('Current password')"
+                type="password"
+                required
+                autocomplete="current-password"
+                viewable
+            />
+            <flux:input
+                wire:model="password"
+                :label="__('New password')"
+                type="password"
+                required
+                autocomplete="new-password"
+                passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
+                viewable
+            />
+            <flux:input
+                wire:model="password_confirmation"
+                :label="__('Confirm password')"
+                type="password"
+                required
+                autocomplete="new-password"
+                passwordrules="{{ \Illuminate\Validation\Rules\Password::defaults()->toPasswordRulesString() }}"
+                viewable
+            />
+
+            <div class="flex items-center gap-4">
+                <flux:button variant="primary" type="submit" data-test="update-password-button">
+                    {{ __('Save') }}
+                </flux:button>
+            </div>
+        </form>
+        </section>
 
         @if ($this->showDeleteUser)
             <livewire:pages::settings.delete-user-form />

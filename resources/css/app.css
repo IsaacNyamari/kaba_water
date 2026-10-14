@@ -308,3 +308,56 @@ select:focus[data-flux-control] {
         display: none;
     }
 }
+
+/* ─────────────────────────────────────────────────────────────
+   Tables — comfortable padding everywhere
+   Flux strips the padding from the first and last columns
+   (first:ps-0 / last:pe-0). These rules sit in the utilities layer
+   with higher specificity, so they win over that, while vertical
+   padding and per-table tweaks are left alone.
+   ───────────────────────────────────────────────────────────── */
+@layer utilities {
+    /* Inner columns keep Flux's 0.75rem; the outer edges get breathing room. */
+    [data-flux-table] :is([data-flux-column], [data-flux-cell]):first-child {
+        padding-inline-start: 1rem;
+    }
+
+    [data-flux-table] :is([data-flux-column], [data-flux-cell]):last-child {
+        padding-inline-end: 1rem;
+    }
+
+    @media (min-width: 1280px) {
+        [data-flux-table] :is([data-flux-column], [data-flux-cell]):first-child {
+            padding-inline-start: 1.25rem;
+        }
+
+        [data-flux-table] :is([data-flux-column], [data-flux-cell]):last-child {
+            padding-inline-end: 1.25rem;
+        }
+    }
+
+    /* Header row: a soft brand tint so it reads as a header. */
+    [data-flux-table] [data-flux-column] {
+        background-color: color-mix(in oklab, var(--color-brand-50) 70%, transparent);
+    }
+
+    .dark [data-flux-table] [data-flux-column] {
+        background-color: color-mix(in oklab, var(--color-brand-500) 8%, transparent);
+    }
+
+    /* Row hover. */
+    [data-flux-table] tbody tr:hover > [data-flux-cell] {
+        background-color: color-mix(in oklab, var(--color-brand-50) 55%, transparent);
+    }
+
+    .dark [data-flux-table] tbody tr:hover > [data-flux-cell] {
+        background-color: color-mix(in oklab, var(--color-brand-500) 6%, transparent);
+    }
+
+    /* Pagination under a table lines up with the padded columns. */
+    [data-flux-table] ~ [data-flux-pagination],
+    ui-table-scroll-area + [data-flux-pagination] {
+        padding-inline: 1rem;
+        padding-block: 0.75rem;
+    }
+}

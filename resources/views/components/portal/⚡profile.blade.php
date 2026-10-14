@@ -1,6 +1,5 @@
 <?php
 
-use Illuminate\Support\Facades\Hash;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
 use Livewire\Component;
@@ -11,9 +10,6 @@ new #[Layout('layouts.portal'), Title('Profile')] class extends Component {
     public string $phone = '';
     public string $address = '';
 
-    public string $current_password = '';
-    public string $new_password = '';
-    public string $new_password_confirmation = '';
 
     public function mount(): void
     {
@@ -52,25 +48,6 @@ new #[Layout('layouts.portal'), Title('Profile')] class extends Component {
         \Flux::toast(variant: 'success', heading: 'Profile updated');
     }
 
-    public function updatePassword(): void
-    {
-        $this->validate([
-            'current_password' => ['required'],
-            'new_password' => ['required', 'string', 'min:8', 'confirmed'],
-        ]);
-
-        if (!Hash::check($this->current_password, auth()->user()->password)) {
-            $this->addError('current_password', 'Current password is incorrect.');
-            return;
-        }
-
-        auth()
-            ->user()
-            ->update(['password' => $this->new_password]);
-
-        $this->reset('current_password', 'new_password', 'new_password_confirmation');
-        \Flux::toast(variant: 'success', heading: 'Password updated');
-    }
 };
 ?>
 
@@ -78,7 +55,7 @@ new #[Layout('layouts.portal'), Title('Profile')] class extends Component {
 
     <div>
         <h1 class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100">Profile</h1>
-        <p class="text-sm text-zinc-500 mt-1">Manage your personal details and password.</p>
+        <p class="text-sm text-zinc-500 mt-1">Manage your personal details.</p>
     </div>
 
     {{-- Profile --}}
@@ -100,22 +77,12 @@ new #[Layout('layouts.portal'), Title('Profile')] class extends Component {
         </div>
     </form>
 
-    {{-- Password --}}
-    <form wire:submit="updatePassword"
-        class="app-card p-6 space-y-5">
+    {{-- Password changes live on the shared profile settings page --}}
+    <div class="app-card flex flex-wrap items-center justify-between gap-3 p-6">
         <div>
             <flux:heading size="sm">Password</flux:heading>
-            <flux:text class="text-sm text-zinc-500">Use at least 8 characters.</flux:text>
+            <flux:text class="text-sm text-zinc-500">Change your sign-in password from your account settings.</flux:text>
         </div>
-
-        <flux:input wire:model="current_password" type="password" label="Current password" />
-        <div class="grid gap-5 sm:grid-cols-2">
-            <flux:input wire:model="new_password" type="password" label="New password" />
-            <flux:input wire:model="new_password_confirmation" type="password" label="Confirm new password" />
-        </div>
-
-        <div class="flex justify-end">
-            <flux:button type="submit" variant="primary">Update password</flux:button>
-        </div>
-    </form>
+        <flux:button :href="route('profile.edit')" wire:navigate icon="key">Change password</flux:button>
+    </div>
 </div>

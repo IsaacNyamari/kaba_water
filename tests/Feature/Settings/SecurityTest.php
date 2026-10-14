@@ -78,6 +78,7 @@ test('two factor authentication disabled when confirmation abandoned between req
     ]);
 });
 
+// Passwords are changed on the profile page (profile.edit).
 test('password can be updated', function () {
     $user = User::factory()->create([
         'password' => Hash::make('password'),
@@ -85,7 +86,7 @@ test('password can be updated', function () {
 
     $this->actingAs($user);
 
-    $response = Livewire::test('pages::settings.security')
+    $response = Livewire::test('pages::settings.profile')
         ->set('current_password', 'password')
         ->set('password', 'new-password')
         ->set('password_confirmation', 'new-password')
@@ -103,7 +104,7 @@ test('correct password must be provided to update password', function () {
 
     $this->actingAs($user);
 
-    $response = Livewire::test('pages::settings.security')
+    $response = Livewire::test('pages::settings.profile')
         ->set('current_password', 'wrong-password')
         ->set('password', 'new-password')
         ->set('password_confirmation', 'new-password')
