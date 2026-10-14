@@ -23,8 +23,34 @@
     --color-zinc-900: #171717;
     --color-zinc-950: #0a0a0a;
 
-    --color-accent: var(--color-neutral-800);
-    --color-accent-content: var(--color-neutral-800);
+    /* Brand scale (aqua → teal → navy). Used across the app as brand-* and accent-*. */
+    --color-brand-50: #f0fdfa;
+    --color-brand-100: #ccfbf1;
+    --color-brand-200: #99f6e4;
+    --color-brand-300: #5eead4;
+    --color-brand-400: #2dd4bf;
+    --color-brand-500: #14b8a6;
+    --color-brand-600: #0e7c86;
+    --color-brand-700: #0b6470;
+    --color-brand-800: #0b4f5c;
+    --color-brand-900: #0b2545;
+    --color-brand-950: #071a33;
+
+    --color-accent-50: var(--color-brand-50);
+    --color-accent-100: var(--color-brand-100);
+    --color-accent-200: var(--color-brand-200);
+    --color-accent-300: var(--color-brand-300);
+    --color-accent-400: var(--color-brand-400);
+    --color-accent-500: var(--color-brand-500);
+    --color-accent-600: var(--color-brand-600);
+    --color-accent-700: var(--color-brand-700);
+    --color-accent-800: var(--color-brand-800);
+    --color-accent-900: var(--color-brand-900);
+    --color-accent-950: var(--color-brand-950);
+
+    /* Flux accent: primary buttons, focus rings, active navigation */
+    --color-accent: var(--color-brand-600);
+    --color-accent-content: var(--color-brand-600);
     --color-accent-foreground: var(--color-white);
 
     /* Marketing site — aqua / deep navy / teal */
@@ -64,9 +90,9 @@
 
 @layer theme {
     .dark {
-        --color-accent: var(--color-white);
-        --color-accent-content: var(--color-white);
-        --color-accent-foreground: var(--color-neutral-800);
+        --color-accent: var(--color-brand-400);
+        --color-accent-content: var(--color-brand-400);
+        --color-accent-foreground: var(--color-brand-950);
     }
 }
 
