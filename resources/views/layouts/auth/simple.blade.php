@@ -68,15 +68,9 @@
             <div class="mx-auto flex min-h-svh max-w-6xl flex-col px-6 py-6 lg:px-10">
                 {{-- Brand + theme toggle --}}
                 <div class="flex items-center justify-between">
-                <a href="{{ route('home') }}" wire:navigate class="inline-flex items-center gap-2.5" aria-label="{{ config('app.name') }} home">
-                    <span class="flex size-10 items-center justify-center rounded-xl bg-brand-600 ring-1 ring-brand-700/20 dark:bg-white/15 dark:ring-white/25 dark:backdrop-blur">
-                        <svg viewBox="0 0 24 24" class="size-5 fill-white" aria-hidden="true">
-                            <path d="M12 2.5c3.3 4.1 6 7.4 6 11a6 6 0 1 1-12 0c0-3.6 2.7-6.9 6-11Z" />
-                        </svg>
-                    </span>
-                    <span class="text-xl font-semibold tracking-tight text-brand-950 dark:text-white">
-                        {{ str(config('app.name'))->before(' ') }}<span class="text-brand-600 dark:text-brand-300"> {{ str(config('app.name'))->after(' ') }}</span>
-                    </span>
+                <a href="{{ route('home') }}" wire:navigate class="inline-flex items-center" aria-label="{{ config('app.name') }} home">
+                    <img src="{{ asset('images/brand/humsols-logo.png') }}" alt="HumSols — Human Solutions" class="h-10 w-auto dark:hidden" />
+                    <img src="{{ asset('images/brand/humsols-logo-dark.png') }}" alt="HumSols — Human Solutions" class="hidden h-10 w-auto dark:block" />
                 </a>
 
                 <button type="button" x-data x-on:click="$flux.dark = ! $flux.dark" aria-label="{{ __('Toggle dark mode') }}"

@@ -1,7 +1,7 @@
 @extends('layouts.marketing')
 
 @section('title', 'About')
-@section('meta_description', 'Kaba Water builds billing software for the small water companies, borehole operators and estate managers who keep neighbourhoods supplied.')
+@section('meta_description', 'Human Solutions builds billing software for the small water companies, borehole operators and estate managers who keep neighbourhoods supplied.')
 
 @php
     $values = [
@@ -59,7 +59,7 @@
                 Most small water vendors bill the same way: a reader walks the route with a notebook, someone types the numbers into a spreadsheet, and invoices are worked out one row at a time. It works, until there are two hundred meters, three tariff bands and a customer disputing last March.
             </p>
             <p>
-                Kaba Water began as a way to take that monthly week of typing away. Readings go in at the meter. Tariffs are applied the same way for everyone. Invoices, payments and balances stay in step without anyone reconciling them by hand.
+                HS Water Billing began as a way to take that monthly week of typing away. Readings go in at the meter. Tariffs are applied the same way for everyone. Invoices, payments and balances stay in step without anyone reconciling them by hand.
             </p>
             <p>
                 Since then it has grown into the system a vendor runs the whole business on: expenses, repairs, assets and a full set of accounts, all fed by the same readings.

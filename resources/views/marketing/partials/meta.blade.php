@@ -1,5 +1,5 @@
 @php
-    $appName = config('app.name', 'Kaba Water');
+    $appName = config('app.name', 'Human Solutions');
     $pageTitle = trim($__env->yieldContent('title'));
     $fullTitle = $pageTitle !== '' ? "{$pageTitle} · {$appName}" : $appName;
     $description = trim($__env->yieldContent('meta_description')) ?: config('marketing.tagline');

@@ -1,7 +1,7 @@
 @extends('layouts.marketing')
 
 @section('title', 'Services & features')
-@section('meta_description', 'Meter readings, photo capture, tiered tariffs, invoicing, payments, a client portal and full financial reports. See everything Kaba Water does for a water vendor.')
+@section('meta_description', 'Meter readings, photo capture, tiered tariffs, invoicing, payments, a client portal and full financial reports. See everything HS Water Billing does for a water vendor.')
 
 @php
     $sections = [
@@ -28,7 +28,7 @@
             'icon' => 'document-text',
             'eyebrow' => 'Invoicing & tariffs',
             'title' => 'Tiered tariffs applied correctly, every time.',
-            'text' => 'Set your consumption bands, standing charge and tax once. Kaba Water applies them to each reading and produces a clear invoice that shows the customer exactly how the total was reached.',
+            'text' => 'Set your consumption bands, standing charge and tax once. HS Water Billing applies them to each reading and produces a clear invoice that shows the customer exactly how the total was reached.',
             'points' => ['Consumption bands with a different rate for each', 'Draft, sent, paid, overdue and void statuses', 'A branded PDF for every invoice'],
             'mockup' => 'invoice',
         ],
@@ -73,7 +73,7 @@
     @include('marketing.partials.page-hero', [
         'eyebrow' => 'Services',
         'title' => 'One system for the whole billing cycle.',
-        'lead' => 'From the reader at the gate to the accountant at year end, Kaba Water keeps everyone working from the same numbers.',
+        'lead' => 'From the reader at the gate to the accountant at year end, HS Water Billing keeps everyone working from the same numbers.',
     ])
 
     {{-- Anchor chips --}}

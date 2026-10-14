@@ -1,7 +1,7 @@
 @extends('layouts.marketing')
 
 @section('title', 'Terms of service')
-@section('meta_description', 'The terms that apply when you use Kaba Water to bill your water customers.')
+@section('meta_description', 'The terms that apply when you use HS Water Billing to bill your water customers.')
 
 @section('content')
     @include('marketing.partials.page-hero', [
@@ -13,12 +13,12 @@
     <div class="bg-white dark:bg-navy-deep">
         @component('marketing.partials.prose')
             <p>
-                These terms apply when you use Kaba Water, the water-utility billing service. By creating a workspace or signing in, you agree to them. If you are accepting on behalf of a business, you confirm you are authorised to do so.
+                These terms apply when you use HS Water Billing, the water-utility billing service. By creating a workspace or signing in, you agree to them. If you are accepting on behalf of a business, you confirm you are authorised to do so.
             </p>
 
             <h2>1. The service</h2>
             <p>
-                Kaba Water lets a water vendor record clients, meters and readings, issue invoices, record payments and produce financial reports. We may improve or change features over time, and will give reasonable notice of any change that removes something you rely on.
+                HS Water Billing lets a water vendor record clients, meters and readings, issue invoices, record payments and produce financial reports. We may improve or change features over time, and will give reasonable notice of any change that removes something you rely on.
             </p>
 
             <h2>2. Your account</h2>
@@ -52,7 +52,7 @@
 
             <h2>7. Availability and liability</h2>
             <p>
-                We work to keep the service available and your data safe, but we do not promise it will be uninterrupted or free of errors. Kaba Water is a tool for running your billing; it is not tax, legal or accounting advice. To the extent the law allows, our total liability to you is limited to the fees you paid us in the twelve months before the claim.
+                We work to keep the service available and your data safe, but we do not promise it will be uninterrupted or free of errors. HS Water Billing is a tool for running your billing; it is not tax, legal or accounting advice. To the extent the law allows, our total liability to you is limited to the fees you paid us in the twelve months before the claim.
             </p>
 
             <h2>8. Changes to these terms</h2>

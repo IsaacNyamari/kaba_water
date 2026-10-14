@@ -33,13 +33,13 @@
                 <p class="mt-4 max-w-xs text-sm text-pretty text-zinc-400">{{ config('marketing.tagline') }}</p>
 
                 <div class="mt-6 flex gap-2">
-                    <a href="{{ $social['x'] }}" aria-label="Kaba Water on X" class="flex size-10 items-center justify-center rounded-xl bg-white/5 text-zinc-300 transition hover:bg-aqua hover:text-navy">
+                    <a href="{{ $social['x'] }}" aria-label="Human Solutions on X" class="flex size-10 items-center justify-center rounded-xl bg-white/5 text-zinc-300 transition hover:bg-aqua hover:text-navy">
                         <svg viewBox="0 0 24 24" class="size-4 fill-none stroke-current stroke-2" aria-hidden="true"><path stroke-linecap="round" d="M5 5l14 14M19 5L5 19" /></svg>
                     </a>
-                    <a href="{{ $social['facebook'] }}" aria-label="Kaba Water on Facebook" class="flex size-10 items-center justify-center rounded-xl bg-white/5 text-zinc-300 transition hover:bg-aqua hover:text-navy">
+                    <a href="{{ $social['facebook'] }}" aria-label="Human Solutions on Facebook" class="flex size-10 items-center justify-center rounded-xl bg-white/5 text-zinc-300 transition hover:bg-aqua hover:text-navy">
                         <svg viewBox="0 0 24 24" class="size-4 fill-none stroke-current stroke-2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M15.5 4.5h-2a3 3 0 0 0-3 3V20M7.5 11.5h7" /></svg>
                     </a>
-                    <a href="{{ $social['linkedin'] }}" aria-label="Kaba Water on LinkedIn" class="flex size-10 items-center justify-center rounded-xl bg-white/5 text-zinc-300 transition hover:bg-aqua hover:text-navy">
+                    <a href="{{ $social['linkedin'] }}" aria-label="Human Solutions on LinkedIn" class="flex size-10 items-center justify-center rounded-xl bg-white/5 text-zinc-300 transition hover:bg-aqua hover:text-navy">
                         <svg viewBox="0 0 24 24" class="size-4 fill-none stroke-current stroke-2" aria-hidden="true"><path stroke-linecap="round" stroke-linejoin="round" d="M6 10v8M6 6v.01M11 18v-8M11 13.5a3 3 0 0 1 6 0V18" /></svg>
                     </a>
                 </div>

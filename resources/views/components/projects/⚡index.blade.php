@@ -202,8 +202,8 @@ new #[Layout('layouts.vendor'), Title('Projects')] class extends Component {
     @endif
 
     {{-- Filters --}}
-    <div class="app-card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-6">
-        <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search name or reference" class="lg:col-span-2" />
+    <div class="app-card grid gap-3 p-4 sm:grid-cols-2 lg:grid-cols-4 2xl:grid-cols-7">
+        <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass" placeholder="Search name or reference" class="sm:col-span-2" />
         <flux:select wire:model.live="status">
             <flux:select.option value="">All stages</flux:select.option>
             <flux:select.option value="delayed">Delayed (past due)</flux:select.option>
@@ -223,9 +223,10 @@ new #[Layout('layouts.vendor'), Title('Projects')] class extends Component {
                 <flux:select.option value="{{ $m->id }}">{{ $m->name }}</flux:select.option>
             @endforeach
         </flux:select>
-        <div class="flex gap-2">
-            <flux:input type="date" wire:model.live="from" aria-label="Started from" />
-            <flux:input type="date" wire:model.live="to" aria-label="Started to" />
+        {{-- Start-date range: two equal columns that shrink instead of overflowing. --}}
+        <div class="grid min-w-0 grid-cols-2 gap-2 sm:col-span-2">
+            <flux:input type="date" wire:model.live="from" aria-label="Started from" class="min-w-0" />
+            <flux:input type="date" wire:model.live="to" aria-label="Started to" class="min-w-0" />
         </div>
     </div>
 

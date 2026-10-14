@@ -18,7 +18,7 @@ return [
     'contact' => [
         'phones' => ['+254 725 742 737', '+254 711 777 992'],
         'email' => 'info@humsols.com',
-        'address' => ['Kaba Water', 'Westlands', 'Nairobi, Kenya'],
+        'address' => ['Human Solutions', 'Westlands', 'Nairobi, Kenya'],
         'hours' => [
             'Monday – Friday' => '8:00 am – 5:30 pm',
             'Saturday' => '9:00 am – 1:00 pm',
@@ -158,7 +158,7 @@ return [
             'a' => 'Yes. You can add clients and meters yourself, and the opening balances wizard records what customers already owe you on the day you start. On the Enterprise plan we do the migration with you.',
         ],
         [
-            'q' => 'Does Kaba Water work with M-Pesa?',
+            'q' => 'Does HS Water Billing work with M-Pesa?',
             'a' => 'You record M-Pesa payments against an invoice with the transaction code, alongside cash and bank payments. The invoice balance and the client statement update immediately.',
         ],
         [

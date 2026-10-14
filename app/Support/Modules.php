@@ -22,7 +22,7 @@ final class Modules
 
         if ($water = self::waterHome($user)) {
             $modules['water'] = [
-                'name' => 'Water Billing',
+                'name' => 'HS Water Billing',
                 'description' => 'Clients, meters, readings, bills, payments, repairs and accounting.',
                 'icon' => 'beaker',
                 'url' => $water,

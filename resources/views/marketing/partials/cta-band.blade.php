@@ -5,7 +5,7 @@
             {{ $title ?? "Send this month's bills before lunch." }}
         </h2>
         <p class="mx-auto mt-4 max-w-xl text-lg text-pretty text-zinc-200">
-            {{ $lead ?? 'Set up your clients, meters and tariffs once. Kaba Water takes it from the reading to the receipt.' }}
+            {{ $lead ?? 'Set up your clients, meters and tariffs once. HS Water Billing takes it from the reading to the receipt.' }}
         </p>
         <div class="mt-8 flex flex-col items-center justify-center gap-3 sm:flex-row">
             <a href="{{ route('access.request') }}" wire:navigate class="btn-mk btn-mk-primary w-full sm:w-auto">

@@ -1,7 +1,7 @@
 @extends('layouts.marketing')
 
 @section('title', 'Privacy policy')
-@section('meta_description', 'What personal information Kaba Water collects, why, and the choices you have.')
+@section('meta_description', 'What personal information Human Solutions collects, why, and the choices you have.')
 
 @section('content')
     @include('marketing.partials.page-hero', [
@@ -13,12 +13,12 @@
     <div class="bg-white dark:bg-navy-deep">
         @component('marketing.partials.prose')
             <p>
-                This policy explains what personal information Kaba Water collects, how we use it and the choices you have. It covers this website and the Kaba Water billing service.
+                This policy explains what personal information Human Solutions collects, how we use it and the choices you have. It covers this website and the HS Water Billing service.
             </p>
 
             <h2>1. Who is responsible</h2>
             <p>
-                For information about our own customers and website visitors, Kaba Water decides how it is used. For information a water vendor enters about <strong>their</strong> customers (names, meters, readings, bills), the vendor decides how it is used and we process it on their instructions.
+                For information about our own customers and website visitors, Human Solutions decides how it is used. For information a water vendor enters about <strong>their</strong> customers (names, meters, readings, bills), the vendor decides how it is used and we process it on their instructions.
             </p>
 
             <h2>2. What we collect</h2>
@@ -51,7 +51,7 @@
 
             <h2>6. Your rights</h2>
             <p>
-                Under the Kenya Data Protection Act, 2019 you can ask to see the personal information held about you, have it corrected or deleted, and object to how it is used. If your water vendor uses Kaba Water, contact them first, as they hold your billing records. For anything we hold directly, <a href="{{ route('marketing.contact') }}" wire:navigate>contact us</a>.
+                Under the Kenya Data Protection Act, 2019 you can ask to see the personal information held about you, have it corrected or deleted, and object to how it is used. If your water vendor uses HS Water Billing, contact them first, as they hold your billing records. For anything we hold directly, <a href="{{ route('marketing.contact') }}" wire:navigate>contact us</a>.
             </p>
 
             <h2>7. Cookies</h2>

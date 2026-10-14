@@ -1,7 +1,7 @@
 @extends('layouts.marketing')
 
 @section('title', 'Water billing software for vendors')
-@section('meta_description', 'Kaba Water turns meter readings into invoices and payments. Built for small water companies, borehole operators and estate managers in Kenya.')
+@section('meta_description', 'HS Water Billing turns meter readings into invoices and payments. Built for small water companies, borehole operators and estate managers in Kenya.')
 
 @php
     $features = [
@@ -39,7 +39,7 @@
                 </h1>
 
                 <p class="mx-auto mt-6 max-w-xl text-lg text-pretty text-zinc-600 lg:mx-0 dark:text-zinc-300">
-                    Kaba Water takes you from the meter reading to the invoice to the payment in one place, so month-end takes an afternoon instead of a week.
+                    HS Water Billing takes you from the meter reading to the invoice to the payment in one place, so month-end takes an afternoon instead of a week.
                 </p>
 
                 <div class="mt-8 flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">

@@ -1,7 +1,7 @@
 @extends('layouts.marketing')
 
 @section('title', 'Contact')
-@section('meta_description', 'Talk to the Kaba Water team. Book a demo, ask about pricing, or get help moving your clients and meters across.')
+@section('meta_description', 'Talk to the Human Solutions team. Book a demo, ask about pricing, or get help moving your clients and meters across.')
 
 @php $contact = config('marketing.contact'); @endphp
 
