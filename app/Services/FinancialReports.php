@@ -8,6 +8,7 @@ use App\Models\Expense;
 use App\Models\Invoice;
 use App\Models\Liability;
 use App\Models\Payment;
+use App\Support\SqlDate;
 use Carbon\CarbonInterface;
 use Illuminate\Support\Facades\DB;
 
@@ -45,15 +46,15 @@ class FinancialReports
         $expenseTotal = $expenseRows->sum('total');
 
         return [
-            'period'        => ['from' => $from, 'to' => $to],
-            'revenue'       => round($revenue, 2),
-            'expense_lines' => $expenseRows->map(fn($e) => [
-                'name'   => $e->category?->name ?? 'Uncategorised',
-                'color'  => $e->category?->color ?? 'zinc',
+            'period' => ['from' => $from, 'to' => $to],
+            'revenue' => round($revenue, 2),
+            'expense_lines' => $expenseRows->map(fn ($e) => [
+                'name' => $e->category?->name ?? 'Uncategorised',
+                'color' => $e->category?->color ?? 'zinc',
                 'amount' => round((float) $e->total, 2),
             ])->all(),
-            'expenses'      => round($expenseTotal, 2),
-            'net_profit'    => round($revenue - $expenseTotal, 2),
+            'expenses' => round($expenseTotal, 2),
+            'net_profit' => round($revenue - $expenseTotal, 2),
             'profit_margin' => $revenue > 0
                 ? round((($revenue - $expenseTotal) / $revenue) * 100, 1)
                 : 0.0,
@@ -107,7 +108,7 @@ class FinancialReports
             ->where('vendor_id', $this->vendorId)
             ->where('status', 'active')
             ->get()
-            ->sum(fn(Asset $a) => $a->bookValue());
+            ->sum(fn (Asset $a) => $a->bookValue());
 
         $totalAssets = round($cash + $receivables + $fixedAssets, 2);
 
@@ -117,22 +118,22 @@ class FinancialReports
             ->where('status', 'active')
             ->get();
 
-        $liabilityLines = $liabilities->map(fn(Liability $l) => [
-            'name'   => $l->name,
+        $liabilityLines = $liabilities->map(fn (Liability $l) => [
+            'name' => $l->name,
             'amount' => round($l->outstanding(), 2),
         ])->all();
 
         $totalLiabilities = round(collect($liabilityLines)->sum('amount'), 2);
 
         return [
-            'as_of'             => $asOf,
-            'cash'              => $cash,
-            'receivables'       => round($receivables, 2),
-            'fixed_assets'      => round((float) $fixedAssets, 2),
-            'total_assets'      => $totalAssets,
-            'liability_lines'   => $liabilityLines,
+            'as_of' => $asOf,
+            'cash' => $cash,
+            'receivables' => round($receivables, 2),
+            'fixed_assets' => round((float) $fixedAssets, 2),
+            'total_assets' => $totalAssets,
+            'liability_lines' => $liabilityLines,
             'total_liabilities' => $totalLiabilities,
-            'equity'            => round($totalAssets - $totalLiabilities, 2),
+            'equity' => round($totalAssets - $totalLiabilities, 2),
         ];
     }
 
@@ -148,33 +149,33 @@ class FinancialReports
         $revenue = Payment::withoutGlobalScope('vendor')
             ->where('vendor_id', $this->vendorId)
             ->where('paid_at', '>=', $start)
-            ->selectRaw(\App\Support\SqlDate::yearMonth('paid_at') . " as ym, SUM(amount) as total")
+            ->selectRaw(SqlDate::yearMonth('paid_at').' as ym, SUM(amount) as total')
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
         $expenses = Expense::withoutGlobalScope('vendor')
             ->where('vendor_id', $this->vendorId)
             ->where('paid_at', '>=', $start)
-            ->selectRaw(\App\Support\SqlDate::yearMonth('paid_at') . " as ym, SUM(amount + tax) as total")
+            ->selectRaw(SqlDate::yearMonth('paid_at').' as ym, SUM(amount + tax) as total')
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
         $labels = [];
-        $rev    = [];
-        $exp    = [];
-        $net    = [];
+        $rev = [];
+        $exp = [];
+        $net = [];
 
         for ($i = $months - 1; $i >= 0; $i--) {
-            $d  = now()->subMonths($i);
+            $d = now()->subMonths($i);
             $ym = $d->format('Y-m');
 
             $r = (float) ($revenue[$ym] ?? 0);
             $e = (float) ($expenses[$ym] ?? 0);
 
             $labels[] = $d->format('M Y');
-            $rev[]    = round($r, 2);
-            $exp[]    = round($e, 2);
-            $net[]    = round($r - $e, 2);
+            $rev[] = round($r, 2);
+            $exp[] = round($e, 2);
+            $net[] = round($r - $e, 2);
         }
 
         return compact('labels', 'rev', 'exp', 'net');
@@ -198,7 +199,7 @@ class FinancialReports
 
         return [
             'labels' => $rows->pluck('category.name')->all(),
-            'values' => $rows->map(fn($r) => round((float) $r->total, 2))->all(),
+            'values' => $rows->map(fn ($r) => round((float) $r->total, 2))->all(),
             'colors' => $rows->pluck('category.color')->all(),
         ];
     }

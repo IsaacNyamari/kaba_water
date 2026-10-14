@@ -6,6 +6,7 @@ use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
 use App\Models\Payment;
 use App\Models\Reading;
+use App\Support\SqlDate;
 use Illuminate\Support\Facades\DB;
 
 class VendorAnalytics
@@ -22,7 +23,7 @@ class VendorAnalytics
         $payments = Payment::withoutGlobalScope('vendor')
             ->where('payments.vendor_id', $this->vendorId)
             ->where('payments.paid_at', '>=', $start)
-            ->selectRaw(\App\Support\SqlDate::yearMonth('payments.paid_at') . " as ym, SUM(payments.amount) as total")
+            ->selectRaw(SqlDate::yearMonth('payments.paid_at').' as ym, SUM(payments.amount) as total')
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
@@ -30,7 +31,7 @@ class VendorAnalytics
             ->where('invoices.vendor_id', $this->vendorId)
             ->where('invoices.status', '!=', InvoiceStatus::Void->value)
             ->where('invoices.issued_at', '>=', $start)
-            ->selectRaw(\App\Support\SqlDate::yearMonth('invoices.issued_at') . " as ym, SUM(invoices.total) as total")
+            ->selectRaw(SqlDate::yearMonth('invoices.issued_at').' as ym, SUM(invoices.total) as total')
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
@@ -38,11 +39,11 @@ class VendorAnalytics
 
         for ($i = $months - 1; $i >= 0; $i--) {
             $date = now()->subMonths($i);
-            $ym   = $date->format('Y-m');
+            $ym = $date->format('Y-m');
 
-            $labels[]  = $date->format('M Y');
+            $labels[] = $date->format('M Y');
             $revenue[] = round((float) ($payments[$ym] ?? 0), 2);
-            $billed[]  = round((float) ($invoices[$ym] ?? 0), 2);
+            $billed[] = round((float) ($invoices[$ym] ?? 0), 2);
         }
 
         return compact('labels', 'revenue', 'billed');
@@ -59,7 +60,7 @@ class VendorAnalytics
             ->where('readings.vendor_id', $this->vendorId)
             ->where('readings.status', 'approved')
             ->where('readings.read_at', '>=', $start)
-            ->selectRaw(\App\Support\SqlDate::yearMonth('readings.read_at') . " as ym, SUM(readings.consumption) as total")
+            ->selectRaw(SqlDate::yearMonth('readings.read_at').' as ym, SUM(readings.consumption) as total')
             ->groupBy('ym')
             ->pluck('total', 'ym');
 
@@ -107,22 +108,22 @@ class VendorAnalytics
     public function topConsumers(int $limit = 10, ?string $from = null, ?string $to = null): array
     {
         return DB::table('readings')
-            ->join('meters',  'meters.id',  '=', 'readings.meter_id')
+            ->join('meters', 'meters.id', '=', 'readings.meter_id')
             ->join('clients', 'clients.id', '=', 'meters.client_id')
             ->where('readings.vendor_id', $this->vendorId)
             ->where('readings.status', 'approved')
-            ->when($from, fn($q) => $q->whereDate('readings.read_at', '>=', $from))
-            ->when($to,   fn($q) => $q->whereDate('readings.read_at', '<=', $to))
+            ->when($from, fn ($q) => $q->whereDate('readings.read_at', '>=', $from))
+            ->when($to, fn ($q) => $q->whereDate('readings.read_at', '<=', $to))
             ->groupBy('clients.id', 'clients.name', 'clients.account_no')
             ->selectRaw('clients.id as id, clients.name as name, clients.account_no as account_no, SUM(readings.consumption) as total')
             ->orderByDesc('total')
             ->limit($limit)
             ->get()
-            ->map(fn($r) => [
-                'id'         => (int) $r->id,
-                'name'       => $r->name,
+            ->map(fn ($r) => [
+                'id' => (int) $r->id,
+                'name' => $r->name,
                 'account_no' => $r->account_no,
-                'total'      => (int) $r->total,
+                'total' => (int) $r->total,
             ])
             ->all();
     }
@@ -138,27 +139,33 @@ class VendorAnalytics
             ->get(['invoices.due_at', 'invoices.total', 'invoices.amount_paid']);
 
         $buckets = [
-            'Current'    => 0,
-            '1-30 days'  => 0,
+            'Current' => 0,
+            '1-30 days' => 0,
             '31-60 days' => 0,
             '61-90 days' => 0,
-            '90+ days'   => 0,
+            '90+ days' => 0,
         ];
 
         foreach ($rows as $r) {
             $balance = (float) $r->total - (float) $r->amount_paid;
-            $days    = now()->diffInDays($r->due_at, false);
+            $days = now()->diffInDays($r->due_at, false);
 
-            if ($days >= 0)         $buckets['Current']    += $balance;
-            elseif ($days >= -30)   $buckets['1-30 days']  += $balance;
-            elseif ($days >= -60)   $buckets['31-60 days'] += $balance;
-            elseif ($days >= -90)   $buckets['61-90 days'] += $balance;
-            else                    $buckets['90+ days']   += $balance;
+            if ($days >= 0) {
+                $buckets['Current'] += $balance;
+            } elseif ($days >= -30) {
+                $buckets['1-30 days'] += $balance;
+            } elseif ($days >= -60) {
+                $buckets['31-60 days'] += $balance;
+            } elseif ($days >= -90) {
+                $buckets['61-90 days'] += $balance;
+            } else {
+                $buckets['90+ days'] += $balance;
+            }
         }
 
         return [
             'labels' => array_keys($buckets),
-            'values' => array_map(fn($v) => round($v, 2), array_values($buckets)),
+            'values' => array_map(fn ($v) => round($v, 2), array_values($buckets)),
         ];
     }
 }
