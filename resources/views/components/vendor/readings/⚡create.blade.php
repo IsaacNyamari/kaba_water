@@ -254,7 +254,11 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
         $this->ocrError = null;
 
         try {
-            $digits = app(GeminiOcrService::class)->extract($this->photo->getRealPath(), $this->photo->getMimeType());
+            $digits = app(GeminiOcrService::class)->extract(
+                $this->photo->getRealPath(),
+                $this->photo->getMimeType(),
+                auth()->user()->vendor,
+            );
 
             if ($digits === '') {
                 $this->ocrError = 'No digits detected. Try a clearer, closer photo or enter the value manually.';
@@ -266,6 +270,8 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
             $this->source = 'ocr';
 
             \Flux::toast(variant: 'success', heading: 'OCR complete', text: "Extracted: {$digits}");
+        } catch (\App\Services\GeminiKeyMissingException $e) {
+            $this->ocrError = 'missing-key';
         } catch (\Throwable $e) {
             // Never show raw exception text: it can carry provider details.
             $this->ocrError = 'Could not read the photo automatically. Enter the reading manually, or try a clearer photo.';
@@ -290,6 +296,11 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
     public function save(): void
     {
         $this->authorize('create', Reading::class);
+
+        // Dials show leading zeros ("00156"); store and compare whole numbers.
+        $this->reading = \App\Support\MeterValue::normalize($this->reading);
+        $this->previous_reading = \App\Support\MeterValue::normalize($this->previous_reading);
+
         $this->validate();
 
         $photoPath = null;
@@ -476,7 +487,17 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
                             </div>
                         @endif
 
-                        @if ($ocrError)
+                        @if ($ocrError === 'missing-key')
+                            <div class="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800 dark:border-amber-500/20 dark:bg-amber-500/10 dark:text-amber-300">
+                                Automatic reading needs your own Gemini API key.
+                                @can('vendor.settings.manage')
+                                    <a href="{{ route('vendor.settings.index', ['tab' => 'integrations']) }}" class="font-semibold underline underline-offset-2">Add it in Settings → Integrations</a>,
+                                    or enter the reading manually.
+                                @else
+                                    Ask your workspace owner to add one in Settings, or enter the reading manually.
+                                @endcan
+                            </div>
+                        @elseif ($ocrError)
                             <div class="rounded-lg bg-rose-50 border border-rose-200 p-3 text-sm text-rose-700">
                                 {{ $ocrError }}
                             </div>

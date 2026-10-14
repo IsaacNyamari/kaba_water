@@ -71,6 +71,9 @@ new #[Layout('layouts.portal'), Title('Submit reading')] class extends Component
 
     public function save(): void
     {
+        // Dials show leading zeros ("00156"); store and compare whole numbers.
+        $this->reading = \App\Support\MeterValue::normalize($this->reading);
+
         $this->validate();
 
         if ($latest = $this->latestApproved) {

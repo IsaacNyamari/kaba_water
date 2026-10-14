@@ -35,7 +35,10 @@ return [
         ],
     ],
     'gemini' => [
-        'key'    => env('GEMINI_API_KEY'),
+        'key' => env('GEMINI_API_KEY'),
+        // Let vendors without their own key use the platform key above.
+        // Off by default so one vendor's usage can't exhaust the platform quota.
+        'platform_fallback' => (bool) env('GEMINI_PLATFORM_FALLBACK', false),
         'models' => array_values(array_filter(array_map(
             'trim',
             explode(',', env('GEMINI_MODELS', 'gemini-flash-lite-latest,gemini-flash-latest'))
