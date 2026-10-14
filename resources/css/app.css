@@ -160,7 +160,7 @@ select:focus[data-flux-control] {
 
 /* Shared surface: soft brand-tinted gradient, light edge, gentle shadow. */
 @utility app-card {
-    @apply rounded-2xl border border-brand-900/8 bg-linear-to-br from-white via-white to-brand-50/60 shadow-sm shadow-brand-900/5 dark:border-white/8 dark:from-zinc-900 dark:via-zinc-900 dark:to-brand-500/8 dark:shadow-black/20;
+    @apply rounded-2xl border border-brand-200/70 bg-linear-to-b from-brand-50 to-white shadow-sm shadow-brand-900/5 dark:border-brand-500/15 dark:from-brand-500/10 dark:to-zinc-900 dark:shadow-black/20;
 }
 
 /* Legacy .card / .card-header / .card-body markup (e.g. Bill a reading). */
@@ -169,7 +169,7 @@ select:focus[data-flux-control] {
 }
 
 .card-header {
-    @apply border-b border-brand-900/8 bg-brand-50/50 px-5 py-4 dark:border-white/8 dark:bg-brand-500/5;
+    @apply border-b border-brand-200/60 bg-brand-100/50 px-5 py-4 dark:border-brand-500/15 dark:bg-brand-500/10;
 }
 
 .card-body {
@@ -178,11 +178,44 @@ select:focus[data-flux-control] {
 
 /* Flux cards (default variant) get the same surface. Unlayered so it wins over Flux's :where() defaults. */
 [data-flux-card][data-flux-card-variant='default'] {
-    @apply border-brand-900/8 bg-linear-to-br from-white via-white to-brand-50/60 shadow-sm shadow-brand-900/5 dark:border-white/8 dark:from-zinc-900 dark:via-zinc-900 dark:to-brand-500/8 dark:shadow-black/20;
+    @apply border-brand-200/70 bg-linear-to-b from-brand-50 to-white shadow-sm shadow-brand-900/5 dark:border-brand-500/15 dark:from-brand-500/10 dark:to-zinc-900 dark:shadow-black/20;
+}
+
+/*
+ * Summary (KPI) cards: a coloured wash per meaning, matching the dashboard.
+ * Use as class="stat-card tone-rose p-5". Tones: brand, sky, emerald, amber, rose, violet.
+ */
+.stat-card {
+    @apply app-card bg-linear-to-br;
+}
+
+.stat-card.tone-brand {
+    @apply border-brand-200/80 from-brand-100/80 via-brand-50/60 to-white dark:border-brand-500/25 dark:from-brand-500/20 dark:via-brand-500/5 dark:to-zinc-900;
+}
+
+.stat-card.tone-sky {
+    @apply border-sky-200/80 from-sky-100/80 via-sky-50/60 to-white dark:border-sky-500/25 dark:from-sky-500/20 dark:via-sky-500/5 dark:to-zinc-900;
+}
+
+.stat-card.tone-emerald {
+    @apply border-emerald-200/80 from-emerald-100/80 via-emerald-50/60 to-white dark:border-emerald-500/25 dark:from-emerald-500/20 dark:via-emerald-500/5 dark:to-zinc-900;
+}
+
+.stat-card.tone-amber {
+    @apply border-amber-200/80 from-amber-100/80 via-amber-50/60 to-white dark:border-amber-500/25 dark:from-amber-500/20 dark:via-amber-500/5 dark:to-zinc-900;
+}
+
+.stat-card.tone-rose {
+    @apply border-rose-200/80 from-rose-100/80 via-rose-50/60 to-white dark:border-rose-500/25 dark:from-rose-500/20 dark:via-rose-500/5 dark:to-zinc-900;
+}
+
+.stat-card.tone-violet {
+    @apply border-violet-200/80 from-violet-100/80 via-violet-50/60 to-white dark:border-violet-500/25 dark:from-violet-500/20 dark:via-violet-500/5 dark:to-zinc-900;
 }
 
 /* Motion: fade up on first paint (staggered across siblings) and a soft hover. */
 .app-card,
+.stat-card,
 .card,
 .mk-card,
 [data-flux-card] {
@@ -193,18 +226,18 @@ select:focus[data-flux-control] {
         border-color 0.2s ease;
 }
 
-:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(2) { animation-delay: 40ms; }
-:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(3) { animation-delay: 80ms; }
-:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(4) { animation-delay: 120ms; }
-:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(5) { animation-delay: 160ms; }
-:is(.app-card, .card, .mk-card, [data-flux-card]):nth-child(n + 6) { animation-delay: 200ms; }
+:is(.app-card, .stat-card, .card, .mk-card, [data-flux-card]):nth-child(2) { animation-delay: 40ms; }
+:is(.app-card, .stat-card, .card, .mk-card, [data-flux-card]):nth-child(3) { animation-delay: 80ms; }
+:is(.app-card, .stat-card, .card, .mk-card, [data-flux-card]):nth-child(4) { animation-delay: 120ms; }
+:is(.app-card, .stat-card, .card, .mk-card, [data-flux-card]):nth-child(5) { animation-delay: 160ms; }
+:is(.app-card, .stat-card, .card, .mk-card, [data-flux-card]):nth-child(n + 6) { animation-delay: 200ms; }
 
-:is(.app-card, .card, [data-flux-card]):hover {
+:is(.app-card, .stat-card, .card, [data-flux-card]):hover {
     @apply border-brand-500/25 shadow-md shadow-brand-900/8 dark:border-brand-400/20;
 }
 
 /* Clickable cards also lift a little. */
-:is(a.app-card, a.card, a[data-flux-card], .mk-card:is(a)):hover {
+:is(a.app-card, a.stat-card, a.card, a[data-flux-card], .mk-card:is(a)):hover {
     transform: translateY(-2px);
 }
 
@@ -217,7 +250,61 @@ select:focus[data-flux-control] {
         transition: none;
     }
 
-    :is(a.app-card, a.card, a[data-flux-card], .mk-card:is(a)):hover {
+    :is(a.app-card, a.stat-card, a.card, a[data-flux-card], .mk-card:is(a)):hover {
         transform: none;
+    }
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Sign-in pages — water backdrop (layouts/auth/simple)
+   ───────────────────────────────────────────────────────────── */
+
+@keyframes wave-drift {
+    from { transform: translateX(0); }
+    to { transform: translateX(-50%); }
+}
+
+@keyframes bubble-rise {
+    0% { transform: translateY(0) scale(0.8); opacity: 0; }
+    10% { opacity: 1; }
+    100% { transform: translateY(-105vh) scale(1.1); opacity: 0; }
+}
+
+.auth-wave {
+    animation: wave-drift 18s linear infinite;
+}
+
+.auth-wave-slow {
+    animation-duration: 28s;
+    animation-direction: reverse;
+}
+
+.auth-bubble {
+    animation: bubble-rise 12s ease-in infinite;
+}
+
+.auth-rays {
+    background: repeating-linear-gradient(
+        100deg,
+        transparent 0 60px,
+        rgb(255 255 255 / 0.06) 60px 90px,
+        transparent 90px 170px
+    );
+    mask-image: linear-gradient(to bottom, black, transparent);
+}
+
+.auth-card {
+    animation: card-in 0.5s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .auth-wave,
+    .auth-bubble,
+    .auth-card {
+        animation: none;
+    }
+
+    .auth-bubble {
+        display: none;
     }
 }

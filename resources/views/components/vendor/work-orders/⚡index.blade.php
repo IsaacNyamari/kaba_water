@@ -104,15 +104,15 @@ new #[Layout('layouts.vendor'), Title('Work Orders')] class extends Component {
 
     {{-- Status KPI strip --}}
     <div class="grid gap-4 sm:grid-cols-3">
-        <div class="app-card p-5">
+        <div class="stat-card tone-amber p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Pending</span>
             <div class="text-2xl font-semibold text-amber-600 mt-1">{{ $counts['pending'] }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-emerald p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">In progress</span>
             <div class="text-2xl font-semibold text-brand-600 mt-1">{{ $counts['in_progress'] }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-emerald p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Completed</span>
             <div class="text-2xl font-semibold text-accent-600 mt-1">{{ $counts['completed'] }}</div>
         </div>

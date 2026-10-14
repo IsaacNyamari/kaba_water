@@ -327,19 +327,19 @@ new #[Layout('layouts.vendor'), Title('Financial Reports')] class extends Compon
         @endphp
 
         <div class="grid gap-4 sm:grid-cols-3">
-            <div class="app-card p-5">
+            <div class="stat-card tone-emerald p-5">
                 <span class="text-xs uppercase tracking-wide text-zinc-500">Total revenue (12m)</span>
                 <div class="text-2xl font-semibold text-accent-600 mt-1 font-mono">
                     {{ number_format($totalRev, 2) }}
                 </div>
             </div>
-            <div class="app-card p-5">
+            <div class="stat-card tone-rose p-5">
                 <span class="text-xs uppercase tracking-wide text-zinc-500">Total expenses (12m)</span>
                 <div class="text-2xl font-semibold text-rose-600 mt-1 font-mono">
                     {{ number_format($totalExp, 2) }}
                 </div>
             </div>
-            <div class="app-card p-5">
+            <div class="stat-card tone-rose p-5">
                 <span class="text-xs uppercase tracking-wide text-zinc-500">Net cash (12m)</span>
                 <div
                     class="text-2xl font-semibold mt-1 font-mono {{ $totalNet >= 0 ? 'text-accent-600' : 'text-rose-600' }}">

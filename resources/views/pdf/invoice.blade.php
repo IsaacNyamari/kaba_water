@@ -243,6 +243,16 @@
     <table class="header">
         <tr>
             <td style="width:60%">
+                @php
+                    // Embedded as data so dompdf never has to fetch a URL.
+                    $logoFile = $invoice->vendor->logo_path ? storage_path('app/public/' . $invoice->vendor->logo_path) : null;
+                    $logoData = $logoFile && is_readable($logoFile)
+                        ? 'data:' . mime_content_type($logoFile) . ';base64,' . base64_encode(file_get_contents($logoFile))
+                        : null;
+                @endphp
+                @if ($logoData)
+                    <img src="{{ $logoData }}" alt="" style="max-height:56px; max-width:220px; margin-bottom:8px;">
+                @endif
                 <div class="brand-name">{{ $invoice->vendor->name }}</div>
                 <div class="brand-meta">
                     {{ $invoice->vendor->email }}<br>

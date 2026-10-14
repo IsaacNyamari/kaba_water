@@ -109,7 +109,7 @@ use InteractsWithClient;
     {{-- KPI cards --}}
     <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
 
-        <div class="app-card p-5">
+        <div class="stat-card tone-rose p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Balance due</div>
             <div class="text-2xl font-semibold mt-1 {{ $this->balance > 0 ? 'text-rose-600' : 'text-accent-600' }}">
                 {{ number_format($this->balance, 2) }}
@@ -124,7 +124,7 @@ use InteractsWithClient;
             @endif
         </div>
 
-        <div class="app-card p-5">
+        <div class="stat-card tone-sky p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Last reading</div>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 @if ($this->latestReading)
@@ -139,7 +139,7 @@ use InteractsWithClient;
             </div>
         </div>
 
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Last consumption</div>
             <div class="text-2xl font-semibold text-brand-600 mt-1">
                 @if ($this->latestReading?->consumption)
@@ -152,7 +152,7 @@ use InteractsWithClient;
             <div class="text-xs text-zinc-500 mt-1">Since previous reading</div>
         </div>
 
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Meters</div>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ $this->meterCount }}

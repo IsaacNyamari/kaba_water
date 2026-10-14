@@ -51,19 +51,19 @@ new #[Layout('layouts.portal'), Title('Invoices')] class extends Component {
     </div>
 
     <div class="grid gap-4 sm:grid-cols-3">
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Total invoices</div>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($summary['count']) }}
             </div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-rose p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Unpaid</div>
             <div class="text-2xl font-semibold text-rose-600 mt-1">
                 {{ number_format($summary['unpaid'], 2) }}
             </div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-emerald p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Paid</div>
             <div class="text-2xl font-semibold text-accent-600 mt-1">
                 {{ number_format($summary['paid'], 2) }}

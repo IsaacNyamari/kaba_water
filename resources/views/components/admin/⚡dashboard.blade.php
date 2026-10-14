@@ -46,7 +46,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
 
     {{-- KPI strip --}}
     <div class="grid auto-rows-min gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Total vendors</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($this->stats['vendors_total']) }}
@@ -58,7 +58,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
             </div>
         </div>
 
-        <div class="app-card p-5">
+        <div class="stat-card tone-emerald p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Monthly recurring revenue</span>
             <div class="text-2xl font-semibold text-accent-600 mt-1">
                 {{ number_format($this->stats['mrr'], 2) }}
@@ -66,7 +66,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
             <div class="text-xs text-zinc-500 mt-1">From active subscriptions</div>
         </div>
 
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">End clients</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($this->stats['clients']) }}
@@ -74,7 +74,7 @@ new #[Layout('layouts.admin'), Title('Admin Dashboard')] class extends Component
             <div class="text-xs text-zinc-500 mt-1">Across all vendors</div>
         </div>
 
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Invoices issued</span>
             <div class="text-2xl font-semibold text-brand-600 mt-1">
                 {{ number_format($this->stats['invoices_issued']) }}

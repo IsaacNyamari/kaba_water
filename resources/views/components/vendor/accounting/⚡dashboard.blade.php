@@ -78,7 +78,8 @@ new #[Layout('layouts.vendor'), Title('Accounting')] class extends Component {
 
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
         @foreach ($this->kpis as [$label, $value, $icon, $href])
-            <flux:card wire:key="kpi-{{ $loop->index }}" href="{{ $href }}" class="space-y-1">
+            <flux:card wire:key="kpi-{{ $loop->index }}" href="{{ $href }}"
+                class="stat-card tone-{{ ['emerald', 'brand', 'amber', 'violet', 'sky'][$loop->index % 5] }} space-y-1">
                 <div class="flex items-center gap-2 text-xs uppercase tracking-wide text-zinc-500">
                     <flux:icon :name="$icon" class="size-4" /> {{ $label }}
                 </div>

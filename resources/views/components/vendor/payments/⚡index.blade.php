@@ -86,19 +86,19 @@ new #[Layout('layouts.vendor', ['title' => 'Payments'])] class extends Component
 <div class="p-4 lg:p-6 space-y-4">
 
     <div class="grid gap-4 sm:grid-cols-3">
-        <div class="app-card p-5">
+        <div class="stat-card tone-emerald p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Today</span>
             <div class="text-2xl font-semibold text-accent-600 mt-1">
                 {{ number_format($summary['today'], 2) }}
             </div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">This month</span>
             <div class="text-2xl font-semibold text-brand-600 mt-1">
                 {{ number_format($summary['this_month'], 2) }}
             </div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">All time</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($summary['total'], 2) }}

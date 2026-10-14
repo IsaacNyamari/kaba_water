@@ -84,19 +84,19 @@ new #[Layout('layouts.vendor'), Title('Assets')] class extends Component
 <div class="p-4 lg:p-6 space-y-4" x-data="{ confirmDelete: null }">
 
     <div class="grid gap-4 sm:grid-cols-4">
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Active assets</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{{ $summary['count'] }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-sky p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Total cost</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1 font-mono">{{ number_format($summary['total_cost'], 2) }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-rose p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Accumulated depreciation</span>
             <div class="text-2xl font-semibold text-rose-600 mt-1 font-mono">{{ number_format($summary['depreciated'], 2) }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-emerald p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Net book value</span>
             <div class="text-2xl font-semibold text-accent-600 mt-1 font-mono">{{ number_format($summary['book_value'], 2) }}</div>
         </div>

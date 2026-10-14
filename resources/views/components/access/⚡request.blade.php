@@ -93,7 +93,7 @@ new #[Layout('layouts::auth'), Title('Request access')] class extends Component 
 };
 ?>
 
-<div class="flex flex-col gap-6">
+<div class="flex flex-col gap-5">
     @if ($submitted)
         <x-auth-header :title="__('Request received')" :description="__('Thanks — we\'ve got your details.')" />
 
@@ -111,28 +111,38 @@ new #[Layout('layouts::auth'), Title('Request access')] class extends Component 
             <flux:link :href="route('login')" wire:navigate>{{ __('Back to log in') }}</flux:link>
         </div>
     @else
-        <x-auth-header :title="__('Request access')" :description="__('Tell us who you are. Approved requests get a signup link by email.')" />
+        <x-auth-header :title="__('Request access')" :description="__('Approved requests get a sign-up link by email.')" />
 
-        <form wire:submit="submit" class="flex flex-col gap-5">
-            <flux:radio.group wire:model.live="requested_type" :label="__('I am')">
-                <flux:radio value="vendor" :label="__('A water company / vendor')" />
-                <flux:radio value="client" :label="__('A customer of a water provider')" />
-            </flux:radio.group>
+        <form wire:submit="submit" class="flex flex-col gap-4">
+            {{-- Who is asking: a compact two-option switch instead of a stacked radio list --}}
+            <div role="radiogroup" aria-label="{{ __('I am') }}" class="grid grid-cols-2 gap-1 rounded-xl bg-brand-900/5 p-1 ring-1 ring-brand-900/10 dark:bg-white/10 dark:ring-white/15">
+                @foreach (['vendor' => __('Water company'), 'client' => __('Water customer')] as $value => $label)
+                    <button type="button" role="radio" aria-checked="{{ $requested_type === $value ? 'true' : 'false' }}"
+                        wire:click="$set('requested_type', '{{ $value }}')"
+                        class="rounded-lg px-3 py-2 text-sm font-semibold transition {{ $requested_type === $value ? 'bg-brand-500 text-white shadow-sm dark:bg-brand-400 dark:text-brand-950' : 'text-brand-900/70 hover:bg-brand-900/5 hover:text-brand-950 dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white' }}">
+                        {{ $label }}
+                    </button>
+                @endforeach
+            </div>
+            <flux:error name="requested_type" />
 
-            <flux:input wire:model="name" :label="__('Full name')" required autocomplete="name" />
-            <flux:input wire:model="email" type="email" :label="__('Email address')" required autocomplete="email"
-                placeholder="email@example.com" />
-            <flux:input wire:model="phone" :label="__('Phone (optional)')" autocomplete="tel" />
+            <div class="grid gap-4 sm:grid-cols-2">
+                <flux:input wire:model="name" :label="__('Full name')" required autocomplete="name" />
+                <flux:input wire:model="email" type="email" :label="__('Email address')" required autocomplete="email"
+                    placeholder="email@example.com" />
+                <flux:input wire:model="phone" :label="__('Phone (optional)')" autocomplete="tel" />
 
-            @if ($requested_type === 'vendor')
-                <flux:input wire:model="organization" :label="__('Water company name')" required />
-            @else
-                <flux:input wire:model="provider_name" :label="__('Your water provider')" required />
-                <flux:input wire:model="account_reference" :label="__('Account or meter number (optional)')"
-                    :description="__('Helps us match you to your customer account.')" />
-            @endif
+                @if ($requested_type === 'vendor')
+                    <flux:input wire:model="organization" :label="__('Water company name')" required />
+                @else
+                    <flux:input wire:model="provider_name" :label="__('Your water provider')" required />
+                    <div class="sm:col-span-2">
+                        <flux:input wire:model="account_reference" :label="__('Account or meter number (optional)')" />
+                    </div>
+                @endif
+            </div>
 
-            <flux:textarea wire:model="message" :label="__('Anything else? (optional)')" rows="2" />
+            <flux:input wire:model="message" :label="__('Anything else? (optional)')" />
 
             {{-- Honeypot: hidden from people, irresistible to bots --}}
             <div class="hidden" aria-hidden="true">

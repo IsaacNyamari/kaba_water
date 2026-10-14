@@ -78,15 +78,15 @@ new #[Layout('layouts.vendor'), Title('Expenses')] class extends Component
 
     {{-- Summary --}}
     <div class="grid gap-4 sm:grid-cols-3">
-        <div class="app-card p-5">
+        <div class="stat-card tone-rose p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">This month</span>
             <div class="text-2xl font-semibold text-rose-600 mt-1">{{ number_format($summary['this_month'], 2) }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-sky p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">This year</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{{ number_format($summary['this_year'], 2) }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-brand p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">All time</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{{ number_format($summary['all_time'], 2) }}</div>
         </div>

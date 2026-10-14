@@ -18,7 +18,7 @@ class Vendor extends Model
     use HasAccounting, HasFactory;
 
     protected $fillable = [
-        'name', 'slug', 'email', 'phone', 'logo_path',
+        'name', 'slug', 'email', 'phone', 'logo_path', 'icon_path',
         'currency', 'status', 'plan_id', 'trial_ends_at',
     ];
 

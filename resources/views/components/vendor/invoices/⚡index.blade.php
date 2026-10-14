@@ -62,18 +62,21 @@ new #[Layout('layouts.vendor', ['title' => 'Invoices'])] class extends Component
 
     {{-- KPI strip --}}
     <div class="grid gap-4 sm:grid-cols-3">
-        <flux:card>
-            <flux:heading class="stat-label">Total invoices</flux:heading>
-            <flux:text class="stat-value">{{ number_format($summary['count']) }}</flux:text>
-        </flux:card>
-        <flux:card>
-            <flux:heading class="stat-label">Unpaid</flux:heading>
-            <flux:text class="stat-value text-brand-600">{{ number_format($summary['unpaid_total'], 2) }}</flux:text>
-        </flux:card>
-        <flux:card>
-            <flux:heading class="stat-label">Paid</flux:heading>
-            <flux:text class="stat-value text-accent-600">{{ number_format($summary['paid_total'], 2) }}</flux:text>
-        </flux:card>
+        @foreach ([
+            ['Total invoices', number_format($summary['count']), 'document-text', 'brand', 'text-brand-800 dark:text-brand-200', 'bg-brand-500'],
+            ['Unpaid', number_format($summary['unpaid_total'], 2), 'clock', 'amber', 'text-amber-800 dark:text-amber-200', 'bg-amber-500'],
+            ['Paid', number_format($summary['paid_total'], 2), 'check-circle', 'emerald', 'text-emerald-800 dark:text-emerald-200', 'bg-emerald-500'],
+        ] as [$label, $value, $icon, $tone, $valueClass, $chipClass])
+            <div wire:key="inv-kpi-{{ $loop->index }}" class="stat-card tone-{{ $tone }} p-5">
+                <div class="flex items-center justify-between">
+                    <span class="text-xs font-semibold uppercase tracking-wide text-zinc-500 dark:text-zinc-400">{{ $label }}</span>
+                    <span class="flex size-9 items-center justify-center rounded-xl text-white shadow-sm {{ $chipClass }}">
+                        <flux:icon :name="$icon" variant="mini" class="size-5" />
+                    </span>
+                </div>
+                <div class="mt-3 font-mono text-2xl font-semibold tracking-tight {{ $valueClass }}">{{ $value }}</div>
+            </div>
+        @endforeach
     </div>
 
     {{-- Toolbar --}}

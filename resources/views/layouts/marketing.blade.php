@@ -11,6 +11,7 @@
 
         @vite(['resources/css/app.css', 'resources/js/app.js'])
         @fluxAppearance
+        @include('partials.theme-sync')
         @livewireStyles
     </head>
     <body class="min-h-screen bg-white font-sans text-zinc-600 antialiased selection:bg-aqua/30 dark:bg-navy-deep dark:text-zinc-300">

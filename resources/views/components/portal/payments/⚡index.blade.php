@@ -88,13 +88,13 @@ new #[Layout('layouts.portal'), Title('Payments')] class extends Component {
 
     {{-- Summary --}}
     <div class="grid gap-4 sm:grid-cols-2">
-        <div class="app-card p-5">
+        <div class="stat-card tone-emerald p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Paid this month</div>
             <div class="text-2xl font-semibold text-accent-600 mt-1">
                 {{ number_format($summary['this_month'], 2) }}
             </div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-sky p-5">
             <div class="text-xs uppercase tracking-wide text-zinc-500">Total paid</div>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">
                 {{ number_format($summary['total'], 2) }}

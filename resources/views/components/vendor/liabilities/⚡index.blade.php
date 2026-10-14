@@ -78,15 +78,15 @@ new #[Layout('layouts.vendor'), Title('Liabilities')] class extends Component
 <div class="p-4 lg:p-6 space-y-4" x-data="{ confirmDelete: null, payFor: null, payAmount: '' }">
 
     <div class="grid gap-4 sm:grid-cols-3">
-        <div class="app-card p-5">
+        <div class="stat-card tone-rose p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Total outstanding</span>
             <div class="text-2xl font-semibold text-rose-600 mt-1 font-mono">{{ number_format($summary['outstanding_total'], 2) }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-sky p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Active liabilities</span>
             <div class="text-2xl font-semibold text-zinc-900 dark:text-zinc-100 mt-1">{{ $summary['active_count'] }}</div>
         </div>
-        <div class="app-card p-5">
+        <div class="stat-card tone-amber p-5">
             <span class="text-xs uppercase tracking-wide text-zinc-500">Overdue</span>
             <div class="text-2xl font-semibold text-amber-600 mt-1">{{ $summary['overdue_count'] }}</div>
         </div>

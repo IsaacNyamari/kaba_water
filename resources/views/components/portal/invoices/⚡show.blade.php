@@ -134,7 +134,7 @@ new #[Layout('layouts.portal')] class extends Component {
             </div>
 
             @if ($invoice->notes)
-                <div class="app-card p-5">
+                <div class="stat-card tone-brand p-5">
                     <div class="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Notes</div>
                     <p class="mt-2 text-sm text-zinc-600 dark:text-zinc-400">{{ $invoice->notes }}</p>
                 </div>
@@ -143,7 +143,7 @@ new #[Layout('layouts.portal')] class extends Component {
 
         {{-- Right: totals + actions --}}
         <div class="space-y-4">
-            <div class="app-card p-5">
+            <div class="stat-card tone-sky p-5">
                 <div class="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Summary</div>
                 <div class="mt-3 space-y-2 text-sm">
                     <div class="flex justify-between">
@@ -191,7 +191,7 @@ new #[Layout('layouts.portal')] class extends Component {
             </div>
 
             @if ($invoice->payments->count())
-                <div class="app-card p-5">
+                <div class="stat-card tone-brand p-5">
                     <div class="text-xs uppercase tracking-wide text-zinc-500 font-semibold">Payments received</div>
                     <flux:table class="p-2">
                         <flux:table.columns>
