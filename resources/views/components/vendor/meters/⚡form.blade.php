@@ -2,6 +2,7 @@
 
 use App\Models\Client;
 use App\Models\Meter;
+use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
 
@@ -13,6 +14,9 @@ new #[Layout('layouts.vendor')] class extends Component {
     public string $location = '';
     public string $installed_at = '';
     public string $status = 'active';
+    public string $billing_mode = 'postpaid';
+    public string $device_id = '';
+    public string $connectivity = '';
 
     public function mount(?Meter $meter = null): void
     {
@@ -24,6 +28,9 @@ new #[Layout('layouts.vendor')] class extends Component {
             $this->location = $meter->location ?? '';
             $this->installed_at = $meter->installed_at?->format('Y-m-d') ?? '';
             $this->status = $meter->status->value;
+            $this->billing_mode = $meter->billing_mode ?? 'postpaid';
+            $this->device_id = (string) $meter->device_id;
+            $this->connectivity = (string) $meter->connectivity;
         } else {
             $this->authorize('create', Meter::class);
             if ($clientId = request()->integer('client')) {
@@ -43,6 +50,10 @@ new #[Layout('layouts.vendor')] class extends Component {
             'location' => ['nullable', 'string', 'max:150'],
             'installed_at' => ['nullable', 'date'],
             'status' => ['required', 'in:active,faulty,removed'],
+            'billing_mode' => ['required', 'in:postpaid,prepaid'],
+            'device_id' => ['nullable', 'string', 'max:64', 'regex:/^[A-Za-z0-9:-]+$/',
+                Rule::unique('meters', 'device_id')->where('vendor_id', $vendorId)->ignore($this->meter?->id)],
+            'connectivity' => ['nullable', 'in:lorawan,nbiot,gprs,other'],
         ];
     }
 
@@ -56,6 +67,9 @@ new #[Layout('layouts.vendor')] class extends Component {
             'location' => $this->location ?: null,
             'installed_at' => $this->installed_at ?: null,
             'status' => $this->status,
+            'billing_mode' => $this->billing_mode,
+            'device_id' => $this->device_id ? strtolower(str_replace([':', '-'], '', trim($this->device_id))) : null,
+            'connectivity' => $this->device_id ? ($this->connectivity ?: null) : null,
         ];
 
         if ($this->meter) {
@@ -109,6 +123,30 @@ new #[Layout('layouts.vendor')] class extends Component {
                 </div>
 
                 <flux:input wire:model="installed_at" type="date" label="Installed at" />
+            </div>
+        </div>
+
+        <div class="card">
+            <div class="card-header">
+                <flux:heading size="sm">Billing &amp; smart features</flux:heading>
+            </div>
+            <div class="card-body grid gap-5 sm:grid-cols-2">
+                <flux:select wire:model="billing_mode" label="Billing" class="sm:col-span-2"
+                    description="Prepaid meters are paid for in advance: M-Pesa payments to this meter number issue an STS token instead of settling a bill.">
+                    <flux:select.option value="postpaid">Postpaid — monthly bill from readings</flux:select.option>
+                    <flux:select.option value="prepaid">Prepaid — STS token keypad</flux:select.option>
+                </flux:select>
+
+                <flux:input wire:model="device_id" label="Smart meter device ID (optional)" class="font-mono"
+                    placeholder="DevEUI or IMEI" description="Fill in for meters that send their own readings." />
+
+                <flux:select wire:model="connectivity" label="Connectivity">
+                    <flux:select.option value="">—</flux:select.option>
+                    <flux:select.option value="lorawan">LoRaWAN</flux:select.option>
+                    <flux:select.option value="nbiot">NB-IoT</flux:select.option>
+                    <flux:select.option value="gprs">GPRS / 4G</flux:select.option>
+                    <flux:select.option value="other">Other</flux:select.option>
+                </flux:select>
             </div>
         </div>
 

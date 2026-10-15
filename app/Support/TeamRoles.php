@@ -25,12 +25,12 @@ final class TeamRoles
             'meter_reader' => [
                 'label' => 'Meter reader',
                 'icon' => 'beaker',
-                'description' => 'Records meter readings (with photo reading) on the route.',
+                'description' => 'Records meter readings (with meter photos) and prints invoices. Cannot see revenue totals.',
             ],
             'accountant' => [
-                'label' => 'Accountant',
+                'label' => 'Accountant / clerk',
                 'icon' => 'calculator',
-                'description' => 'The accounting ledger and reports, read-only billing, and approving project costs.',
+                'description' => 'Ledger and reports, M-Pesa reconciliation and suspense, exports and statements; read-only billing and tariffs; approves project costs.',
             ],
             'project_manager' => [
                 'label' => 'Project manager',
@@ -63,6 +63,6 @@ final class TeamRoles
 
     public static function label(?string $role): string
     {
-        return $role === 'vendor' ? 'Owner' : (self::all()[$role]['label'] ?? ucfirst((string) $role));
+        return $role === 'vendor' ? 'Director / owner' : (self::all()[$role]['label'] ?? ucfirst((string) $role));
     }
 }

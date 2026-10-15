@@ -61,6 +61,13 @@ new #[Layout('layouts.portal')] class extends Component {
                 Due {{ $invoice->due_at->format('d M Y') }}
             </p>
         </div>
+        @if ($invoice->status->isPayable() && $invoice->balance() > 0 && \App\Models\Integration::active($invoice->vendor_id, \App\Models\Integration::MPESA))
+            @can('client.payments.make')
+                <flux:button class="ml-auto" variant="primary" icon="device-phone-mobile" :href="$invoice->payUrl()">
+                    Pay {{ number_format($invoice->balance(), 2) }} with M-Pesa
+                </flux:button>
+            @endcan
+        @endif
     </div>
 
     <div class="grid gap-4 lg:grid-cols-3">

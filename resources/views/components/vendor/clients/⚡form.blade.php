@@ -14,6 +14,7 @@ new #[Layout('layouts.vendor')] class extends Component {
     public string $email      = '';
     public string $phone      = '';
     public string $address    = '';
+    public string $house_number = '';
     public string $status     = 'active';
 
     public bool $create_portal_account = false;
@@ -32,6 +33,7 @@ new #[Layout('layouts.vendor')] class extends Component {
             $this->email      = $client->email ?? '';
             $this->phone      = $client->phone ?? '';
             $this->address    = $client->address ?? '';
+            $this->house_number = $client->house_number ?? '';
             $this->status     = $client->status;
         } else {
             $this->authorize('create', Client::class);
@@ -71,6 +73,7 @@ new #[Layout('layouts.vendor')] class extends Component {
                 ? ['nullable', 'required_without:email', 'string', 'max:30']
                 : ['nullable', 'string', 'max:30'],
             'address'    => ['nullable', 'string', 'max:500'],
+            'house_number' => ['nullable', 'string', 'max:40'],
             'status'     => ['required', 'in:active,inactive'],
             'password'   => [$this->creatingLogin() ? 'required' : 'nullable', 'string', 'min:6', 'max:255'],
             'new_pin'    => ['nullable', 'string', 'min:6', 'max:255'],
@@ -115,6 +118,7 @@ new #[Layout('layouts.vendor')] class extends Component {
                     'email'      => $this->email ?: null,
                     'phone'      => $this->phone ?: null,
                     'address'    => $this->address ?: null,
+                    'house_number' => $this->house_number ?: null,
                     'status'     => $this->status,
                 ]);
 
@@ -138,6 +142,7 @@ new #[Layout('layouts.vendor')] class extends Component {
                     'email'      => $this->email ?: null,
                     'phone'      => $this->phone ?: null,
                     'address'    => $this->address ?: null,
+                    'house_number' => $this->house_number ?: null,
                     'status'     => $this->status,
                 ]);
             });
@@ -170,6 +175,9 @@ new #[Layout('layouts.vendor')] class extends Component {
 
                 <flux:input wire:model="phone" label="Phone" />
                 <flux:input wire:model="email" type="email" label="Email" />
+
+                <flux:input wire:model="house_number" label="House / unit number"
+                    description="Customers can use it as the M-Pesa account number." />
 
                 <div class="sm:col-span-2">
                     <flux:textarea wire:model="address" label="Address" rows="2" />

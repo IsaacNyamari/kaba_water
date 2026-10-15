@@ -43,6 +43,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'vendor.invoices.manage',   // covers create, edit, send, void, delete
             'vendor.payments.view',
             'vendor.payments.manage',   // covers record + delete
+            'vendor.mpesa.view',        // M-Pesa transactions, STK requests and the SMS log
+            'vendor.mpesa.reconcile',   // apply suspense / credit payments to customers
+            'vendor.prepaid.view',      // prepaid token sales
+            'vendor.prepaid.manage',    // re-issue failed tokens, vending settings
 
             // ─── Vendor — Operations ───────────────────────────────
             'vendor.work_orders.view',
@@ -113,11 +117,14 @@ class RolesAndPermissionsSeeder extends Seeder
         );
 
         // ─── Vendor team roles (see App\Support\TeamRoles) ──────────────
-        // Accountant: full accounting, read-only billing and finance, and project cost approval.
+        // Accountant / clerk: full accounting, M-Pesa reconciliation (suspense), exports and statements;
+        // read-only billing and tariffs (cannot change tariff rates); project cost approval.
         Role::firstOrCreate(['name' => 'accountant', 'guard_name' => 'web'])->syncPermissions(
             Permission::where('name', 'like', 'accounting.%')
                 ->orWhereIn('name', [
+                    'vendor.clients.view', 'vendor.tariffs.view', 'vendor.reports.view',
                     'vendor.invoices.view', 'vendor.payments.view', 'vendor.expenses.view', 'vendor.finance.view',
+                    'vendor.mpesa.view', 'vendor.mpesa.reconcile', 'vendor.prepaid.view',
                     'projects.view', 'projects.expenses.approve',
                 ])
                 ->get()
@@ -153,6 +160,7 @@ class RolesAndPermissionsSeeder extends Seeder
             'vendor.work_orders.view', 'vendor.work_orders.manage', 'vendor.jobs.view',
             'vendor.invoices.view', 'vendor.invoices.manage',
             'vendor.payments.view', 'vendor.payments.manage',
+            'vendor.mpesa.view', 'vendor.prepaid.view',
             'accounting.view',
         ]);
 
@@ -161,9 +169,10 @@ class RolesAndPermissionsSeeder extends Seeder
             'vendor.jobs.view',
         ]);
 
-        // Meter reader: record readings on the meters.
+        // Meter reader: record readings (with meter photos) and print invoices. No revenue totals,
+        // no editing past bills, no deleting customers.
         Role::firstOrCreate(['name' => 'meter_reader', 'guard_name' => 'web'])->syncPermissions([
-            'vendor.readings.view', 'vendor.readings.create', 'vendor.meters.view',
+            'vendor.readings.view', 'vendor.readings.create', 'vendor.meters.view', 'vendor.invoices.view',
         ]);
 
         // Client: every client.* permission

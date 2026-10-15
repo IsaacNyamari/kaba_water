@@ -7,6 +7,7 @@ use App\Models\Payment;
 /**
  * A customer pays.
  *   Dr 1000 Cash / Bank (per payment method, config/accounting.php)
+ *      — or 2200 Customer Deposits when settled from money already held
  *   Cr 1100 Accounts Receivable
  */
 class PaymentReceived extends Posting
@@ -19,7 +20,10 @@ class PaymentReceived extends Posting
     {
         $p = $this->payment;
         $method = $p->method?->value ?? (string) $p->method;
-        $cashCode = (string) config("accounting.payment_method_accounts.{$method}", self::code('cash'));
+        // Money already held as a customer deposit (M-Pesa suspense / credit) is moved, not received again.
+        $cashCode = $p->from_customer_deposit
+            ? self::code('customer_deposits')
+            : (string) config("accounting.payment_method_accounts.{$method}", self::code('cash'));
         $tags = ['client_id' => $p->client_id, 'description' => 'Payment'.($p->reference ? " {$p->reference}" : '')];
 
         return [

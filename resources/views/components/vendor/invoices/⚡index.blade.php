@@ -62,7 +62,8 @@ new #[Layout('layouts.vendor', ['title' => 'Invoices'])] class extends Component
 
 <div class="space-y-4">
 
-    {{-- KPI strip --}}
+    {{-- KPI strip — revenue totals are hidden from meter readers --}}
+    @can('vendor.payments.view')
     <div class="grid gap-4 sm:grid-cols-3">
         @foreach ([
             ['Total invoices', number_format($summary['count']), 'document-text', 'brand', 'text-brand-800 dark:text-brand-200', 'bg-brand-500'],
@@ -80,6 +81,7 @@ new #[Layout('layouts.vendor', ['title' => 'Invoices'])] class extends Component
             </div>
         @endforeach
     </div>
+    @endcan
 
     {{-- Toolbar --}}
     <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3">

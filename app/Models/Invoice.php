@@ -4,11 +4,10 @@ namespace App\Models;
 
 use App\Enums\InvoiceStatus;
 use App\Models\Concerns\BelongsToVendor;
-use App\Models\InvoiceItem;
-use App\Models\Payment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\URL;
 
 class Invoice extends Model
 {
@@ -21,23 +20,44 @@ class Invoice extends Model
     ];
 
     protected $casts = [
-        'issued_at'   => 'datetime',
-        'due_at'      => 'datetime',
-        'status'      => InvoiceStatus::class,
-        'subtotal'    => 'decimal:2',
-        'tax'         => 'decimal:2',
-        'total'       => 'decimal:2',
+        'issued_at' => 'datetime',
+        'due_at' => 'datetime',
+        'status' => InvoiceStatus::class,
+        'subtotal' => 'decimal:2',
+        'tax' => 'decimal:2',
+        'total' => 'decimal:2',
         'amount_paid' => 'decimal:2',
     ];
 
-    public function client(): BelongsTo  { return $this->belongsTo(Client::class); }
-    public function reading(): BelongsTo { return $this->belongsTo(Reading::class); }
-    public function items(): HasMany     { return $this->hasMany(InvoiceItem::class); }
-    public function payments(): HasMany  { return $this->hasMany(Payment::class); }
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function reading(): BelongsTo
+    {
+        return $this->belongsTo(Reading::class);
+    }
+
+    public function items(): HasMany
+    {
+        return $this->hasMany(InvoiceItem::class);
+    }
+
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
+    }
 
     public function balance(): float
     {
         return max(0, (float) $this->total - (float) $this->amount_paid);
+    }
+
+    /** Signed public link where the customer can pay this invoice with M-Pesa (STK push). */
+    public function payUrl(): string
+    {
+        return URL::signedRoute('pay.invoice', $this);
     }
 
     public function isOverdue(): bool
@@ -56,12 +76,12 @@ class Invoice extends Model
         $paid = round((float) $this->payments()->sum('amount'), 2);
 
         $status = match (true) {
-            $this->status === InvoiceStatus::Void              => InvoiceStatus::Void,
-            $this->status === InvoiceStatus::WrittenOff        => InvoiceStatus::WrittenOff,
+            $this->status === InvoiceStatus::Void => InvoiceStatus::Void,
+            $this->status === InvoiceStatus::WrittenOff => InvoiceStatus::WrittenOff,
             $paid + 0.001 >= (float) $this->total && $paid > 0 => InvoiceStatus::Paid,
-            $this->status === InvoiceStatus::Draft             => InvoiceStatus::Draft,
-            (bool) $this->due_at?->isPast()                    => InvoiceStatus::Overdue,
-            default                                            => InvoiceStatus::Sent,
+            $this->status === InvoiceStatus::Draft => InvoiceStatus::Draft,
+            (bool) $this->due_at?->isPast() => InvoiceStatus::Overdue,
+            default => InvoiceStatus::Sent,
         };
 
         $this->update(['amount_paid' => $paid, 'status' => $status]);

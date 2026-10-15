@@ -25,6 +25,11 @@
                     'Set your password to finish creating your account and start billing every drop.',
                     'By creating an account you agree to our',
                 ],
+                request()->routeIs('pay.*') => [
+                    'Pay with M-Pesa',
+                    'Enter your Safaricom number and confirm with your M-Pesa PIN. Your payment is applied at once and the receipt comes by SMS.',
+                    'By paying you agree to our',
+                ],
                 default => [
                     config('app.name'),
                     'Water billing, made simple: from the meter reading to the invoice to the payment.',

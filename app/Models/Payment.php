@@ -13,16 +13,29 @@ class Payment extends Model
 
     protected $fillable = [
         'vendor_id', 'invoice_id', 'client_id',
-        'amount', 'method', 'reference', 'receipt_path',
+        'amount', 'method', 'reference', 'mpesa_transaction_id', 'from_customer_deposit', 'receipt_path',
         'paid_at', 'recorded_by',
     ];
 
     protected $casts = [
         'paid_at' => 'datetime',
-        'method'  => PaymentMethod::class,
-        'amount'  => 'decimal:2',
+        'method' => PaymentMethod::class,
+        'amount' => 'decimal:2',
+        'from_customer_deposit' => 'boolean',
     ];
 
-    public function invoice(): BelongsTo { return $this->belongsTo(Invoice::class); }
-    public function client(): BelongsTo  { return $this->belongsTo(Client::class); }
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
+
+    public function client(): BelongsTo
+    {
+        return $this->belongsTo(Client::class);
+    }
+
+    public function mpesaTransaction(): BelongsTo
+    {
+        return $this->belongsTo(MpesaTransaction::class);
+    }
 }

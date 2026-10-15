@@ -3,6 +3,8 @@
 use App\Http\Controllers\Auth\PhoneLoginController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\Webhooks\MpesaWebhookController;
+use App\Http\Controllers\Webhooks\SmartMeterWebhookController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -17,6 +19,20 @@ Route::view('/', 'marketing.home')->name('home');
 // Search engines: generated from Admin → Settings → SEO.
 Route::get('/sitemap.xml', [SeoController::class, 'sitemap'])->name('seo.sitemap');
 Route::get('/robots.txt', [SeoController::class, 'robots'])->name('seo.robots');
+
+// Callbacks from Safaricom (M-Pesa) and smart-meter networks. The secret token in the URL identifies the vendor.
+Route::prefix('webhooks')->name('webhooks.')->middleware('throttle:600,1')->group(function () {
+    Route::post('/mpesa/{token}/validation', [MpesaWebhookController::class, 'validation'])->name('mpesa.validation');
+    Route::post('/mpesa/{token}/confirmation', [MpesaWebhookController::class, 'confirmation'])->name('mpesa.confirmation');
+    Route::post('/mpesa/{token}/stk', [MpesaWebhookController::class, 'stk'])->name('mpesa.stk');
+    Route::post('/meters/{token}', SmartMeterWebhookController::class)->name('meters');
+});
+
+// Pay-by-link pages sent with invoices and to prepaid customers (signed, no login needed).
+Route::middleware('signed')->group(function () {
+    Route::livewire('/pay/invoice/{invoice}', 'pay.invoice')->name('pay.invoice');
+    Route::livewire('/pay/meter/{meter}', 'pay.token')->name('pay.token');
+});
 
 Route::name('marketing.')->group(function () {
     Route::view('/services', 'marketing.services')->name('services');
@@ -132,6 +148,7 @@ Route::middleware(['auth', 'verified', 'role:vendor|vendor_staff|technician|mete
         Route::middleware('permission:vendor.meters.view|vendor.meters.manage')->group(function () {
             Route::livewire('/meters', 'vendor.meters.index')->name('meters.index');
             Route::livewire('/meters/create', 'vendor.meters.form')->name('meters.create');
+            Route::livewire('/meters/smart', 'vendor.meters.smart')->name('meters.smart');
             Route::livewire('/meters/{meter}/edit', 'vendor.meters.form')->name('meters.edit');
         });
 
@@ -160,6 +177,16 @@ Route::middleware(['auth', 'verified', 'role:vendor|vendor_staff|technician|mete
         Route::middleware('permission:vendor.payments.view|vendor.payments.manage')->group(function () {
             Route::livewire('/payments', 'vendor.payments.index')->name('payments.index');
             Route::livewire('/payments/create', 'vendor.payments.create')->name('payments.create');
+        });
+
+        // M-Pesa: transactions, suspense reconciliation and the SMS log
+        Route::middleware('permission:vendor.mpesa.view|vendor.mpesa.reconcile')->group(function () {
+            Route::livewire('/mpesa', 'vendor.mpesa.index')->name('mpesa.index');
+        });
+
+        // Prepaid token sales
+        Route::middleware('permission:vendor.prepaid.view|vendor.prepaid.manage')->group(function () {
+            Route::livewire('/prepaid', 'vendor.prepaid.index')->name('prepaid.index');
         });
 
         // ── Tariffs ─────────────────────────────────────────
@@ -301,6 +328,8 @@ Route::middleware(['auth', 'verified', 'role:client', 'vendor.context'])
         // Payments
         Route::middleware('permission:client.payments.view')->group(function () {
             Route::livewire('/payments', 'portal.payments.index')->name('payments.index');
+            Route::livewire('/payments/{payment}/receipt', 'portal.payments.receipt')->name('payments.receipt');
+            Route::livewire('/tokens', 'portal.tokens')->name('tokens');
         });
 
         // Work Orders (client's own)

@@ -3,10 +3,10 @@
 namespace App\Models;
 
 use App\Models\Concerns\BelongsToVendor;
-use App\Models\Payment;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Facades\DB;
 
 class Client extends Model
 {
@@ -20,6 +20,7 @@ class Client extends Model
         'email',
         'phone',
         'address',
+        'house_number',
         'status',
     ];
 
@@ -27,14 +28,17 @@ class Client extends Model
     {
         return $this->belongsTo(User::class);
     }
+
     public function meters(): HasMany
     {
         return $this->hasMany(Meter::class);
     }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);
     }
+
     public function payments(): HasMany
     {
         return $this->hasMany(Payment::class);
@@ -45,8 +49,9 @@ class Client extends Model
         // Outstanding = what is still owed after partial payments.
         return (float) $this->invoices()
             ->whereIn('status', ['sent', 'overdue'])
-            ->sum(\Illuminate\Support\Facades\DB::raw('total - amount_paid'));
+            ->sum(DB::raw('total - amount_paid'));
     }
+
     public static function nextAccountNo(int $vendorId): string
     {
         $last = static::withoutGlobalScope('vendor')
@@ -56,8 +61,9 @@ class Client extends Model
 
         $next = $last ? ((int) preg_replace('/\D/', '', $last)) + 1 : 1;
 
-        return 'C' . str_pad((string) $next, 5, '0', STR_PAD_LEFT);
+        return 'C'.str_pad((string) $next, 5, '0', STR_PAD_LEFT);
     }
+
     public function workOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class);

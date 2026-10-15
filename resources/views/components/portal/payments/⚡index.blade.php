@@ -125,6 +125,7 @@ new #[Layout('layouts.portal'), Title('Payments')] class extends Component {
                     <th class="px-5 py-3">Method</th>
                     <th class="px-5 py-3">Reference</th>
                     <th class="px-5 py-3 text-right">Amount</th>
+                    <th class="px-5 py-3"></th>
                 </tr>
             </thead>
             <tbody>
@@ -148,10 +149,13 @@ new #[Layout('layouts.portal'), Title('Payments')] class extends Component {
                         <td class="px-5 py-3 text-right font-mono font-semibold text-accent-600">
                             {{ number_format($payment->amount, 2) }}
                         </td>
+                        <td class="px-5 py-3 text-right">
+                            <flux:button size="xs" variant="ghost" icon="receipt-percent" :href="route('portal.payments.receipt', $payment)" wire:navigate>Receipt</flux:button>
+                        </td>
                     </tr>
                 @empty
                     <tr>
-                        <td colspan="5" class="px-5 py-12 text-center text-zinc-500">
+                        <td colspan="6" class="px-5 py-12 text-center text-zinc-500">
                             <flux:icon name="banknotes" class="w-10 h-10 mx-auto mb-3 text-zinc-300" />
                             <div class="font-medium">No payments yet</div>
                             <div class="text-sm">Your payment history will appear here.</div>

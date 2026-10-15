@@ -9,6 +9,8 @@ use App\Services\Accounting\FiscalPeriodService;
 use App\Services\Accounting\LedgerService;
 use App\Services\Accounting\Postings\CreditNoteIssued;
 use App\Services\Accounting\Postings\InvoiceIssued;
+use App\Services\Mpesa\MpesaReconciler;
+use Illuminate\Support\Facades\DB;
 
 /**
  * Auto-posts invoices to the ledger.
@@ -55,6 +57,11 @@ class InvoiceObserver
 
         if ($this->isIssued($invoice)) {
             $this->ledger->postEvent(new InvoiceIssued($invoice)); // idempotent
+        }
+
+        // A newly sent bill is settled first from any M-Pesa credit the client already has with us.
+        if ($invoice->status === InvoiceStatus::Sent && $invoice->getOriginal('status') === InvoiceStatus::Draft) {
+            DB::afterCommit(fn () => rescue(fn () => app(MpesaReconciler::class)->applyCredits($invoice->client)));
         }
 
         if ($invoice->status === InvoiceStatus::Void) {

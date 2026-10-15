@@ -148,8 +148,13 @@
 
                     @canany(['vendor.meters.view', 'vendor.meters.manage'])
                         <flux:sidebar.item icon="cog-6-tooth" :href="route('vendor.meters.index')"
-                            :current="request()->routeIs('vendor.meters.*')" wire:navigate>
+                            :current="request()->routeIs('vendor.meters.*') && ! request()->routeIs('vendor.meters.smart')" wire:navigate>
                             {{ __('Meters') }}
+                        </flux:sidebar.item>
+
+                        <flux:sidebar.item icon="signal" :href="route('vendor.meters.smart')"
+                            :current="request()->routeIs('vendor.meters.smart')" wire:navigate>
+                            {{ __('Smart meters') }}
                         </flux:sidebar.item>
                     @endcanany
 
@@ -168,7 +173,7 @@
                     @endcanany
                 </flux:sidebar.group>
 
-                @canany(['vendor.invoices.view', 'vendor.invoices.manage', 'vendor.payments.view', 'vendor.payments.manage', 'vendor.tariffs.view', 'vendor.tariffs.manage'])
+                @canany(['vendor.invoices.view', 'vendor.invoices.manage', 'vendor.payments.view', 'vendor.payments.manage', 'vendor.mpesa.view', 'vendor.mpesa.reconcile', 'vendor.prepaid.view', 'vendor.tariffs.view', 'vendor.tariffs.manage'])
                 <flux:sidebar.group :heading="__('Billing')" class="grid">
                     @canany(['vendor.invoices.view', 'vendor.invoices.manage'])
                         <flux:sidebar.item icon="document-text" :href="route('vendor.invoices.index')"
@@ -181,6 +186,21 @@
                         <flux:sidebar.item icon="banknotes" :href="route('vendor.payments.index')"
                             :current="request()->routeIs('vendor.payments.*')" wire:navigate>
                             {{ __('Payments') }}
+                        </flux:sidebar.item>
+                    @endcanany
+
+                    @canany(['vendor.mpesa.view', 'vendor.mpesa.reconcile'])
+                        @php $suspenseCount = \App\Models\MpesaTransaction::where('status', 'suspense')->count(); @endphp
+                        <flux:sidebar.item icon="device-phone-mobile" :href="route('vendor.mpesa.index')"
+                            :current="request()->routeIs('vendor.mpesa.*')" :badge="$suspenseCount ?: null" wire:navigate>
+                            {{ __('M-Pesa') }}
+                        </flux:sidebar.item>
+                    @endcanany
+
+                    @canany(['vendor.prepaid.view', 'vendor.prepaid.manage'])
+                        <flux:sidebar.item icon="key" :href="route('vendor.prepaid.index')"
+                            :current="request()->routeIs('vendor.prepaid.*')" wire:navigate>
+                            {{ __('Prepaid tokens') }}
                         </flux:sidebar.item>
                     @endcanany
 
@@ -343,6 +363,13 @@
                         :current="request()->routeIs('portal.payments.*')" wire:navigate>
                         {{ __('Payments') }}
                     </flux:sidebar.item>
+
+                    @if (\App\Models\Meter::where('billing_mode', 'prepaid')->whereHas('client', fn ($q) => $q->where('user_id', auth()->id()))->exists())
+                        <flux:sidebar.item icon="key" :href="route('portal.tokens')"
+                            :current="request()->routeIs('portal.tokens')" wire:navigate>
+                            {{ __('Water tokens') }}
+                        </flux:sidebar.item>
+                    @endif
                 </flux:sidebar.group>
 
                 <flux:sidebar.group :heading="__('Settings')" class="grid">

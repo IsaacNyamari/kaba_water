@@ -12,7 +12,7 @@ use Livewire\WithFileUploads;
 new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component {
     use WithFileUploads;
 
-    /** Open section: workspace | branding | integrations | profile. Passwords are changed on profile.edit. */
+    /** Open section: workspace | branding | mpesa | sms | prepaid | smart-meters | integrations | profile. Passwords are changed on profile.edit. */
     #[Url(as: 'tab', history: true)]
     public string $tab = 'workspace';
 
@@ -220,7 +220,11 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
     $sections = [
         'workspace' => ['Workspace', 'building-storefront'],
         'branding' => ['Branding', 'swatch'],
-        'integrations' => ['Integrations', 'puzzle-piece'],
+        'mpesa' => ['M-Pesa', 'device-phone-mobile'],
+        'sms' => ['SMS', 'chat-bubble-left-right'],
+        'prepaid' => ['Prepaid meters', 'key'],
+        'smart-meters' => ['Smart meters', 'signal'],
+        'integrations' => ['Gemini AI', 'puzzle-piece'],
         'profile' => ['Your profile', 'user-circle'],
     ];
     $workspace = auth()->user()->vendor;
@@ -235,7 +239,7 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
             </span>
             <div>
                 <flux:heading size="lg">{{ $workspace->name }} settings</flux:heading>
-                <flux:text class="text-sm">Your business details, branding and profile. Changes apply to your whole workspace.</flux:text>
+                <flux:text class="text-sm">Your business details, branding, payments, SMS and meters. Changes apply to your whole workspace.</flux:text>
             </div>
         </div>
     </div>
@@ -303,6 +307,14 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
                         <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="saveBranding,logo,icon">Save branding</flux:button>
                     </div>
                 </form>
+            @elseif ($tab === 'mpesa')
+                <livewire:vendor.settings.mpesa />
+            @elseif ($tab === 'sms')
+                <livewire:vendor.settings.sms />
+            @elseif ($tab === 'prepaid')
+                <livewire:vendor.settings.prepaid />
+            @elseif ($tab === 'smart-meters')
+                <livewire:vendor.settings.smart-meters />
             @elseif ($tab === 'integrations')
                 @php
                     $savedKey = $workspace->gemini_api_key;

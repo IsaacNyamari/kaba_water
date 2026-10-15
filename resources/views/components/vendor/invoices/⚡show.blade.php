@@ -146,6 +146,40 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
         $this->redirectRoute('vendor.invoices.index', navigate: true);
     }
 
+    /** Send an M-Pesa PIN prompt for the balance to the client's phone. */
+    public function requestMpesa(\App\Services\Mpesa\StkPushService $stk): void
+    {
+        $this->authorize('update', $this->invoice);
+
+        try {
+            $stk->forInvoice($this->invoice, (string) $this->invoice->client->phone);
+            Flux::toast(variant: 'success', heading: 'M-Pesa prompt sent', text: "{$this->invoice->client->name} will see a PIN prompt on {$this->invoice->client->phone}. The invoice updates when they pay.");
+        } catch (\Throwable $e) {
+            Flux::toast(variant: 'danger', heading: 'Prompt not sent', text: $e->getMessage());
+        }
+    }
+
+    /** Text the client a link where they can pay this invoice with M-Pesa. */
+    public function smsPayLink(\App\Services\Sms\SmsService $sms): void
+    {
+        $this->authorize('update', $this->invoice);
+
+        $log = $sms->send(
+            $this->invoice->vendor_id,
+            $this->invoice->client->phone,
+            "Dear {$this->invoice->client->name}, your water bill {$this->invoice->number} of KES ".number_format($this->invoice->balance(), 2)
+                ." is due {$this->invoice->due_at?->format('d M')}. Pay with M-Pesa: {$this->invoice->payUrl()}",
+            'pay_link',
+            $this->invoice->client,
+        );
+
+        match ($log->status) {
+            'sent' => Flux::toast(variant: 'success', text: 'Pay link sent by SMS.'),
+            'logged' => Flux::toast(variant: 'warning', heading: 'SMS is off', text: 'The message was logged but not sent. Turn SMS on in Settings.'),
+            default => Flux::toast(variant: 'danger', heading: 'SMS failed', text: (string) $log->error),
+        };
+    }
+
     public function rendering(): void
     {
         $this->invoice->loadMissing(['items', 'client', 'reading.meter', 'payments']);
@@ -181,6 +215,19 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                 PDF
             </flux:button>
 
+            @can('update', $invoice)
+            @if ($invoice->status->isPayable() && $invoice->balance() > 0)
+                <flux:dropdown>
+                    <flux:button icon="device-phone-mobile" icon:trailing="chevron-down">M-Pesa</flux:button>
+                    <flux:menu>
+                        <flux:menu.item icon="bell-alert" wire:click="requestMpesa"
+                            wire:confirm="Send an M-Pesa PIN prompt for KES {{ number_format($invoice->balance(), 2) }} to {{ $invoice->client->phone }}?">Send PIN prompt to client</flux:menu.item>
+                        <flux:menu.item icon="chat-bubble-left-ellipsis" wire:click="smsPayLink">SMS pay link</flux:menu.item>
+                        <flux:menu.item icon="link" x-on:click="navigator.clipboard.writeText('{{ $invoice->payUrl() }}'); $flux.toast('Pay link copied.')">Copy pay link</flux:menu.item>
+                    </flux:menu>
+                </flux:dropdown>
+            @endif
+
             @if ($invoice->status->value === 'draft')
                 <flux:button wire:click="send" variant="primary" icon="paper-airplane">
                     Mark as sent
@@ -211,6 +258,7 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                 wire:confirm="Delete this invoice permanently?">
                 Delete
             </flux:button>
+            @endcan
         </div>
     </div>
 
