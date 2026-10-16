@@ -58,14 +58,7 @@ class InvoiceReadingAutomatically
             return $skip('No water was used since the previous reading, so there is nothing to bill.');
         }
 
-        $tariff = Tariff::withoutGlobalScope('vendor')
-            ->where('vendor_id', $reading->vendor_id)
-            ->where('is_active', true)
-            ->first();
-
-        if (! $tariff) {
-            return $skip('No active tariff — add one under Tariffs to bill readings automatically.');
-        }
+        $tariff = Tariff::ensureDefaultFor($reading->vendor_id);
 
         try {
             $invoice = $this->generate->handle($reading, $tariff);

@@ -136,7 +136,7 @@ test('an overpayment is held as credit and settles the next invoice when it is s
 });
 
 test('paying a prepaid meter number deducts the arrears share and texts an STS token', function () {
-    Tariff::withoutGlobalScope('vendor')->create(['vendor_id' => $this->vendor->id, 'name' => 'Flat', 'type' => 'flat', 'rate' => '50', 'is_active' => true]);
+    Tariff::ensureDefaultFor($this->vendor->id)->update(['rate' => '50']);
     Integration::for($this->vendor->id, Integration::TOKEN_VENDING)->update([
         'is_enabled' => true, 'config' => ['driver' => 'simulator', 'arrears_percent' => '25'],
     ]);

@@ -12,7 +12,7 @@ beforeEach(function () {
     $this->actingAs(accountingUser($this->vendor));
     $client = Client::create(['account_no' => 'C00001', 'name' => 'Jane', 'phone' => '0712345678']);
     $this->meter = Meter::create(['client_id' => $client->id, 'serial' => 'AUTO-1', 'status' => 'active']);
-    Tariff::create(['name' => 'Flat', 'type' => 'flat', 'rate' => '100', 'is_active' => true]);
+    Tariff::ensureDefaultFor($this->vendor->id)->update(['rate' => '100']);
 });
 
 test('a reading after a previous one is billed and issued straight away', function () {
@@ -25,6 +25,15 @@ test('a reading after a previous one is billed and issued straight away', functi
         ->and($result['invoice']->status)->toBe(InvoiceStatus::Sent)
         ->and((string) $result['invoice']->total)->toBe('1200.00')
         ->and($reading->fresh()->invoice)->not->toBeNull();
+});
+
+test('every vendor starts with the default KES 200 / m³ tariff', function () {
+    $tariff = Tariff::withoutGlobalScope('vendor')->where('vendor_id', accountingVendor()->id)->sole();
+
+    expect($tariff->name)->toBe(Tariff::DEFAULT_NAME)
+        ->and($tariff->type)->toBe('flat')
+        ->and((string) $tariff->rate)->toBe('200.0000')
+        ->and($tariff->is_active)->toBeTrue();
 });
 
 test('the first reading of a meter is not billed, and billing twice is harmless', function () {

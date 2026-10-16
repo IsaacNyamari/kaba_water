@@ -36,8 +36,7 @@ class GenerateInvoiceFromReading
 
         $reading->loadMissing('meter.client', 'vendor');
 
-        $tariff ??= Tariff::where('is_active', true)->first()
-            ?? throw new RuntimeException('No active tariff configured for this vendor.');
+        $tariff ??= Tariff::ensureDefaultFor($reading->vendor_id);
 
         $consumption = (float) $reading->consumption;
 
