@@ -28,7 +28,7 @@ class GeminiOcrService
     public function extract(string $imagePath, string $mimeType, ?Vendor $vendor = null): string
     {
         $apiKey = $this->keyFor($vendor);
-        $models = config('services.gemini.models', []);
+        $models = $this->modelsFor($vendor);
 
         if (empty($models)) {
             throw new RuntimeException('Gemini models are not configured.');
@@ -99,6 +99,25 @@ class GeminiOcrService
     protected function redact(string $text, string $apiKey): string
     {
         return str_replace($apiKey, '[redacted]', $text);
+    }
+
+    /**
+     * Models to try, in order: the vendor's own list (Settings → Gemini AI),
+     * else the platform default (GEMINI_MODELS).
+     *
+     * @return list<string>
+     */
+    public function modelsFor(?Vendor $vendor): array
+    {
+        $own = self::parseModels((string) $vendor?->gemini_models);
+
+        return $own ?: config('services.gemini.models', []);
+    }
+
+    /** @return list<string> "a, b,,c" → ["a", "b", "c"] */
+    public static function parseModels(string $list): array
+    {
+        return array_values(array_unique(array_filter(array_map('trim', explode(',', $list)))));
     }
 
     /**

@@ -15,7 +15,7 @@ class Vendor extends Model
 
     protected $fillable = [
         'name', 'slug', 'email', 'phone', 'logo_path', 'icon_path',
-        'currency', 'status', 'plan_id', 'trial_ends_at', 'gemini_api_key',
+        'currency', 'status', 'plan_id', 'trial_ends_at', 'gemini_api_key', 'gemini_models',
     ];
 
     /** Never serialise the vendor's own API key (e.g. into Livewire state or JSON). */

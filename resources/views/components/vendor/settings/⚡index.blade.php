@@ -28,6 +28,9 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
     /** New Gemini key input only; the saved key is never put in component state. */
     public string $gemini_key = '';
 
+    /** Comma-separated Gemini models, tried in order. Blank uses the platform default. */
+    public string $gemini_models = '';
+
     public string $user_name = '';
     public string $user_email = '';
 
@@ -40,6 +43,7 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
         $this->email = $vendor->email;
         $this->phone = $vendor->phone ?? '';
         $this->currency = $vendor->currency;
+        $this->gemini_models = (string) $vendor->gemini_models;
 
         $this->user_name = auth()->user()->name;
         $this->user_email = auth()->user()->email;
@@ -187,6 +191,24 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
         $problem
             ? Flux::toast(variant: 'danger', heading: 'Key check failed', text: $problem)
             : Flux::toast(variant: 'success', heading: 'Key works', text: 'Gemini accepted your API key.');
+    }
+
+    /** Save which Gemini models are tried for meter photos, in order. */
+    public function saveGeminiModels(): void
+    {
+        $this->authorize('vendor.settings.manage');
+
+        $this->validate(
+            ['gemini_models' => ['nullable', 'string', 'max:255', 'regex:/^\s*[a-z0-9][a-z0-9.\-]*(\s*,\s*[a-z0-9][a-z0-9.\-]*)*\s*$/']],
+            ['gemini_models.regex' => 'Use model names separated by commas, e.g. gemini-flash-lite-latest, gemini-flash-latest.'],
+            ['gemini_models' => 'Gemini models'],
+        );
+
+        $models = GeminiOcrService::parseModels($this->gemini_models);
+        auth()->user()->vendor->update(['gemini_models' => $models ? implode(',', $models) : null]);
+        $this->gemini_models = implode(',', $models);
+
+        Flux::toast(variant: 'success', heading: 'Models saved', text: $models ? 'Tried in order: '.implode(' → ', $models).'.' : 'Using the platform default models.');
     }
 
     public function removeGeminiKey(): void
@@ -379,6 +401,24 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
                             The key is checked with Gemini before it is saved, stored encrypted, and never shown again in full.
                         </flux:text>
                     </div>
+
+                    <form wire:submit="saveGeminiModels" class="app-card space-y-4 p-6">
+                        <div>
+                            <flux:heading size="sm">Models</flux:heading>
+                            <flux:text class="text-sm">
+                                Which Gemini models read your meter photos, separated by commas. The first is tried first; if it fails the next one is used.
+                                Leave blank for the default: <span class="font-mono">{{ implode(', ', config('services.gemini.models', [])) }}</span>.
+                            </flux:text>
+                        </div>
+                        <div class="flex flex-col gap-3 sm:flex-row sm:items-end">
+                            <div class="flex-1">
+                                <flux:input wire:model="gemini_models" label="Models (in order)" class="font-mono"
+                                    placeholder="gemini-flash-lite-latest,gemini-flash-latest" />
+                            </div>
+                            <flux:button type="submit" variant="primary" wire:loading.attr="disabled" wire:target="saveGeminiModels">Save models</flux:button>
+                        </div>
+                        <flux:error name="gemini_models" />
+                    </form>
                 </div>
             @elseif ($tab === 'profile')
                 <form wire:submit="saveUser" class="app-card space-y-6 p-6">
