@@ -64,6 +64,12 @@ class Meter extends Model
         return URL::signedRoute('pay.token', $this);
     }
 
+    /** The buy-token page as a short link (/p/abc1234) that fits in an SMS. */
+    public function shortTokenUrl(): string
+    {
+        return ShortLink::urlFor('token', $this->id, $this->vendor_id);
+    }
+
     /** A smart meter that has not reported for over a day is offline. */
     public function isOnline(): bool
     {

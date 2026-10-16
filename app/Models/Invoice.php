@@ -60,6 +60,12 @@ class Invoice extends Model
         return URL::signedRoute('pay.invoice', $this);
     }
 
+    /** The same pay page as a short link (/p/abc1234) that fits in an SMS. */
+    public function shortPayUrl(): string
+    {
+        return ShortLink::urlFor('invoice', $this->id, $this->vendor_id);
+    }
+
     public function isOverdue(): bool
     {
         return in_array($this->status, [InvoiceStatus::Sent, InvoiceStatus::Overdue], true)

@@ -3,6 +3,7 @@
 use App\Http\Controllers\Auth\PhoneLoginController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\SeoController;
+use App\Http\Controllers\ShortLinkController;
 use App\Http\Controllers\Webhooks\MpesaWebhookController;
 use App\Http\Controllers\Webhooks\SmartMeterWebhookController;
 use Illuminate\Support\Facades\Route;
@@ -27,6 +28,9 @@ Route::prefix('webhooks')->name('webhooks.')->middleware('throttle:600,1')->grou
     Route::post('/mpesa/{token}/stk', [MpesaWebhookController::class, 'stk'])->name('mpesa.stk');
     Route::post('/meters/{token}', SmartMeterWebhookController::class)->name('meters');
 });
+
+// Short pay links sent by SMS: /p/{code} → the signed pay page below.
+Route::get('/p/{code}', ShortLinkController::class)->middleware('throttle:60,1')->where('code', '[a-z0-9]{4,12}')->name('short-link');
 
 // Pay-by-link pages sent with invoices and to prepaid customers (signed, no login needed).
 Route::middleware('signed')->group(function () {

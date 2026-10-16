@@ -226,7 +226,7 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                         <flux:menu.item icon="bell-alert" wire:click="requestMpesa"
                             wire:confirm="Send an M-Pesa PIN prompt for KES {{ number_format($invoice->balance(), 2) }} to {{ $invoice->client->phone }}?">Send PIN prompt to client</flux:menu.item>
                         <flux:menu.item icon="chat-bubble-left-ellipsis" wire:click="smsPayLink">SMS invoice to client</flux:menu.item>
-                        <flux:menu.item icon="link" x-on:click="navigator.clipboard.writeText('{{ $invoice->payUrl() }}'); $flux.toast('Pay link copied.')">Copy pay link</flux:menu.item>
+                        <flux:menu.item icon="link" x-on:click="navigator.clipboard.writeText('{{ $invoice->shortPayUrl() }}'); $flux.toast('Pay link copied.')">Copy pay link</flux:menu.item>
                     </flux:menu>
                 </flux:dropdown>
             @endif
