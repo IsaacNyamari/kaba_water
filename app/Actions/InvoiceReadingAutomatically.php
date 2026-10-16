@@ -7,7 +7,7 @@ use App\Models\Invoice;
 use App\Models\Reading;
 use App\Models\Tariff;
 use App\Services\InvoicePdfService;
-use App\Services\Sms\SmsService;
+use App\Services\Sms\InvoiceSms;
 use Illuminate\Support\Facades\DB;
 use Throwable;
 
@@ -26,7 +26,7 @@ class InvoiceReadingAutomatically
     public function __construct(
         protected GenerateInvoiceFromReading $generate,
         protected InvoicePdfService $pdf,
-        protected SmsService $sms,
+        protected InvoiceSms $sms,
     ) {}
 
     /**
@@ -73,17 +73,10 @@ class InvoiceReadingAutomatically
         }
 
         $invoice->refresh();
-        $client = $reading->meter->client;
 
-        if ($client && $invoice->status->isPayable()) {
-            $this->sms->send(
-                $invoice->vendor_id,
-                $client->phone,
-                "Dear {$client->name}, your water bill {$invoice->number}: ".number_format((int) $reading->consumption).' m3 used, KES '
-                    .number_format($invoice->balance(), 2)." due {$invoice->due_at?->format('d M')}. Pay with M-Pesa: {$invoice->payUrl()}",
-                'invoice',
-                $client,
-            );
+        // Already settled from M-Pesa credit? Then there is nothing to ask for.
+        if ($invoice->status->isPayable()) {
+            $this->sms->send($invoice);
         }
 
         return ['invoice' => $invoice, 'reason' => null];

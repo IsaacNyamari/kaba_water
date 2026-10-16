@@ -46,9 +46,19 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
         }
 
         $pdf->regenerate($this->invoice);
-
-        Flux::toast(variant: 'success', heading: 'Sent',text:"Invoice marked as sent");
         $this->invoice->refresh();
+
+        // Text the client the invoice and pay link (unless M-Pesa credit already settled it).
+        $sms = $this->invoice->status->isPayable()
+            ? app(\App\Services\Sms\InvoiceSms::class)->send($this->invoice)
+            : null;
+
+        Flux::toast(variant: 'success', heading: 'Sent', text: match ($sms?->status) {
+            'sent' => 'Invoice sent to the client by SMS.',
+            'logged' => 'Invoice marked as sent. SMS is off in Settings, so the message was only logged.',
+            'failed' => 'Invoice marked as sent, but the SMS failed: '.$sms->error,
+            default => 'Invoice marked as sent.',
+        });
     }
 
     public function openMarkPaid(): void
@@ -160,21 +170,14 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
     }
 
     /** Text the client a link where they can pay this invoice with M-Pesa. */
-    public function smsPayLink(\App\Services\Sms\SmsService $sms): void
+    public function smsPayLink(\App\Services\Sms\InvoiceSms $sms): void
     {
         $this->authorize('update', $this->invoice);
 
-        $log = $sms->send(
-            $this->invoice->vendor_id,
-            $this->invoice->client->phone,
-            "Dear {$this->invoice->client->name}, your water bill {$this->invoice->number} of KES ".number_format($this->invoice->balance(), 2)
-                ." is due {$this->invoice->due_at?->format('d M')}. Pay with M-Pesa: {$this->invoice->payUrl()}",
-            'pay_link',
-            $this->invoice->client,
-        );
+        $log = $sms->send($this->invoice);
 
         match ($log->status) {
-            'sent' => Flux::toast(variant: 'success', text: 'Pay link sent by SMS.'),
+            'sent' => Flux::toast(variant: 'success', text: 'Invoice and pay link sent by SMS to '.$log->to.'.'),
             'logged' => Flux::toast(variant: 'warning', heading: 'SMS is off', text: 'The message was logged but not sent. Turn SMS on in Settings.'),
             default => Flux::toast(variant: 'danger', heading: 'SMS failed', text: (string) $log->error),
         };
@@ -222,7 +225,7 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                     <flux:menu>
                         <flux:menu.item icon="bell-alert" wire:click="requestMpesa"
                             wire:confirm="Send an M-Pesa PIN prompt for KES {{ number_format($invoice->balance(), 2) }} to {{ $invoice->client->phone }}?">Send PIN prompt to client</flux:menu.item>
-                        <flux:menu.item icon="chat-bubble-left-ellipsis" wire:click="smsPayLink">SMS pay link</flux:menu.item>
+                        <flux:menu.item icon="chat-bubble-left-ellipsis" wire:click="smsPayLink">SMS invoice &amp; pay link</flux:menu.item>
                         <flux:menu.item icon="link" x-on:click="navigator.clipboard.writeText('{{ $invoice->payUrl() }}'); $flux.toast('Pay link copied.')">Copy pay link</flux:menu.item>
                     </flux:menu>
                 </flux:dropdown>
