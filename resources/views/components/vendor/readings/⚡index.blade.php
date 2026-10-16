@@ -62,7 +62,15 @@ new #[Layout('layouts.vendor'), Title('Readings')] class extends Component {
         // Recomputes previous reading + consumption at approval time.
         $reading->approve();
 
-        Flux::toast(variant: 'success', heading: 'Approved', text: 'Reading approved — ' . number_format($reading->consumption) . ' m³ consumed.');
+        // Bill straight away when there is a previous reading to measure from.
+        $billing = app(\App\Actions\InvoiceReadingAutomatically::class)->handle($reading->fresh());
+
+        Flux::toast(
+            variant: 'success',
+            heading: $billing['invoice'] ? 'Approved and billed' : 'Approved',
+            text: 'Reading approved — ' . number_format($reading->consumption) . ' m³ consumed.'
+                . ($billing['invoice'] ? " Invoice {$billing['invoice']->number} sent to the client." : ($billing['reason'] ? ' Not billed: ' . $billing['reason'] : '')),
+        );
     }
 
     public function reject(int $id, string $reason = ''): void

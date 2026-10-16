@@ -2,6 +2,7 @@
 
 namespace App\Services\Metering;
 
+use App\Actions\InvoiceReadingAutomatically;
 use App\Enums\ReadingStatus;
 use App\Models\Integration;
 use App\Models\Meter;
@@ -57,7 +58,7 @@ class SmartMeterReadings
                     return;
                 }
 
-                Reading::withoutGlobalScope('vendor')->create([
+                $reading = Reading::withoutGlobalScope('vendor')->create([
                     'vendor_id' => $meter->vendor_id,
                     'meter_id' => $meter->id,
                     'reading' => $value,
@@ -65,6 +66,9 @@ class SmartMeterReadings
                     'status' => $status,
                     'read_at' => $last->read_at,
                 ]);
+
+                // Auto-approved smart readings are billed at once, like any approved reading.
+                app(InvoiceReadingAutomatically::class)->handle($reading->fresh());
 
                 $created++;
             });

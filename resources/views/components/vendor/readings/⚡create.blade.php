@@ -329,8 +329,20 @@ new #[Layout('layouts.vendor'), Title('New reading')] class extends Component {
         // and re-links any later reading to this one when backfilling.
         $reading = \Illuminate\Support\Facades\DB::transaction(fn () => Reading::create($payload));
 
-        session()->flash('status', 'Reading for ' . $reading->read_at->format('F Y') . ' recorded: '
-            . number_format($reading->reading) . ' m³ (' . number_format((int) $reading->consumption) . ' m³ consumed).');
+        $message = 'Reading for ' . $reading->read_at->format('F Y') . ' recorded: '
+            . number_format($reading->reading) . ' m³ (' . number_format((int) $reading->consumption) . ' m³ consumed).';
+
+        // Bill straight away when there is a previous reading to measure from.
+        $billing = app(\App\Actions\InvoiceReadingAutomatically::class)->handle($reading->fresh());
+
+        if ($billing['invoice']) {
+            $invoice = $billing['invoice'];
+            $message .= " Invoice {$invoice->number} for " . number_format($invoice->balance(), 2) . ' issued to ' . $reading->meter->client->name . '.';
+        } elseif ($billing['reason']) {
+            $message .= ' Not billed: ' . $billing['reason'];
+        }
+
+        session()->flash('status', $message);
 
         $this->redirectRoute('vendor.readings.index', navigate: true);
     }
