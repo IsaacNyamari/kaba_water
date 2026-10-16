@@ -10,6 +10,12 @@ use RuntimeException;
 class GeminiOcrService
 {
     /**
+     * Gemini refuses this server's IPv6 address ("User location is not
+     * supported") while its IPv4 address is accepted, so always use IPv4.
+     */
+    public const NETWORK_OPTIONS = ['force_ip_resolve' => 'v4'];
+
+    /**
      * Send the image to Gemini and return the extracted digits.
      *
      * The API key travels only in the x-goog-api-key header, never in the
@@ -46,6 +52,7 @@ class GeminiOcrService
 
             try {
                 $response = Http::timeout(25)
+                    ->withOptions(self::NETWORK_OPTIONS)
                     ->acceptJson()
                     ->withHeaders(['x-goog-api-key' => $apiKey])
                     ->post($endpoint, [
@@ -151,6 +158,7 @@ class GeminiOcrService
     {
         try {
             $response = Http::timeout(15)
+                ->withOptions(self::NETWORK_OPTIONS)
                 ->acceptJson()
                 ->withHeaders(['x-goog-api-key' => $apiKey])
                 ->get('https://generativelanguage.googleapis.com/v1beta/models', ['pageSize' => 1]);

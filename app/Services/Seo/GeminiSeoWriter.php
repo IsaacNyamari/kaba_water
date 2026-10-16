@@ -42,6 +42,7 @@ class GeminiSeoWriter
         foreach ($models as $model) {
             try {
                 $response = Http::timeout(30)
+                    ->withOptions(GeminiOcrService::NETWORK_OPTIONS)
                     ->acceptJson()
                     ->withHeaders(['x-goog-api-key' => $apiKey])
                     ->post('https://generativelanguage.googleapis.com/v1beta/models/'.rawurlencode($model).':generateContent', [
