@@ -177,7 +177,7 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
         $log = $sms->send($this->invoice);
 
         match ($log->status) {
-            'sent' => Flux::toast(variant: 'success', text: 'Invoice and pay link sent by SMS to '.$log->to.'.'),
+            'sent' => Flux::toast(variant: 'success', text: 'Invoice sent by SMS to '.$log->to.'.'),
             'logged' => Flux::toast(variant: 'warning', heading: 'SMS is off', text: 'The message was logged but not sent. Turn SMS on in Settings.'),
             default => Flux::toast(variant: 'danger', heading: 'SMS failed', text: (string) $log->error),
         };
@@ -225,7 +225,7 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                     <flux:menu>
                         <flux:menu.item icon="bell-alert" wire:click="requestMpesa"
                             wire:confirm="Send an M-Pesa PIN prompt for KES {{ number_format($invoice->balance(), 2) }} to {{ $invoice->client->phone }}?">Send PIN prompt to client</flux:menu.item>
-                        <flux:menu.item icon="chat-bubble-left-ellipsis" wire:click="smsPayLink">SMS invoice &amp; pay link</flux:menu.item>
+                        <flux:menu.item icon="chat-bubble-left-ellipsis" wire:click="smsPayLink">SMS invoice to client</flux:menu.item>
                         <flux:menu.item icon="link" x-on:click="navigator.clipboard.writeText('{{ $invoice->payUrl() }}'); $flux.toast('Pay link copied.')">Copy pay link</flux:menu.item>
                     </flux:menu>
                 </flux:dropdown>
