@@ -29,7 +29,7 @@ final class Modules
             ];
         }
 
-        if ($user->can('projects.view')) {
+        if (self::enabled('projects') && $user->can('projects.view')) {
             $modules['projects'] = [
                 'name' => 'Project Management',
                 'description' => 'Borehole projects from Day One to handover — progress, materials, costs and budget.',
@@ -41,10 +41,19 @@ final class Modules
         return $modules;
     }
 
+    /**
+     * Whether a module is switched on for the platform. Water Billing always
+     * is; the others follow config/modules.php (set by the platform admin).
+     */
+    public static function enabled(string $module): bool
+    {
+        return $module === 'water' || (bool) config("modules.{$module}", false);
+    }
+
     /** Which module the current page belongs to. */
     public static function current(): string
     {
-        return request()->routeIs('projects.*') ? 'projects' : 'water';
+        return self::enabled('projects') && request()->routeIs('projects.*') ? 'projects' : 'water';
     }
 
     /** The user's landing page inside Water Billing, or null without access. */

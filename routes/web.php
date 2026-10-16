@@ -284,7 +284,7 @@ Route::middleware(['auth', 'verified', 'role:vendor|vendor_staff|technician|mete
 Route::middleware(['auth', 'verified', 'vendor.context', 'sub.active'])->group(function () {
     Route::livewire('/modules', 'modules')->name('modules');
 
-    Route::middleware('permission:projects.view')->prefix('projects')->name('projects.')->group(function () {
+    Route::middleware(['module:projects', 'permission:projects.view'])->prefix('projects')->name('projects.')->group(function () {
         Route::livewire('/', 'projects.index')->name('index');
         Route::livewire('/create', 'projects.form')->middleware('permission:projects.manage')->name('create');
 

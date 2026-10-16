@@ -105,7 +105,7 @@ class User extends Authenticatable implements MustVerifyEmail, PasskeyUser
         $modules = Modules::for($this);
 
         return match (count($modules)) {
-            0 => '/',
+            0 => route('modules'), // explains that no module is available
             1 => reset($modules)['url'],
             default => route('modules'),
         };

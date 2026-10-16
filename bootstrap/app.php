@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Middleware\EnsureModuleEnabled;
 use App\Http\Middleware\EnsureSubscriptionActive;
 use App\Http\Middleware\EnsureVendorContext;
 use Illuminate\Foundation\Application;
@@ -27,6 +28,7 @@ return Application::configure(basePath: dirname(__DIR__))
             // Custom vendor context
             'vendor.context' => EnsureVendorContext::class,
             'sub.active' => EnsureSubscriptionActive::class,
+            'module' => EnsureModuleEnabled::class,
         ]);
         // Safaricom and meter networks cannot send a CSRF token; their URLs carry a secret instead.
         $middleware->validateCsrfTokens(except: ['webhooks/*']);

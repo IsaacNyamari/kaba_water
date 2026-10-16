@@ -55,6 +55,23 @@ final class TeamRoles
         ];
     }
 
+    /** Roles that only work in Project Management. */
+    public const PROJECT_ROLES = ['project_manager', 'site_engineer', 'storekeeper', 'procurement_officer'];
+
+    /**
+     * Roles that can be given right now: project roles are left out while the
+     * Project Management module is switched off. Members who already hold one
+     * keep it (all() still knows it) and can work again once it is back on.
+     *
+     * @return array<string, array{label: string, icon: string, description: string}>
+     */
+    public static function assignable(): array
+    {
+        return Modules::enabled('projects')
+            ? self::all()
+            : array_diff_key(self::all(), array_flip(self::PROJECT_ROLES));
+    }
+
     /** @return list<string> */
     public static function names(): array
     {

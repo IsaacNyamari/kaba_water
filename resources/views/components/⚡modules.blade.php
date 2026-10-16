@@ -14,9 +14,10 @@ new #[Layout('layouts.vendor'), Title('Choose a module')] class extends Componen
     {
         $modules = Modules::for(auth()->user());
 
-        // Nothing to choose between — go straight in.
-        if (count($modules) < 2) {
-            $this->redirect(count($modules) ? reset($modules)['url'] : auth()->user()->homeRoute(), navigate: true);
+        // Only one module — go straight in. With none (e.g. a project-only role while
+        // Project Management is switched off) the page explains why.
+        if (count($modules) === 1) {
+            $this->redirect(reset($modules)['url'], navigate: true);
         }
     }
 
@@ -32,6 +33,16 @@ new #[Layout('layouts.vendor'), Title('Choose a module')] class extends Componen
         <flux:heading size="xl">Welcome back, {{ str(auth()->user()->name)->before(' ') }}</flux:heading>
         <flux:text class="mt-1">Where would you like to work today? You can switch any time from the sidebar.</flux:text>
     </div>
+
+    @if (empty($modules))
+        <div class="app-card flex items-start gap-3 p-6">
+            <flux:icon.lock-closed class="size-6 shrink-0 text-zinc-400" />
+            <div>
+                <flux:heading size="sm">No modules available for your account</flux:heading>
+                <flux:text class="mt-1 text-sm">The module your role works in is switched off. Ask your workspace owner for another role, or contact the platform administrator.</flux:text>
+            </div>
+        </div>
+    @endif
 
     <div class="grid gap-6 md:grid-cols-2">
         @foreach ($modules as $key => $module)

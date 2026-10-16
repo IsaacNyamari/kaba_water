@@ -81,7 +81,7 @@ new #[Layout('layouts.vendor'), Title('Team')] class extends Component {
         $this->validate([
             'name' => ['required', 'string', 'max:150'],
             'email' => ['required', 'email', 'max:190', Rule::unique('users', 'email')->ignore($this->editingId)],
-            'role' => ['required', Rule::in(TeamRoles::names())],
+            'role' => ['required', Rule::in(array_keys(TeamRoles::assignable()))],
             'password' => ['nullable', 'string', 'min:8', 'max:255'],
         ]);
 
@@ -176,7 +176,7 @@ new #[Layout('layouts.vendor'), Title('Team')] class extends Component {
 
     {{-- Roles at a glance --}}
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        @foreach (TeamRoles::all() as $key => $info)
+        @foreach (TeamRoles::assignable() as $key => $info)
             @php $count = $this->members->filter(fn ($m) => $m->hasRole($key))->count(); @endphp
             <div wire:key="role-{{ $key }}" class="stat-card tone-{{ ['vendor_staff' => 'brand', 'technician' => 'amber', 'meter_reader' => 'sky', 'accountant' => 'violet', 'project_manager' => 'emerald', 'site_engineer' => 'amber', 'storekeeper' => 'sky', 'procurement_officer' => 'violet'][$key] ?? 'brand' }} p-5">
                 <div class="flex items-center justify-between">
@@ -243,7 +243,7 @@ new #[Layout('layouts.vendor'), Title('Team')] class extends Component {
             </div>
 
             <flux:radio.group wire:model="role" label="Role">
-                @foreach (TeamRoles::all() as $key => $info)
+                @foreach (TeamRoles::assignable() as $key => $info)
                     <flux:radio value="{{ $key }}" :label="$info['label']" :description="$info['description']" />
                 @endforeach
             </flux:radio.group>

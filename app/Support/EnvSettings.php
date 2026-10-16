@@ -29,6 +29,14 @@ final class EnvSettings
                     'APP_LOCALE' => ['label' => 'Language', 'type' => 'text', 'help' => 'e.g. en', 'rules' => ['required', 'alpha_dash', 'max:10']],
                 ],
             ],
+            'modules' => [
+                'title' => 'Modules',
+                'icon' => 'squares-2x2',
+                'description' => 'Switch optional modules on or off for every workspace. Water Billing is always on. Switching a module off hides it and keeps its data.',
+                'fields' => [
+                    'PROJECTS_MODULE_ENABLED' => ['label' => 'Project Management', 'type' => 'bool', 'help' => 'Borehole projects, project suppliers and equipment. When off, its pages, menu, team roles and daily alerts are disabled.'],
+                ],
+            ],
             'mail' => [
                 'title' => 'Mail',
                 'icon' => 'envelope',

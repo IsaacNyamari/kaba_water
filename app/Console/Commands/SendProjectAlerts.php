@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Project;
 use App\Services\Projects\ProjectAlerts;
+use App\Support\Modules;
 use App\Support\Notifier;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Cache;
@@ -24,6 +25,12 @@ class SendProjectAlerts extends Command
 
     public function handle(): int
     {
+        if (! Modules::enabled('projects')) {
+            $this->info('Project Management is switched off; no alerts sent.');
+
+            return self::SUCCESS;
+        }
+
         $sent = 0;
 
         Project::withoutGlobalScope('vendor')->active()->with(['manager', 'tasks.assignee', 'milestones'])
