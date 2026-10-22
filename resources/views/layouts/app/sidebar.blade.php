@@ -142,6 +142,11 @@
 
                     @canany(['vendor.clients.view', 'vendor.clients.manage'])
                         @if ($isPropertyOwner)
+                            <flux:sidebar.item icon="building-office-2" :href="route('vendor.apartments.index')"
+                                :current="request()->routeIs('vendor.apartments.*')" wire:navigate>
+                                {{ __('Apartments') }}
+                            </flux:sidebar.item>
+
                             <flux:sidebar.item icon="home-modern" :href="route('vendor.units.index')"
                                 :current="request()->routeIs('vendor.units.index')" wire:navigate>
                                 {{ __('Houses') }}

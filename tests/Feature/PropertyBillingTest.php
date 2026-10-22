@@ -151,3 +151,74 @@ test('property owners see houses and tenants in the menu', function () {
         ->assertSee('Bill houses')
         ->assertSee('Tenants');
 });
+
+test('a landlord can add several apartments', function () {
+    Livewire::test('vendor.apartments.index')
+        ->set('name', 'Greenview Court')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->set('name', 'Riverside Flats')
+        ->call('save')
+        ->assertHasNoErrors()
+        ->set('name', 'Riverside Flats')
+        ->call('save')
+        ->assertHasErrors(['name' => 'unique']);
+
+    expect(Property::orderBy('name')->pluck('name')->all())
+        ->toBe(['Greenview Court', 'Riverside Flats', 'Sunrise Apartments']);
+});
+
+test('many houses can be added to an apartment at once, skipping ones that exist', function () {
+    Livewire::test('vendor.apartments.index')
+        ->call('openAddHouses', $this->property->id)
+        ->set('prefix', 'A')
+        ->set('from', '1')
+        ->set('to', '6')
+        ->set('rent', '15000')
+        ->set('service_charge', '1000')
+        ->call('addHouses')
+        ->assertHasNoErrors();
+
+    $houses = Unit::where('property_id', $this->property->id)->orderBy('id')->get();
+
+    // A4 already existed (with its tenant) and is left alone.
+    expect($houses->pluck('house_number')->sort()->values()->all())->toBe(['A1', 'A2', 'A3', 'A4', 'A5', 'A6'])
+        ->and($houses->firstWhere('house_number', 'A4')->client_id)->toBe($this->tenant->id)
+        ->and((string) $houses->firstWhere('house_number', 'A6')->rent)->toBe('15000.00')
+        ->and($houses->firstWhere('house_number', 'A6')->client_id)->toBeNull();
+});
+
+test('adding houses is capped and needs a valid range', function () {
+    Livewire::test('vendor.apartments.index')
+        ->call('openAddHouses', $this->property->id)
+        ->set('from', '10')
+        ->set('to', '5')
+        ->call('addHouses')
+        ->assertHasErrors(['to'])
+        ->set('from', '1')
+        ->set('to', '1000')
+        ->call('addHouses')
+        ->assertHasErrors(['to']);
+
+    expect(Unit::count())->toBe(1);
+});
+
+test('the apartments page shows each building with its occupancy and rent roll', function () {
+    Unit::create(['property_id' => $this->property->id, 'house_number' => 'A5', 'rent' => '9000.00']);
+
+    Livewire::test('vendor.apartments.index')
+        ->assertSee('Sunrise Apartments')
+        ->assertSee('16,500.00'); // only the occupied A4 counts
+});
+
+test('an apartment with houses cannot be deleted', function () {
+    $empty = Property::create(['name' => 'Empty Block']);
+
+    Livewire::test('vendor.apartments.index')
+        ->call('confirmDelete', $this->property->id)
+        ->call('delete')
+        ->call('confirmDelete', $empty->id)
+        ->call('delete');
+
+    expect(Property::pluck('name')->all())->toBe(['Sunrise Apartments']);
+});

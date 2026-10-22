@@ -156,6 +156,7 @@ Route::middleware(['auth', 'verified', 'role:vendor|vendor_staff|technician|mete
 
         // ── Houses (property owners bill per house number) ──
         Route::middleware('permission:vendor.clients.view|vendor.clients.manage')->group(function () {
+            Route::livewire('/apartments', 'vendor.apartments.index')->name('apartments.index');
             Route::livewire('/houses', 'vendor.units.index')->name('units.index');
         });
         Route::livewire('/houses/billing', 'vendor.units.billing')->middleware('permission:vendor.invoices.manage')->name('units.billing');

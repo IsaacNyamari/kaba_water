@@ -41,11 +41,6 @@ new #[Layout('layouts.vendor'), Title('Houses')] class extends Component {
     public string $deposit = '0';
     public string $notes = '';
 
-    // ── Property form ──
-    public ?int $editingPropertyId = null;
-    public string $property_name = '';
-    public string $property_location = '';
-
     public ?int $deleteId = null;
 
     public function mount(): void
@@ -187,58 +182,6 @@ new #[Layout('layouts.vendor'), Title('Houses')] class extends Component {
         Flux::toast(variant: 'success', heading: 'House deleted', text: "House {$unit->house_number} removed. Its past bills are kept.");
     }
 
-    // ───────────────────────── Properties ─────────────────────────
-
-    public function editProperty(?int $id = null): void
-    {
-        $this->authorize($id ? 'update' : 'create', $id ? Property::findOrFail($id) : Property::class);
-
-        $property = $id ? Property::findOrFail($id) : null;
-        $this->editingPropertyId = $property?->id;
-        $this->property_name = $property?->name ?? '';
-        $this->property_location = $property?->location ?? '';
-        $this->resetValidation();
-    }
-
-    public function saveProperty(): void
-    {
-        $vendorId = auth()->user()->vendor_id;
-
-        $this->validate([
-            'property_name' => ['required', 'string', 'max:150', Rule::unique('properties', 'name')->where('vendor_id', $vendorId)->ignore($this->editingPropertyId)],
-            'property_location' => ['nullable', 'string', 'max:255'],
-        ], ['property_name.unique' => 'You already have a property with that name.']);
-
-        $property = $this->editingPropertyId ? Property::findOrFail($this->editingPropertyId) : null;
-        $this->authorize($property ? 'update' : 'create', $property ?? Property::class);
-
-        $payload = ['name' => $this->property_name, 'location' => $this->property_location ?: null];
-        $property ? $property->update($payload) : Property::create($payload);
-
-        Flux::toast(variant: 'success', heading: $property ? 'Property updated' : 'Property added', text: $this->property_name);
-        $this->reset(['editingPropertyId', 'property_name', 'property_location']);
-        unset($this->properties);
-    }
-
-    public function deleteProperty(int $id): void
-    {
-        $property = Property::withCount('units')->findOrFail($id);
-        $this->authorize('delete', $property);
-
-        if ($property->units_count > 0) {
-            Flux::toast(variant: 'danger', heading: 'Property not deleted', text: "Move or delete its {$property->units_count} house(s) first.");
-
-            return;
-        }
-
-        $property->delete();
-        if ($this->property === (string) $id) {
-            $this->property = '';
-        }
-        unset($this->properties);
-        Flux::toast(variant: 'success', heading: 'Property deleted', text: $property->name);
-    }
-
     // ───────────────────────── Data ─────────────────────────
 
     #[Computed]
@@ -302,9 +245,7 @@ new #[Layout('layouts.vendor'), Title('Houses')] class extends Component {
             </div>
 
             <div class="flex flex-wrap gap-2">
-                <flux:modal.trigger name="properties">
-                    <flux:button icon="building-office-2" wire:click="editProperty">Properties</flux:button>
-                </flux:modal.trigger>
+                <flux:button icon="building-office-2" href="{{ route('vendor.apartments.index') }}" wire:navigate>Apartments</flux:button>
                 @can('vendor.invoices.manage')
                     <flux:button icon="document-plus" href="{{ route('vendor.units.billing') }}" wire:navigate>Bill houses</flux:button>
                 @endcan
@@ -338,7 +279,7 @@ new #[Layout('layouts.vendor'), Title('Houses')] class extends Component {
         <flux:input wire:model.live.debounce.300ms="search" icon="magnifying-glass"
             placeholder="Search house number, tenant or phone…" class="sm:w-80" />
         <flux:select wire:model.live="property" class="sm:w-56">
-            <flux:select.option value="">All properties</flux:select.option>
+            <flux:select.option value="">All apartments</flux:select.option>
             @foreach ($this->properties as $p)
                 <flux:select.option value="{{ $p->id }}">{{ $p->name }}</flux:select.option>
             @endforeach
@@ -422,8 +363,8 @@ new #[Layout('layouts.vendor'), Title('Houses')] class extends Component {
                     @endforeach
                 </flux:select>
                 <div class="sm:col-span-2">
-                    <flux:select wire:model="property_id" label="Property (optional)" description="Group houses by building or estate. Add properties with the Properties button.">
-                        <flux:select.option value="">No property</flux:select.option>
+                    <flux:select wire:model="property_id" label="Apartment (optional)" description="The building or estate this house is in. Add apartments on the Apartments page.">
+                        <flux:select.option value="">Not in an apartment</flux:select.option>
                         @foreach ($this->properties as $p)
                             <flux:select.option value="{{ $p->id }}">{{ $p->name }}</flux:select.option>
                         @endforeach
@@ -488,49 +429,4 @@ new #[Layout('layouts.vendor'), Title('Houses')] class extends Component {
         </div>
     </flux:modal>
 
-    {{-- Properties --}}
-    <flux:modal name="properties" class="w-full max-w-xl">
-        <div class="space-y-6">
-            <div>
-                <flux:heading size="lg">Properties</flux:heading>
-                <flux:subheading>Buildings or estates your houses belong to. Optional.</flux:subheading>
-            </div>
-
-            <div class="divide-y divide-zinc-100 dark:divide-zinc-700">
-                @forelse ($this->properties as $p)
-                    <div class="flex items-center justify-between gap-3 py-2" wire:key="property-{{ $p->id }}">
-                        <div class="min-w-0">
-                            <div class="font-medium">{{ $p->name }}</div>
-                            <div class="text-xs text-zinc-500">{{ $p->units_count }} house(s){{ $p->location ? ' · '.$p->location : '' }}</div>
-                        </div>
-                        @can('update', $p)
-                            <div class="flex gap-1">
-                                <flux:button variant="ghost" size="sm" icon="pencil-square" wire:click="editProperty({{ $p->id }})" />
-                                <flux:button variant="ghost" size="sm" icon="trash" class="text-rose-600"
-                                    wire:click="deleteProperty({{ $p->id }})" wire:confirm="Delete property {{ $p->name }}?" />
-                            </div>
-                        @endcan
-                    </div>
-                @empty
-                    <flux:text class="py-2 text-sm">No properties yet.</flux:text>
-                @endforelse
-            </div>
-
-            @can('create', \App\Models\Property::class)
-                <form wire:submit="saveProperty" class="space-y-4 rounded-lg bg-zinc-50 p-4 dark:bg-zinc-800/40">
-                    <flux:heading size="sm">{{ $editingPropertyId ? 'Edit property' : 'New property' }}</flux:heading>
-                    <div class="grid gap-4 sm:grid-cols-2">
-                        <flux:input wire:model="property_name" label="Name" placeholder="e.g. Sunrise Apartments" />
-                        <flux:input wire:model="property_location" label="Location" />
-                    </div>
-                    <div class="flex justify-end gap-2">
-                        @if ($editingPropertyId)
-                            <flux:button variant="ghost" wire:click="editProperty">Cancel</flux:button>
-                        @endif
-                        <flux:button type="submit" variant="primary" size="sm">{{ $editingPropertyId ? 'Save property' : 'Add property' }}</flux:button>
-                    </div>
-                </form>
-            @endcan
-        </div>
-    </flux:modal>
 </div>

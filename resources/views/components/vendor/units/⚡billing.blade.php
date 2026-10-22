@@ -168,8 +168,8 @@ new #[Layout('layouts.vendor'), Title('Bill houses')] class extends Component {
             <div class="card-body space-y-4">
                 <div class="flex flex-col gap-3 sm:flex-row">
                     <flux:input wire:model.live="period" type="month" label="Month" class="sm:w-48" />
-                    <flux:select wire:model.live="property" label="Property" class="sm:w-56">
-                        <flux:select.option value="">All properties</flux:select.option>
+                    <flux:select wire:model.live="property" label="Apartment" class="sm:w-56">
+                        <flux:select.option value="">All apartments</flux:select.option>
                         @foreach ($this->properties as $p)
                             <flux:select.option value="{{ $p->id }}">{{ $p->name }}</flux:select.option>
                         @endforeach
