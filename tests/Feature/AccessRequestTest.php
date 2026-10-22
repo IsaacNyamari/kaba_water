@@ -4,6 +4,7 @@ use App\Actions\AccessRequests\AcceptInvitation;
 use App\Actions\AccessRequests\ApproveAccessRequest;
 use App\Actions\AccessRequests\SubmitAccessRequest;
 use App\Enums\AccessRequestStatus;
+use App\Enums\BusinessType;
 use App\Enums\EmailCheckResult;
 use App\Models\AccessRequest;
 use App\Models\Client;
@@ -222,4 +223,84 @@ test('only platform admins can open the review queue', function () {
     $vendorUser->assignRole('vendor');
 
     $this->actingAs($vendorUser)->get(route('admin.access-requests.index'))->assertForbidden();
+});
+
+test('landlords ask for access with their property or business name', function () {
+    Livewire::test('access.request')
+        ->set('requested_type', AccessRequest::TYPE_LANDLORD)
+        ->set('name', 'Peter Kamau')
+        ->set('email', 'peter@sunrise.test')
+        ->call('submit')
+        ->assertHasErrors(['organization' => 'required'])
+        ->set('organization', 'Sunrise Apartments')
+        ->call('submit')
+        ->assertHasNoErrors()
+        ->assertSet('submitted', true);
+
+    expect(AccessRequest::sole()->requested_type)->toBe(AccessRequest::TYPE_LANDLORD);
+});
+
+test('an approved landlord gets a property-owner workspace and lands on its dashboard', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('super_admin');
+
+    $request = app(SubmitAccessRequest::class)->handle(vendorRequestData([
+        'requested_type' => AccessRequest::TYPE_LANDLORD, 'email' => 'peter@sunrise.test', 'organization' => 'Sunrise Apartments',
+    ]));
+
+    $this->actingAs($admin);
+    Livewire::test('admin.access-requests.index')
+        ->call('openApprove', $request->id)
+        ->assertSet('role', 'vendor')
+        ->assertSet('businessType', 'property')
+        ->call('approve')
+        ->assertHasNoErrors();
+
+    $request->refresh();
+    expect($request->vendor->business_type)->toBe(BusinessType::Property)
+        ->and($request->vendor->name)->toBe('Sunrise Apartments');
+
+    $user = app(AcceptInvitation::class)->handle($request, inviteTokenFor($request), 'Peter Kamau', 'Sup3r-secret-pass!');
+
+    $this->actingAs($user)->get(route('vendor.dashboard'))->assertOk();
+    $this->get(route('vendor.units.index'))->assertOk();
+});
+
+test('auto approve gives landlords a property-owner workspace', function () {
+    config(['access.auto_approve' => true]);
+
+    $request = app(SubmitAccessRequest::class)->handle(vendorRequestData([
+        'requested_type' => AccessRequest::TYPE_LANDLORD, 'organization' => 'Sunrise Apartments',
+    ]));
+
+    expect($request->status)->toBe(AccessRequestStatus::Approved)
+        ->and($request->vendor->business_type)->toBe(BusinessType::Property);
+});
+
+test('the admin can approve someone as a team member of an existing workspace', function () {
+    $admin = User::factory()->create();
+    $admin->assignRole('super_admin');
+    $workspace = Vendor::factory()->propertyOwner()->create();
+
+    $request = app(SubmitAccessRequest::class)->handle(vendorRequestData(['email' => 'reader@sunrise.test']));
+
+    $this->actingAs($admin);
+    Livewire::test('admin.access-requests.index')
+        ->call('openApprove', $request->id)
+        ->set('role', 'meter_reader')
+        ->call('approve')
+        ->assertHasErrors('vendorId')
+        ->set('vendorId', $workspace->id)
+        ->call('approve')
+        ->assertHasNoErrors();
+
+    $request->refresh();
+    $user = app(AcceptInvitation::class)->handle($request, inviteTokenFor($request), 'Mary Reader', 'Sup3r-secret-pass!');
+
+    expect($user->hasRole('meter_reader'))->toBeTrue()
+        ->and($user->vendor_id)->toBe($workspace->id)
+        ->and(Vendor::count())->toBe(1);
+
+    $this->actingAs($user)->get(route('vendor.readings.create'))->assertOk();
+    $this->get(route('vendor.dashboard'))->assertForbidden();
 });

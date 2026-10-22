@@ -45,7 +45,7 @@ class SubmitAccessRequest
 
         if ($this->shouldAutoApprove($request)) {
             try {
-                // Vendor request + real-looking email + feature on → new trial workspace.
+                // Water company or landlord + real-looking email + feature on → new trial workspace of that kind.
                 $this->approve->handle($request, role: 'vendor', vendorId: null, clientId: null, reviewer: null, auto: true);
 
                 return $request->fresh();
@@ -64,7 +64,7 @@ class SubmitAccessRequest
         Notifier::send(
             Notifier::admins(),
             'Access request from '.$request->name,
-            ($request->requested_type === AccessRequest::TYPE_VENDOR ? 'Vendor workspace' : 'Client portal').($request->organization ? ' · '.$request->organization : ''),
+            $request->typeLabel().($request->organization ? ' · '.$request->organization : ''),
             route('admin.access-requests.index'),
             'user-plus',
             'access_request',
@@ -76,7 +76,7 @@ class SubmitAccessRequest
     protected function shouldAutoApprove(AccessRequest $request): bool
     {
         return config('access.auto_approve')
-            && $request->requested_type === AccessRequest::TYPE_VENDOR
+            && $request->wantsWorkspace()
             && filled($request->organization)
             && $request->email_check?->passed();
     }

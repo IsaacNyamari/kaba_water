@@ -3,6 +3,7 @@
 namespace App\Actions\AccessRequests;
 
 use App\Enums\AccessRequestStatus;
+use App\Enums\BusinessType;
 use App\Enums\VendorStatus;
 use App\Models\AccessRequest;
 use App\Models\Client;
@@ -11,6 +12,7 @@ use App\Models\User;
 use App\Models\Vendor;
 use App\Notifications\AccessInvitation;
 use App\Support\DefaultExpenseCategories;
+use App\Support\TeamRoles;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Notification;
 use Illuminate\Support\Facades\URL;
@@ -24,12 +26,25 @@ use Illuminate\Validation\ValidationException;
  */
 class ApproveAccessRequest
 {
-    public const ROLES = ['vendor', 'accountant', 'vendor_staff', 'client', 'super_admin'];
+    /**
+     * Every role an approval can grant: the workspace owner, a customer, a
+     * platform admin, or one of the team roles a vendor can give (App\Support\TeamRoles),
+     * which join an existing workspace.
+     *
+     * @return list<string>
+     */
+    public static function roles(): array
+    {
+        return ['vendor', 'client', 'super_admin', ...array_keys(TeamRoles::assignable())];
+    }
 
     /**
      * @param  int|null  $vendorId  vendor role: existing workspace, or null to create one
-     *                              from the request's organisation. client role: required.
+     *                              from the request's organisation. Workspace roles and
+     *                              the client role: required.
      * @param  int|null  $clientId  client role: the customer account to link (required).
+     * @param  BusinessType|null  $businessType  New workspace only: water vendor or property
+     *                                           owner. Defaults to what the person asked for.
      */
     public function handle(
         AccessRequest $request,
@@ -38,12 +53,13 @@ class ApproveAccessRequest
         ?int $clientId,
         ?User $reviewer,
         bool $auto = false,
+        ?BusinessType $businessType = null,
     ): AccessRequest {
         if (! $request->isPending()) {
             throw ValidationException::withMessages(['request' => 'This request has already been decided.']);
         }
 
-        if (! in_array($role, self::ROLES, true)) {
+        if (! in_array($role, self::roles(), true)) {
             throw ValidationException::withMessages(['role' => 'Unknown role.']);
         }
 
@@ -51,12 +67,12 @@ class ApproveAccessRequest
             throw ValidationException::withMessages(['request' => "A user with {$request->email} already exists."]);
         }
 
-        DB::transaction(function () use ($request, $role, $vendorId, $clientId, $reviewer, $auto) {
+        DB::transaction(function () use ($request, $role, $vendorId, $clientId, $reviewer, $auto, $businessType) {
             [$vendorId, $clientId] = match ($role) {
-                'vendor' => [$vendorId ?? $this->createWorkspace($request)->id, null],
+                'vendor' => [$vendorId ?? $this->createWorkspace($request, $businessType ?? $request->businessType())->id, null],
                 'client' => $this->resolveClient($vendorId, $clientId),
-                'accountant', 'vendor_staff' => [$this->requireVendor($vendorId), null],
                 'super_admin' => [null, null],
+                default => [$this->requireVendor($vendorId), null], // team roles join an existing workspace
             };
 
             $request->update([
@@ -90,7 +106,7 @@ class ApproveAccessRequest
             ->notify(new AccessInvitation($request, $url));
     }
 
-    protected function createWorkspace(AccessRequest $request): Vendor
+    protected function createWorkspace(AccessRequest $request, BusinessType $businessType): Vendor
     {
         $name = $request->organization ?: "{$request->name}'s workspace";
 
@@ -102,6 +118,7 @@ class ApproveAccessRequest
 
         $vendor = Vendor::create([
             'name' => $name,
+            'business_type' => $businessType,
             'slug' => $this->uniqueSlug($name),
             'email' => $request->email,
             'phone' => $request->phone,

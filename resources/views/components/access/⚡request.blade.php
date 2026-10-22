@@ -33,11 +33,11 @@ new #[Layout('layouts::auth'), Title('Request access')] class extends Component 
     protected function rules(): array
     {
         return [
-            'requested_type'    => ['required', 'in:' . AccessRequest::TYPE_VENDOR . ',' . AccessRequest::TYPE_CLIENT],
+            'requested_type'    => ['required', 'in:' . implode(',', array_keys(AccessRequest::TYPES))],
             'name'              => ['required', 'string', 'max:150'],
             'email'             => ['required', 'email:rfc', 'max:150'],
             'phone'             => ['nullable', 'string', 'max:30'],
-            'organization'      => [$this->requested_type === AccessRequest::TYPE_VENDOR ? 'required' : 'nullable', 'string', 'max:150'],
+            'organization'      => [$this->requested_type !== AccessRequest::TYPE_CLIENT ? 'required' : 'nullable', 'string', 'max:150'],
             'provider_name'     => [$this->requested_type === AccessRequest::TYPE_CLIENT ? 'required' : 'nullable', 'string', 'max:150'],
             'account_reference' => ['nullable', 'string', 'max:60'],
             'message'           => ['nullable', 'string', 'max:1000'],
@@ -47,8 +47,10 @@ new #[Layout('layouts::auth'), Title('Request access')] class extends Component 
     protected function messages(): array
     {
         return [
-            'organization.required'  => 'Enter the name of your water company.',
-            'provider_name.required' => 'Enter the name of the company that supplies your water.',
+            'organization.required'  => $this->requested_type === AccessRequest::TYPE_LANDLORD
+                ? 'Enter the name of your property or business.'
+                : 'Enter the name of your water company.',
+            'provider_name.required' => 'Enter the name of your water company or landlord.',
         ];
     }
 
@@ -114,9 +116,9 @@ new #[Layout('layouts::auth'), Title('Request access')] class extends Component 
         <x-auth-header :title="__('Request access')" :description="__('Approved requests get a sign-up link by email.')" />
 
         <form wire:submit="submit" class="flex flex-col gap-4">
-            {{-- Who is asking: a compact two-option switch instead of a stacked radio list --}}
-            <div role="radiogroup" aria-label="{{ __('I am') }}" class="grid grid-cols-2 gap-1 rounded-xl bg-brand-900/5 p-1 ring-1 ring-brand-900/10 dark:bg-white/10 dark:ring-white/15">
-                @foreach (['vendor' => __('Water company'), 'client' => __('Water customer')] as $value => $label)
+            {{-- Who is asking: a compact three-option switch instead of a stacked radio list --}}
+            <div role="radiogroup" aria-label="{{ __('I am') }}" class="grid grid-cols-3 gap-1 rounded-xl bg-brand-900/5 p-1 ring-1 ring-brand-900/10 dark:bg-white/10 dark:ring-white/15">
+                @foreach ([AccessRequest::TYPE_VENDOR => __('Water company'), AccessRequest::TYPE_LANDLORD => __('Landlord'), AccessRequest::TYPE_CLIENT => __('Customer / tenant')] as $value => $label)
                     <button type="button" role="radio" aria-checked="{{ $requested_type === $value ? 'true' : 'false' }}"
                         wire:click="$set('requested_type', '{{ $value }}')"
                         class="rounded-lg px-3 py-2 text-sm font-semibold transition {{ $requested_type === $value ? 'bg-brand-500 text-white shadow-sm dark:bg-brand-400 dark:text-brand-950' : 'text-brand-900/70 hover:bg-brand-900/5 hover:text-brand-950 dark:text-white/80 dark:hover:bg-white/10 dark:hover:text-white' }}">
@@ -132,12 +134,14 @@ new #[Layout('layouts::auth'), Title('Request access')] class extends Component 
                     placeholder="email@example.com" />
                 <flux:input wire:model="phone" :label="__('Phone (optional)')" autocomplete="tel" />
 
-                @if ($requested_type === 'vendor')
+                @if ($requested_type === AccessRequest::TYPE_VENDOR)
                     <flux:input wire:model="organization" :label="__('Water company name')" required />
+                @elseif ($requested_type === AccessRequest::TYPE_LANDLORD)
+                    <flux:input wire:model="organization" :label="__('Property or business name')" required />
                 @else
-                    <flux:input wire:model="provider_name" :label="__('Your water provider')" required />
+                    <flux:input wire:model="provider_name" :label="__('Your water company or landlord')" required />
                     <div class="sm:col-span-2">
-                        <flux:input wire:model="account_reference" :label="__('Account or meter number (optional)')" />
+                        <flux:input wire:model="account_reference" :label="__('Account, meter or house number (optional)')" />
                     </div>
                 @endif
             </div>

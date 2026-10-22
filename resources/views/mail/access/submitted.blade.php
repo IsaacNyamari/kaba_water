@@ -3,7 +3,7 @@
 
 # New access request
 
-{{ $accessRequest->name }} asked for a **{{ $accessRequest->requested_type === \App\Models\AccessRequest::TYPE_VENDOR ? 'vendor workspace' : 'client portal account' }}**.
+{{ $accessRequest->name }} asked for access as a **{{ strtolower($accessRequest->typeLabel()) }}**{{ $accessRequest->wantsWorkspace() ? ' (own workspace)' : ' (portal account)' }}.
 
 <x-mail::table>
 | | |

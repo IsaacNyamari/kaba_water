@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use App\Enums\AccessRequestStatus;
+use App\Enums\BusinessType;
 use App\Enums\EmailCheckResult;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
@@ -15,9 +16,20 @@ use Illuminate\Support\Str;
  */
 class AccessRequest extends Model
 {
+    /** A water company asking for its own workspace. */
     public const TYPE_VENDOR = 'vendor';
 
+    /** A landlord / apartment owner asking for its own workspace (bills tenants per house). */
+    public const TYPE_LANDLORD = 'landlord';
+
+    /** A customer or tenant asking for a portal login. */
     public const TYPE_CLIENT = 'client';
+
+    public const TYPES = [
+        self::TYPE_VENDOR => 'Water company',
+        self::TYPE_LANDLORD => 'Landlord / property owner',
+        self::TYPE_CLIENT => 'Customer / tenant',
+    ];
 
     protected $fillable = [
         'name', 'email', 'phone', 'organization', 'requested_type',
@@ -67,6 +79,23 @@ class AccessRequest extends Model
     public function scopePending(Builder $q): Builder
     {
         return $q->where('status', AccessRequestStatus::Pending->value);
+    }
+
+    /** Water companies and landlords get a workspace of their own; customers get a portal login. */
+    public function wantsWorkspace(): bool
+    {
+        return in_array($this->requested_type, [self::TYPE_VENDOR, self::TYPE_LANDLORD], true);
+    }
+
+    /** The kind of workspace to create for this request. */
+    public function businessType(): BusinessType
+    {
+        return $this->requested_type === self::TYPE_LANDLORD ? BusinessType::Property : BusinessType::Water;
+    }
+
+    public function typeLabel(): string
+    {
+        return self::TYPES[$this->requested_type] ?? ucfirst((string) $this->requested_type);
     }
 
     public function isPending(): bool

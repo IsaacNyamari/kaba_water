@@ -5,6 +5,8 @@ use App\Livewire\Concerns\RefreshesOnActivity;
 use App\Actions\AccessRequests\ApproveAccessRequest;
 use App\Actions\AccessRequests\RejectAccessRequest;
 use App\Enums\AccessRequestStatus;
+use App\Enums\BusinessType;
+use App\Support\TeamRoles;
 use App\Models\AccessRequest;
 use App\Models\Client;
 use App\Models\Vendor;
@@ -30,6 +32,7 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
     public ?int $approvingId = null;
     public string $role = 'vendor';
     public string $workspaceMode = 'new'; // new | existing (vendor role)
+    public string $businessType = 'water'; // new workspace: water | property
     public ?int $vendorId = null;
     public ?int $clientId = null;
 
@@ -98,6 +101,7 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
         $this->approvingId = $request->id;
         $this->role = $request->requested_type === AccessRequest::TYPE_CLIENT ? 'client' : 'vendor';
         $this->workspaceMode = 'new';
+        $this->businessType = $request->businessType()->value;
         $this->vendorId = null;
         $this->clientId = null;
 
@@ -121,11 +125,12 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
     {
         $request = AccessRequest::findOrFail($this->approvingId);
         $this->authorize('review', $request);
+        $this->resetValidation();
 
         $vendorId = match ($this->role) {
             'vendor' => $this->workspaceMode === 'existing' ? $this->vendorId : null,
-            'client', 'accountant', 'vendor_staff' => $this->vendorId,
-            default  => null,
+            'super_admin' => null,
+            default => $this->vendorId, // client and team roles
         };
 
         if ($this->role === 'vendor' && $this->workspaceMode === 'existing' && ! $vendorId) {
@@ -134,7 +139,10 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
         }
 
         try {
-            $action->handle($request, $this->role, $vendorId, $this->role === 'client' ? $this->clientId : null, auth()->user());
+            $action->handle(
+                $request, $this->role, $vendorId, $this->role === 'client' ? $this->clientId : null, auth()->user(),
+                businessType: BusinessType::tryFrom($this->businessType),
+            );
         } catch (ValidationException $e) {
             foreach ($e->errors() as $field => $messages) {
                 $this->addError(in_array($field, ['vendorId', 'clientId', 'role'], true) ? $field : 'role', $messages[0]);
@@ -274,8 +282,10 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
                     </flux:table.cell>
 
                     <flux:table.cell class="text-sm">
-                        @if ($r->requested_type === AccessRequest::TYPE_VENDOR)
-                            <flux:badge size="sm" color="violet">Vendor</flux:badge>
+                        @if ($r->wantsWorkspace())
+                            <flux:badge size="sm" :color="$r->requested_type === AccessRequest::TYPE_LANDLORD ? 'amber' : 'violet'">
+                                {{ $r->requested_type === AccessRequest::TYPE_LANDLORD ? 'Landlord' : 'Water company' }}
+                            </flux:badge>
                             <div class="text-xs text-zinc-500 mt-1">{{ $r->organization }}</div>
                         @else
                             <flux:badge size="sm" color="sky">Client</flux:badge>
@@ -304,7 +314,7 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
                                 by {{ $r->reviewer->name }}
                             @endif
                             @if ($r->role)
-                                · {{ str_replace('_', ' ', $r->role) }}{{ $r->vendor ? ' @ ' . $r->vendor->name : '' }}
+                                · {{ $r->role === 'client' ? 'Client' : ($r->role === 'super_admin' ? 'Platform admin' : TeamRoles::label($r->role)) }}{{ $r->vendor ? ' @ ' . $r->vendor->name : '' }}
                             @endif
                         </div>
                         @if ($r->status === AccessRequestStatus::Approved && $r->invite_expires_at?->isPast())
@@ -345,11 +355,17 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
                     <flux:subheading>{{ $this->approving->email }} will be emailed a signup link.</flux:subheading>
                 </div>
 
-                <flux:select wire:model.live="role" label="Role to grant">
-                    <flux:select.option value="vendor">Vendor (runs a water-company workspace)</flux:select.option>
-                    <flux:select.option value="accountant">Accountant (accounting module of a workspace)</flux:select.option>
-                    <flux:select.option value="vendor_staff">Staff (read-only accounting of a workspace)</flux:select.option>
-                    <flux:select.option value="client">Client (customer portal)</flux:select.option>
+                <flux:text class="text-sm">
+                    They asked as: <strong>{{ $this->approving->typeLabel() }}</strong>{{ $this->approving->organization ? ' · ' . $this->approving->organization : '' }}
+                </flux:text>
+
+                <flux:select wire:model.live="role" label="Role to grant"
+                    :description="TeamRoles::assignable()[$role]['description'] ?? null">
+                    <flux:select.option value="vendor">Director / owner (runs the whole workspace)</flux:select.option>
+                    @foreach (TeamRoles::assignable() as $value => $teamRole)
+                        <flux:select.option value="{{ $value }}">{{ $teamRole['label'] }} (team member of a workspace)</flux:select.option>
+                    @endforeach
+                    <flux:select.option value="client">Client / tenant (customer portal)</flux:select.option>
                     <flux:select.option value="super_admin">Platform admin</flux:select.option>
                 </flux:select>
                 <flux:error name="role" />
@@ -361,6 +377,15 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
                         <flux:radio value="existing" label="Add as a user of an existing workspace" />
                     </flux:radio.group>
 
+                    @if ($workspaceMode === 'new')
+                        <flux:select wire:model="businessType" label="Business type"
+                            description="Landlords bill tenants per house number; water companies bill metered water.">
+                            @foreach (BusinessType::cases() as $type)
+                                <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    @endif
+
                     @if ($workspaceMode === 'existing')
                         <flux:select wire:model.live="vendorId" label="Workspace" placeholder="Choose…">
                             @foreach ($this->vendors as $v)
@@ -369,7 +394,7 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
                         </flux:select>
                     @endif
                     <flux:error name="vendorId" />
-                @elseif (in_array($role, ['accountant', 'vendor_staff'], true))
+                @elseif (array_key_exists($role, TeamRoles::assignable()))
                     <flux:select wire:model.live="vendorId" label="Workspace" placeholder="Choose…">
                         @foreach ($this->vendors as $v)
                             <flux:select.option value="{{ $v->id }}">{{ $v->name }}</flux:select.option>
@@ -384,7 +409,7 @@ new #[Layout('layouts.admin'), Title('Access Requests')] class extends Component
                         @endif.
                     </flux:text>
 
-                    <flux:select wire:model.live="vendorId" label="Water provider" placeholder="Choose…">
+                    <flux:select wire:model.live="vendorId" label="Water company or landlord" placeholder="Choose…">
                         @foreach ($this->vendors as $v)
                             <flux:select.option value="{{ $v->id }}">{{ $v->name }}</flux:select.option>
                         @endforeach

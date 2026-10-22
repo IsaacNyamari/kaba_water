@@ -13,7 +13,11 @@ Create my account
 This link works **once** and expires on **{{ $accessRequest->invite_expires_at?->format('d M Y \a\t H:i') }}**.
 </x-mail::panel>
 
-@if ($accessRequest->requested_type === \App\Models\AccessRequest::TYPE_VENDOR)
+@if ($accessRequest->role && ! in_array($accessRequest->role, ['vendor', 'client', 'super_admin'], true))
+You will sign in as **{{ \App\Support\TeamRoles::label($accessRequest->role) }}**.
+@elseif ($accessRequest->role === 'vendor' && $accessRequest->vendor?->isPropertyOwner())
+Once you are in, add your houses by house number, link each tenant, set the rent and bill them every month.
+@elseif ($accessRequest->role === 'vendor')
 Once you are in, add your first clients and meters, set your tariff, and you are ready to capture readings.
 @else
 Once you are in, you can see your bills, your water usage and your payment history at any time.
