@@ -2,9 +2,11 @@
 
 use App\Livewire\Concerns\RefreshesOnActivity;
 
+use App\Actions\SendInvoice;
 use App\Enums\InvoiceStatus;
 use App\Models\Client;
 use App\Models\Invoice;
+use Flux\Flux;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Url;
 use Livewire\Component;
@@ -33,6 +35,23 @@ new #[Layout('layouts.vendor', ['title' => 'Invoices'])] class extends Component
     {
         $this->reset(['search', 'status', 'clientId', 'from', 'to']);
         $this->resetPage();
+    }
+
+    /** Issue a draft and text it to the client, or text an unpaid invoice again. */
+    public function send(int $id, SendInvoice $action): void
+    {
+        $invoice = Invoice::findOrFail($id);
+        $this->authorize('send', $invoice);
+
+        try {
+            $sms = $action->handle($invoice);
+        } catch (\App\Services\Accounting\Exceptions\AccountingException|\RuntimeException $e) {
+            Flux::toast(variant: 'danger', heading: 'Cannot send', text: $e->getMessage());
+            return;
+        }
+
+        $outcome = SendInvoice::outcome($sms);
+        Flux::toast(variant: $outcome['variant'], heading: "Invoice {$invoice->number} sent", text: $outcome['text']);
     }
 
     public function with(): array
@@ -182,6 +201,15 @@ new #[Layout('layouts.vendor', ['title' => 'Invoices'])] class extends Component
 
                         <flux:table.cell align="end">
                             <div class="inline-flex gap-1">
+                                @can('send', $invoice)
+                                    @if ($invoice->status->value === 'draft' || $invoice->status->isPayable())
+                                        <flux:tooltip :content="$invoice->status->value === 'draft' ? 'Send invoice' : 'Resend invoice'">
+                                            <flux:button size="sm" variant="ghost" icon="paper-airplane"
+                                                wire:click="send({{ $invoice->id }})" wire:loading.attr="disabled" wire:target="send({{ $invoice->id }})"
+                                                wire:confirm="Send invoice {{ $invoice->number }} to {{ $invoice->client->name }} by SMS?" />
+                                        </flux:tooltip>
+                                    @endif
+                                @endcan
                                 <flux:button size="sm" variant="ghost" icon="eye"
                                     href="{{ route('vendor.invoices.show', $invoice) }}" />
                                 <flux:button size="sm" variant="ghost" icon="arrow-down-tray"

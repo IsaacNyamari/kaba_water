@@ -70,6 +70,14 @@ class Reading extends Model
     }
 
     /**
+     * Whether the client submitted this reading themselves from the portal.
+     */
+    public function isTakenByClient(): bool
+    {
+        return (bool) $this->creator?->isClient();
+    }
+
+    /**
      * The most recent APPROVED reading value for a meter, optionally only
      * readings taken at or before $before and excluding one reading id.
      */

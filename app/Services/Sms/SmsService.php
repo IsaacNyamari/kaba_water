@@ -103,7 +103,8 @@ class SmsService
 
     /**
      * HostPinnacle (smsportal.hostpinnacle.co.ke). Authenticates with the
-     * portal user ID and password, or with an API key from the portal.
+     * user ID and API password, the API key (sent as the `apikey` header),
+     * or both — most accounts need all three.
      *
      * @return array{0: bool, 1: ?string, 2: ?string}
      */
@@ -122,10 +123,13 @@ class SmsService
             'output' => 'json',
         ];
 
+        // Accounts with an API key expect it alongside the user ID and password, so send whatever is saved.
         if (filled($integration->setting('userid'))) {
             $params['userid'] = (string) $integration->setting('userid');
             $params['password'] = (string) $integration->setting('password');
-        } elseif ($apiKey !== '') {
+        }
+
+        if ($apiKey !== '') {
             $request = $request->withHeaders(['apikey' => $apiKey]);
         }
 

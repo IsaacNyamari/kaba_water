@@ -2,6 +2,7 @@
 
 namespace App\Services\Sms;
 
+use App\Actions\BillUnit;
 use App\Models\Integration;
 use App\Models\Invoice;
 use App\Models\SmsMessage;
@@ -28,13 +29,19 @@ class InvoiceSms
 
     public function message(Invoice $invoice): string
     {
-        $invoice->loadMissing(['client', 'vendor', 'reading.meter']);
+        $invoice->loadMissing(['client', 'vendor', 'reading.meter', 'unit']);
         $reading = $invoice->reading;
+        $kind = $reading ? 'water bill' : 'bill';
 
         $lines = [
-            "{$invoice->vendor?->name}: water bill {$invoice->number}",
+            "{$invoice->vendor?->name}: {$kind} {$invoice->number}",
             "Dear {$invoice->client?->name} (A/C {$invoice->client?->account_no}),",
         ];
+
+        if ($invoice->unit) {
+            $lines[] = "House {$invoice->unit->house_number}"
+                .($invoice->billing_period ? ', '.BillUnit::periodLabel($invoice->billing_period) : '');
+        }
 
         if ($reading) {
             $lines[] = 'Meter '.$reading->meter?->serial.': '.number_format((int) $reading->previous_reading).' to '.number_format((int) $reading->reading)

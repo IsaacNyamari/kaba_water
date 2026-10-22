@@ -31,7 +31,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'module' => EnsureModuleEnabled::class,
         ]);
         // Safaricom and meter networks cannot send a CSRF token; their URLs carry a secret instead.
-        $middleware->validateCsrfTokens(except: ['webhooks/*']);
+        $middleware->validateCsrfTokens(except: ['webhooks/*', 'api/mobile/*']);
 
         // Redirect unauthenticated users to /login
         $middleware->redirectGuestsTo(fn () => route('login'));

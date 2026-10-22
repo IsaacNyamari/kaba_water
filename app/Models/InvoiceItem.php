@@ -7,13 +7,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class InvoiceItem extends Model
 {
-    protected $fillable = ['invoice_id', 'description', 'quantity', 'unit_price', 'total'];
+    /** Line categories; each maps to a revenue account in config accounting.invoice_item_accounts. */
+    public const WATER = 'water';
+
+    public const RENT = 'rent';
+
+    public const SERVICE_CHARGE = 'service_charge';
+
+    public const OTHER = 'other';
+
+    protected $fillable = ['invoice_id', 'description', 'category', 'quantity', 'unit_price', 'total'];
 
     protected $casts = [
-        'quantity'   => 'decimal:3',
+        'quantity' => 'decimal:3',
         'unit_price' => 'decimal:4',
-        'total'      => 'decimal:2',
+        'total' => 'decimal:2',
     ];
 
-    public function invoice(): BelongsTo { return $this->belongsTo(Invoice::class); }
+    public function invoice(): BelongsTo
+    {
+        return $this->belongsTo(Invoice::class);
+    }
 }

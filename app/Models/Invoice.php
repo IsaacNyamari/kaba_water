@@ -14,7 +14,7 @@ class Invoice extends Model
     use BelongsToVendor;
 
     protected $fillable = [
-        'vendor_id', 'client_id', 'reading_id', 'number',
+        'vendor_id', 'client_id', 'unit_id', 'reading_id', 'billing_period', 'number',
         'issued_at', 'due_at', 'subtotal', 'tax', 'total',
         'amount_paid', 'status', 'pdf_path', 'notes',
     ];
@@ -32,6 +32,12 @@ class Invoice extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /** The house this bill is for (property owners). */
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function reading(): BelongsTo

@@ -1,6 +1,7 @@
 <?php
 
 use App\Actions\MarkInvoicePaid;
+use App\Actions\SendInvoice;
 use App\Enums\InvoiceStatus;
 use App\Enums\PaymentMethod;
 use App\Models\Invoice;
@@ -21,44 +22,24 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
     public function mount(Invoice $invoice): void
     {
         $this->authorize('view', $invoice);
-        $this->invoice = $invoice->load(['items', 'client', 'reading.meter', 'payments']);
+        $this->invoice = $invoice->load(['items', 'client', 'unit.property', 'reading.meter', 'payments']);
     }
 
-    public function send(InvoicePdfService $pdf): void
+    /** Issue a draft and text it to the client, or text an unpaid invoice again. */
+    public function send(SendInvoice $action): void
     {
         $this->authorize('send', $this->invoice);
 
-        if ($this->invoice->status !== InvoiceStatus::Draft) {
-            Flux::toast(variant: 'warning', heading: 'Not a draft', text: 'Only draft invoices can be sent.');
-            return;
-        }
-
         try {
-            // The status change and its ledger entry succeed or fail together.
-            \Illuminate\Support\Facades\DB::transaction(fn () => $this->invoice->update([
-                'status' => InvoiceStatus::Sent,
-                'issued_at' => $this->invoice->issued_at ?? now(),
-            ]));
-        } catch (\App\Services\Accounting\Exceptions\AccountingException $e) {
+            $sms = $action->handle($this->invoice);
+        } catch (\App\Services\Accounting\Exceptions\AccountingException|\RuntimeException $e) {
             $this->invoice->refresh();
             Flux::toast(variant: 'danger', heading: 'Cannot send', text: $e->getMessage());
             return;
         }
 
-        $pdf->regenerate($this->invoice);
-        $this->invoice->refresh();
-
-        // Text the client the invoice and pay link (unless M-Pesa credit already settled it).
-        $sms = $this->invoice->status->isPayable()
-            ? app(\App\Services\Sms\InvoiceSms::class)->send($this->invoice)
-            : null;
-
-        Flux::toast(variant: 'success', heading: 'Sent', text: match ($sms?->status) {
-            'sent' => 'Invoice sent to the client by SMS.',
-            'logged' => 'Invoice marked as sent. SMS is off in Settings, so the message was only logged.',
-            'failed' => 'Invoice marked as sent, but the SMS failed: '.$sms->error,
-            default => 'Invoice marked as sent.',
-        });
+        $outcome = SendInvoice::outcome($sms);
+        Flux::toast(variant: $outcome['variant'], heading: 'Invoice sent', text: $outcome['text']);
     }
 
     public function openMarkPaid(): void
@@ -169,23 +150,9 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
         }
     }
 
-    /** Text the client a link where they can pay this invoice with M-Pesa. */
-    public function smsPayLink(\App\Services\Sms\InvoiceSms $sms): void
-    {
-        $this->authorize('update', $this->invoice);
-
-        $log = $sms->send($this->invoice);
-
-        match ($log->status) {
-            'sent' => Flux::toast(variant: 'success', text: 'Invoice sent by SMS to '.$log->to.'.'),
-            'logged' => Flux::toast(variant: 'warning', heading: 'SMS is off', text: 'The message was logged but not sent. Turn SMS on in Settings.'),
-            default => Flux::toast(variant: 'danger', heading: 'SMS failed', text: (string) $log->error),
-        };
-    }
-
     public function rendering(): void
     {
-        $this->invoice->loadMissing(['items', 'client', 'reading.meter', 'payments']);
+        $this->invoice->loadMissing(['items', 'client', 'unit.property', 'reading.meter', 'payments']);
     }
 };
 ?>
@@ -225,15 +192,15 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                     <flux:menu>
                         <flux:menu.item icon="bell-alert" wire:click="requestMpesa"
                             wire:confirm="Send an M-Pesa PIN prompt for KES {{ number_format($invoice->balance(), 2) }} to {{ $invoice->client->phone }}?">Send PIN prompt to client</flux:menu.item>
-                        <flux:menu.item icon="chat-bubble-left-ellipsis" wire:click="smsPayLink">SMS invoice to client</flux:menu.item>
                         <flux:menu.item icon="link" x-on:click="navigator.clipboard.writeText('{{ $invoice->shortPayUrl() }}'); $flux.toast('Pay link copied.')">Copy pay link</flux:menu.item>
                     </flux:menu>
                 </flux:dropdown>
             @endif
 
-            @if ($invoice->status->value === 'draft')
-                <flux:button wire:click="send" variant="primary" icon="paper-airplane">
-                    Mark as sent
+            @if ($invoice->status->value === 'draft' || $invoice->status->isPayable())
+                <flux:button wire:click="send" variant="primary" icon="paper-airplane" wire:loading.attr="disabled" wire:target="send"
+                    wire:confirm="Send invoice {{ $invoice->number }} to {{ $invoice->client->name }} by SMS ({{ $invoice->client->phone ?: 'no phone on file' }})?">
+                    {{ $invoice->status->value === 'draft' ? 'Send invoice' : 'Resend invoice' }}
                 </flux:button>
             @endif
 
@@ -285,6 +252,21 @@ new #[Layout('layouts.vendor'), Title('Invoice')] class extends Component {
                         @endif
                     </div>
                 </div>
+
+                @if ($invoice->unit)
+                    <div>
+                        <div class="text-xs uppercase tracking-wide text-slate-500 font-semibold">House</div>
+                        <div class="mt-1 font-mono text-sm">{{ $invoice->unit->house_number }}</div>
+                        <div class="text-sm text-slate-600 mt-1 space-y-0.5">
+                            @if ($invoice->unit->property)
+                                <div>{{ $invoice->unit->property->name }}</div>
+                            @endif
+                            @if ($invoice->billing_period)
+                                <div>For {{ \App\Actions\BillUnit::periodLabel($invoice->billing_period) }}</div>
+                            @endif
+                        </div>
+                    </div>
+                @endif
 
                 @if ($invoice->reading?->meter)
                     <div>

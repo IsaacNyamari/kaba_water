@@ -13,7 +13,7 @@ class InvoicePdfService
      */
     public function render(Invoice $invoice): string
     {
-        $invoice->load(['items', 'client', 'vendor', 'reading.meter', 'payments']);
+        $invoice->load(['items', 'client', 'vendor', 'unit.property', 'reading.meter', 'payments']);
 
         return Pdf::loadView('pdf.invoice', ['invoice' => $invoice])
             ->setPaper('a4')

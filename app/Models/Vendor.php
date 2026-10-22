@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BusinessType;
 use App\Enums\VendorStatus;
 use App\Models\Concerns\HasAccounting;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
@@ -14,15 +15,18 @@ class Vendor extends Model
     use HasAccounting, HasFactory;
 
     protected $fillable = [
-        'name', 'slug', 'email', 'phone', 'logo_path', 'icon_path',
+        'name', 'business_type', 'slug', 'email', 'phone', 'logo_path', 'icon_path',
         'currency', 'status', 'plan_id', 'trial_ends_at', 'gemini_api_key', 'gemini_models',
     ];
+
+    protected $attributes = ['business_type' => 'water'];
 
     /** Never serialise the vendor's own API key (e.g. into Livewire state or JSON). */
     protected $hidden = ['gemini_api_key'];
 
     protected $casts = [
         'status' => VendorStatus::class,
+        'business_type' => BusinessType::class,
         'trial_ends_at' => 'datetime',
         'gemini_api_key' => 'encrypted',
     ];
@@ -100,6 +104,28 @@ class Vendor extends Model
     public function workOrders(): HasMany
     {
         return $this->hasMany(WorkOrder::class);
+    }
+
+    public function properties(): HasMany
+    {
+        return $this->hasMany(Property::class);
+    }
+
+    public function units(): HasMany
+    {
+        return $this->hasMany(Unit::class);
+    }
+
+    /** Property / apartment owners bill tenants per house number. */
+    public function isPropertyOwner(): bool
+    {
+        return $this->business_type === BusinessType::Property;
+    }
+
+    /** "client" or "tenant", for labels. */
+    public function customerNoun(): string
+    {
+        return ($this->business_type ?? BusinessType::Water)->customerNoun();
     }
 
     public function isActive(): bool

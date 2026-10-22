@@ -294,6 +294,18 @@
                 </div>
             </td>
             <td>
+                @if ($invoice->unit && ! $invoice->reading)
+                    <div class="label">House</div>
+                    <div class="name">{{ $invoice->unit->house_number }}</div>
+                    <div class="line">
+                        @if ($invoice->unit->property)
+                            {{ $invoice->unit->property->name }}<br>
+                        @endif
+                        @if ($invoice->billing_period)
+                            For {{ \App\Actions\BillUnit::periodLabel($invoice->billing_period) }}
+                        @endif
+                    </div>
+                @else
                 <div class="label">Meter</div>
                 @if ($invoice->reading?->meter)
                     <div class="name">{{ $invoice->reading->meter->serial }}</div>
@@ -305,8 +317,12 @@
                         Previous: {{ number_format($invoice->reading->previous_reading ?? 0) }} m³<br>
                         Current: {{ number_format($invoice->reading->reading) }} m³
                     </div>
+                    @if ($invoice->unit)
+                        <div class="line">House {{ $invoice->unit->fullLabel() }}</div>
+                    @endif
                 @else
                     <div class="line">—</div>
+                @endif
                 @endif
             </td>
         </tr>
@@ -325,10 +341,15 @@
                     <div class="v">{{ $invoice->due_at->format('d M Y') }}</div>
                 </td>
                 <td>
-                    <div class="k">Consumption</div>
-                    <div class="v">
-                        {{ number_format((float) ($invoice->reading->consumption ?? 0)) }} m³
-                    </div>
+                    @if ($invoice->reading)
+                        <div class="k">Consumption</div>
+                        <div class="v">
+                            {{ number_format((float) ($invoice->reading->consumption ?? 0)) }} m³
+                        </div>
+                    @elseif ($invoice->billing_period)
+                        <div class="k">Period</div>
+                        <div class="v">{{ \App\Actions\BillUnit::periodLabel($invoice->billing_period) }}</div>
+                    @endif
                 </td>
             </tr>
         </table>
@@ -339,7 +360,7 @@
         <thead>
             <tr>
                 <th>Description</th>
-                <th class="right" style="width:15%">Qty (m³)</th>
+                <th class="right" style="width:15%">{{ $invoice->reading ? 'Qty (m³)' : 'Qty' }}</th>
                 <th class="right" style="width:20%">Unit price</th>
                 <th class="right" style="width:20%">Amount</th>
             </tr>

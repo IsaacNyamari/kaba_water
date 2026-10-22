@@ -34,6 +34,12 @@ class Client extends Model
         return $this->hasMany(Meter::class);
     }
 
+    /** The houses this client rents. */
+    public function units(): HasMany
+    {
+        return $this->hasMany(Unit::class);
+    }
+
     public function invoices(): HasMany
     {
         return $this->hasMany(Invoice::class);

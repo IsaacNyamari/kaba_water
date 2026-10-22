@@ -2,6 +2,7 @@
 
 namespace App\Support;
 
+use App\Enums\BusinessType;
 use App\Models\User;
 
 /**
@@ -21,10 +22,13 @@ final class Modules
         $modules = [];
 
         if ($water = self::waterHome($user)) {
+            // Water vendors and property owners share this billing module; its name follows the business.
+            $type = $user->vendor?->business_type ?? BusinessType::Water;
+
             $modules['water'] = [
-                'name' => 'HS Water Billing',
-                'description' => 'Clients, meters, readings, bills, payments, repairs and accounting.',
-                'icon' => 'beaker',
+                'name' => $type->moduleName(),
+                'description' => $type->moduleDescription(),
+                'icon' => $type->icon(),
                 'url' => $water,
             ];
         }

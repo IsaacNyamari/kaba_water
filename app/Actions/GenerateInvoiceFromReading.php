@@ -4,6 +4,7 @@ namespace App\Actions;
 
 use App\Enums\InvoiceStatus;
 use App\Models\Invoice;
+use App\Models\InvoiceItem;
 use App\Models\Reading;
 use App\Models\Tariff;
 use App\Services\InvoiceNumberGenerator;
@@ -53,6 +54,7 @@ class GenerateInvoiceFromReading
         $invoice = DB::transaction(function () use ($reading, $tariff, $consumption, $subtotal, $tax, $total, $taxRate, $dueInDays, $issuedAt) {
             $invoice = Invoice::create([
                 'client_id' => $reading->meter->client_id,
+                'unit_id' => $reading->meter->unit_id,
                 'reading_id' => $reading->id,
                 'number' => $this->numbers->next($reading->vendor_id),
                 'issued_at' => $issuedAt,
@@ -92,6 +94,7 @@ class GenerateInvoiceFromReading
     {
         if ($tariff->type === 'flat') {
             $invoice->items()->create([
+                'category' => InvoiceItem::WATER,
                 'description' => "Water consumption — {$consumption} m³ @ "
                     .number_format((float) $tariff->rate, 2).' / m³',
                 'quantity' => $consumption,
@@ -115,6 +118,7 @@ class GenerateInvoiceFromReading
             }
 
             $invoice->items()->create([
+                'category' => InvoiceItem::WATER,
                 'description' => "Water — band of {$band} m³ @ "
                     .number_format((float) $tier['rate'], 2).' / m³',
                 'quantity' => $band,

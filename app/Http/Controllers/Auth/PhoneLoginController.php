@@ -85,7 +85,7 @@ class PhoneLoginController extends Controller
      * Meters are matched by serial (case-insensitive) across all vendors,
      * then narrowed by the client's phone number.
      */
-    protected function findClient(string $phone, string $meterNumber, string $password): ?User
+    public function findClient(string $phone, string $meterNumber, string $password): ?User
     {
         $candidates = Meter::withoutGlobalScope('vendor')
             ->whereRaw('LOWER(serial) = ?', [Str::lower(trim($meterNumber))])
@@ -106,7 +106,7 @@ class PhoneLoginController extends Controller
         return null;
     }
 
-    protected function requiresTwoFactor(User $user): bool
+    public function requiresTwoFactor(User $user): bool
     {
         if (! $user->two_factor_secret || ! in_array(TwoFactorAuthenticatable::class, class_uses_recursive($user), true)) {
             return false;

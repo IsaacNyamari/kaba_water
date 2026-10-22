@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Auth\MobileLoginController;
 use App\Http\Controllers\Auth\PhoneLoginController;
 use App\Http\Controllers\InvoicePdfController;
 use App\Http\Controllers\SeoController;
@@ -28,6 +29,11 @@ Route::prefix('webhooks')->name('webhooks.')->middleware('throttle:600,1')->grou
     Route::post('/mpesa/{token}/stk', [MpesaWebhookController::class, 'stk'])->name('mpesa.stk');
     Route::post('/meters/{token}', SmartMeterWebhookController::class)->name('meters');
 });
+
+// HS Water Billing Android app: native sign-in hands over to a normal web session.
+Route::post('/api/mobile/login', [MobileLoginController::class, 'login'])->middleware('throttle:20,1')->name('mobile.login');
+Route::get('/mobile/session/{token}', [MobileLoginController::class, 'session'])->middleware('throttle:20,1')->name('mobile.session');
+Route::get('/api/mobile/version', fn () => response()->json(config('mobile')))->name('mobile.version');
 
 // Short pay links sent by SMS: /p/{code} → the signed pay page below.
 Route::get('/p/{code}', ShortLinkController::class)->middleware('throttle:60,1')->where('code', '[a-z0-9]{4,12}')->name('short-link');
@@ -147,6 +153,12 @@ Route::middleware(['auth', 'verified', 'role:vendor|vendor_staff|technician|mete
             Route::livewire('/clients/create/upload', 'vendor.clients.upload')->name('clients.upload');
             Route::livewire('/clients/{client}/edit', 'vendor.clients.form')->name('clients.edit');
         });
+
+        // ── Houses (property owners bill per house number) ──
+        Route::middleware('permission:vendor.clients.view|vendor.clients.manage')->group(function () {
+            Route::livewire('/houses', 'vendor.units.index')->name('units.index');
+        });
+        Route::livewire('/houses/billing', 'vendor.units.billing')->middleware('permission:vendor.invoices.manage')->name('units.billing');
 
         // ── Meters ──────────────────────────────────────────
         Route::middleware('permission:vendor.meters.view|vendor.meters.manage')->group(function () {

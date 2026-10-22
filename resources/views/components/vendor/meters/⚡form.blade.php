@@ -2,6 +2,7 @@
 
 use App\Models\Client;
 use App\Models\Meter;
+use App\Models\Unit;
 use Illuminate\Validation\Rule;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -10,6 +11,7 @@ new #[Layout('layouts.vendor')] class extends Component {
     public ?Meter $meter = null;
 
     public string $client_id = '';
+    public string $unit_id = '';
     public string $serial = '';
     public string $location = '';
     public string $installed_at = '';
@@ -24,6 +26,7 @@ new #[Layout('layouts.vendor')] class extends Component {
             $this->authorize('update', $meter);
             $this->meter = $meter;
             $this->client_id = (string) $meter->client_id;
+            $this->unit_id = (string) $meter->unit_id;
             $this->serial = $meter->serial;
             $this->location = $meter->location ?? '';
             $this->installed_at = $meter->installed_at?->format('Y-m-d') ?? '';
@@ -46,6 +49,7 @@ new #[Layout('layouts.vendor')] class extends Component {
 
         return [
             'client_id' => ['required', "exists:clients,id,vendor_id,{$vendorId}"],
+            'unit_id' => ['nullable', "exists:units,id,vendor_id,{$vendorId}"],
             'serial' => ['required', 'string', 'max:60', $unique],
             'location' => ['nullable', 'string', 'max:150'],
             'installed_at' => ['nullable', 'date'],
@@ -57,12 +61,21 @@ new #[Layout('layouts.vendor')] class extends Component {
         ];
     }
 
+    /** A meter fitted in a house belongs to that house's tenant. */
+    public function updatedUnitId(): void
+    {
+        if ($tenant = Unit::whereKey($this->unit_id)->value('client_id')) {
+            $this->client_id = (string) $tenant;
+        }
+    }
+
     public function save(): void
     {
         $this->validate();
 
         $payload = [
             'client_id' => $this->client_id,
+            'unit_id' => $this->unit_id ?: null,
             'serial' => $this->serial,
             'location' => $this->location ?: null,
             'installed_at' => $this->installed_at ?: null,
@@ -87,6 +100,7 @@ new #[Layout('layouts.vendor')] class extends Component {
     {
         return view('vendor.meters.⚡form', [
             'clients' => Client::orderBy('name')->get(['id', 'name', 'account_no']),
+            'units' => Unit::with('property')->orderBy('house_number')->get(),
         ]);
     }
 };
@@ -109,6 +123,17 @@ new #[Layout('layouts.vendor')] class extends Component {
                         @endforeach
                     </flux:select>
                 </div>
+
+                @if ($units->isNotEmpty())
+                    <div class="sm:col-span-2">
+                        <flux:select wire:model.live="unit_id" label="House (optional)" description="The house this meter is fitted in. Its water bills show the house number.">
+                            <flux:select.option value="">— Not in a house —</flux:select.option>
+                            @foreach ($units as $u)
+                                <flux:select.option value="{{ $u->id }}">{{ $u->fullLabel() }}</flux:select.option>
+                            @endforeach
+                        </flux:select>
+                    </div>
+                @endif
 
                 <flux:input wire:model="serial" label="Serial number" class="font-mono" />
 

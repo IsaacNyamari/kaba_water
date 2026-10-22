@@ -20,6 +20,7 @@ new #[Layout('layouts.admin')] class extends Component {
     public string $email = '';
     public string $phone = '';
     public string $currency = 'KES';
+    public string $business_type = 'water';
     public string $status = 'trial';
     public ?int $plan_id = null;
 
@@ -39,6 +40,7 @@ new #[Layout('layouts.admin')] class extends Component {
             $this->email = $vendor->email;
             $this->phone = $vendor->phone ?? '';
             $this->currency = $vendor->currency;
+            $this->business_type = $vendor->business_type->value;
             $this->status = $vendor->status->value;
             $this->plan_id = $vendor->plan_id;
         } else {
@@ -72,6 +74,7 @@ new #[Layout('layouts.admin')] class extends Component {
             'email' => ['required', 'email', 'max:150', $uniqueEmail],
             'phone' => ['nullable', 'string', 'max:30'],
             'currency' => ['required', 'string', 'size:3'],
+            'business_type' => ['required', \Illuminate\Validation\Rule::enum(\App\Enums\BusinessType::class)],
             'status' => ['required', 'in:trial,active,suspended'],
             'plan_id' => ['nullable', 'exists:plans,id'],
         ];
@@ -96,6 +99,7 @@ new #[Layout('layouts.admin')] class extends Component {
             'email' => $this->email,
             'phone' => $this->phone ?: null,
             'currency' => strtoupper($this->currency),
+            'business_type' => $this->business_type,
             'status' => $this->status,
             'plan_id' => $this->plan_id,
         ];
@@ -150,6 +154,12 @@ new #[Layout('layouts.admin')] class extends Component {
 
             <flux:input wire:model="slug" label="Slug"
                 description="Used in URLs and API paths. Auto-generated from name." />
+
+            <flux:select wire:model="business_type" label="Business type">
+                @foreach (\App\Enums\BusinessType::cases() as $type)
+                    <flux:select.option value="{{ $type->value }}">{{ $type->label() }}</flux:select.option>
+                @endforeach
+            </flux:select>
 
             <div class="grid gap-5 sm:grid-cols-2">
                 <flux:input wire:model="email" type="email" label="Contact email" />

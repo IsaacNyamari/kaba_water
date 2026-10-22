@@ -16,7 +16,8 @@ use Throwable;
  * meter has an earlier approved reading to measure from, the units used
  * (current − previous) are invoiced at the active tariff, the invoice is
  * issued (so it posts to the ledger and any M-Pesa credit is applied) and
- * the client gets an SMS with a pay link.
+ * the client gets an SMS with a pay link. Readings the client submitted from
+ * the portal are never billed automatically, even once approved.
  *
  * Never throws — a reading is always saved; when no invoice can be made the
  * reason is returned so the screen can say why.
@@ -43,6 +44,11 @@ class InvoiceReadingAutomatically
 
         if ($reading->invoice()->exists()) {
             return ['invoice' => $reading->invoice, 'reason' => null];
+        }
+
+        // Self-reported readings are only billed when someone creates the invoice by hand.
+        if ($reading->isTakenByClient()) {
+            return $skip('The client took this reading; create the invoice from the invoices page if it should be billed.');
         }
 
         if ($reading->meter?->isPrepaid()) {

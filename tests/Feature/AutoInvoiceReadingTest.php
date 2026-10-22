@@ -46,3 +46,32 @@ test('the first reading of a meter is not billed, and billing twice is harmless'
 
     expect($second->fresh()->invoice()->count())->toBe(1);
 });
+
+test('approving a pending reading issues an unpaid invoice', function () {
+    Reading::create(['meter_id' => $this->meter->id, 'reading' => 100, 'previous_reading' => 0, 'read_at' => now()->subMonth()]);
+    $reading = Reading::create(['meter_id' => $this->meter->id, 'reading' => 105, 'status' => 'pending', 'read_at' => now()]);
+
+    $reading->approve();
+    $result = app(InvoiceReadingAutomatically::class)->handle($reading->fresh());
+
+    expect($result['invoice']->status)->toBe(InvoiceStatus::Sent)
+        ->and((string) $result['invoice']->total)->toBe('500.00');
+});
+
+test('a reading the client took is not billed automatically, even once approved', function () {
+    Reading::create(['meter_id' => $this->meter->id, 'reading' => 100, 'previous_reading' => 0, 'read_at' => now()->subMonth()]);
+    $reading = Reading::create([
+        'meter_id' => $this->meter->id,
+        'reading' => 110,
+        'status' => 'pending',
+        'read_at' => now(),
+        'created_by' => accountingUser($this->vendor, 'client')->id,
+    ]);
+
+    $reading->approve();
+    $result = app(InvoiceReadingAutomatically::class)->handle($reading->fresh());
+
+    expect($result['invoice'])->toBeNull()
+        ->and($result['reason'])->toContain('client took this reading')
+        ->and($reading->fresh()->invoice)->toBeNull();
+});

@@ -25,6 +25,9 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
     public string $phone = '';
     public string $currency = 'KES';
 
+    /** water | property — see App\Enums\BusinessType. */
+    public string $business_type = 'water';
+
     /** New Gemini key input only; the saved key is never put in component state. */
     public string $gemini_key = '';
 
@@ -43,6 +46,7 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
         $this->email = $vendor->email;
         $this->phone = $vendor->phone ?? '';
         $this->currency = $vendor->currency;
+        $this->business_type = $vendor->business_type->value;
         $this->gemini_models = (string) $vendor->gemini_models;
 
         $this->user_name = auth()->user()->name;
@@ -56,6 +60,7 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
             'email' => ['required', 'email', 'max:150', Rule::unique('vendors', 'email')->ignore(auth()->user()->vendor_id)],
             'phone' => ['nullable', 'string', 'max:30'],
             'currency' => ['required', 'string', 'size:3'],
+            'business_type' => ['required', Rule::enum(\App\Enums\BusinessType::class)],
 
             'user_name' => ['required', 'string', 'max:150'],
             'user_email' => ['required', 'email', 'max:150', Rule::unique('users', 'email')->ignore(auth()->id())],
@@ -70,17 +75,24 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
         $this->validateOnly('email');
         $this->validateOnly('phone');
         $this->validateOnly('currency');
+        $this->validateOnly('business_type');
 
         auth()
             ->user()
             ->vendor->update([
                 'name' => $this->name,
+                'business_type' => $this->business_type,
                 'email' => $this->email,
                 'phone' => $this->phone ?: null,
                 'currency' => strtoupper($this->currency),
             ]);
 
         Flux::toast(variant: 'success', heading: 'Workspace updated',text:'workspace updated successfully!');
+
+        // The menu (Houses, Tenants…) follows the business type, so reload it.
+        if (auth()->user()->vendor->wasChanged('business_type')) {
+            $this->redirectRoute('vendor.settings.index', navigate: false);
+        }
     }
 
     /**
@@ -448,6 +460,13 @@ new #[Layout('layouts.vendor', ['title' => 'Settings'])] class extends Component
                     </div>
 
                     <flux:input wire:model="name" label="Business name" />
+
+                    <flux:radio.group wire:model="business_type" label="What do you bill?">
+                        @foreach (\App\Enums\BusinessType::cases() as $type)
+                            <flux:radio value="{{ $type->value }}" label="{{ $type->label() }}" description="{{ $type->description() }}" />
+                        @endforeach
+                    </flux:radio.group>
+
                     <div class="grid gap-5 sm:grid-cols-2">
                         <flux:input wire:model="email" type="email" label="Business email" />
                         <flux:input wire:model="phone" label="Business phone" />

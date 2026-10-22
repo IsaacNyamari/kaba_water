@@ -150,13 +150,13 @@ new class extends Component {
             <div class="space-y-4 rounded-xl border border-zinc-200 p-4 dark:border-zinc-700">
                 <flux:text class="text-sm">
                     Use the login of your <flux:link href="https://smsportal.hostpinnacle.co.ke" target="_blank" rel="noopener">HostPinnacle SMS portal</flux:link>,
-                    or an API key from its control panel instead.
+                    Enter the user ID, API password and API key from its API settings. Most accounts need all three.
                 </flux:text>
                 <div class="grid gap-4 sm:grid-cols-2">
                     <flux:input wire:model="userid" label="User ID" autocomplete="off" />
-                    <flux:input type="password" wire:model="password" viewable autocomplete="off" label="Password"
+                    <flux:input type="password" wire:model="password" viewable autocomplete="off" label="Password (API password)"
                         :placeholder="($saved['password'] ?? false) ? 'Saved — leave blank to keep' : ''" />
-                    <flux:input type="password" wire:model="hp_api_key" viewable autocomplete="off" label="API key (instead of user ID and password)" class="sm:col-span-2"
+                    <flux:input type="password" wire:model="hp_api_key" viewable autocomplete="off" label="API key" class="sm:col-span-2"
                         :placeholder="($saved['hp_api_key'] ?? false) ? 'Saved — leave blank to keep' : ''" />
                 </div>
             </div>

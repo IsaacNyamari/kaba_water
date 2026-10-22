@@ -15,7 +15,7 @@ class Meter extends Model
     use BelongsToVendor;
 
     protected $fillable = [
-        'vendor_id', 'client_id', 'serial',
+        'vendor_id', 'client_id', 'unit_id', 'serial',
         'location', 'installed_at', 'status',
         'billing_mode', 'device_id', 'connectivity', 'last_value', 'last_seen_at', 'battery_percent', 'alerts',
     ];
@@ -31,6 +31,12 @@ class Meter extends Model
     public function client(): BelongsTo
     {
         return $this->belongsTo(Client::class);
+    }
+
+    /** The house the meter is fitted in (property owners). */
+    public function unit(): BelongsTo
+    {
+        return $this->belongsTo(Unit::class);
     }
 
     public function readings(): HasMany

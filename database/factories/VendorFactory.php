@@ -2,6 +2,7 @@
 
 namespace Database\Factories;
 
+use App\Enums\BusinessType;
 use App\Enums\VendorStatus;
 use App\Models\Vendor;
 use Illuminate\Database\Eloquent\Factories\Factory;
@@ -20,9 +21,19 @@ class VendorFactory extends Factory
             'name' => $name,
             'slug' => Str::slug($name).'-'.Str::lower(Str::random(4)),
             'email' => fake()->unique()->companyEmail(),
+            'business_type' => BusinessType::Water,
             'currency' => 'KES',
             'status' => VendorStatus::Active,
             'trial_ends_at' => now()->addDays(30),
         ];
+    }
+
+    /** A landlord who bills tenants per house number. */
+    public function propertyOwner(): static
+    {
+        return $this->state(fn () => [
+            'name' => fake()->unique()->company().' Apartments',
+            'business_type' => BusinessType::Property,
+        ]);
     }
 }

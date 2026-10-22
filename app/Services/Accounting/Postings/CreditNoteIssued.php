@@ -7,7 +7,7 @@ use App\Support\Money\MoneyMath;
 
 /**
  * An issued invoice is voided — the exact reverse of InvoiceIssued.
- *   Dr 4000 Water Revenue        net
+ *   Dr 4xxx Revenue              net (same split as the invoice)
  *   Dr 2100 VAT Payable          tax
  *   Cr 1100 Accounts Receivable  total
  */
@@ -23,8 +23,13 @@ class CreditNoteIssued extends Posting
         $tags = ['client_id' => $i->client_id, 'meter_id' => $i->reading?->meter_id, 'description' => "Credit note for {$i->number}"];
         $net = MoneyMath::sub((string) $i->total, (string) $i->tax);
 
+        $revenue = [];
+        foreach (InvoiceIssued::revenueByAccount($i, $net) as $code => $amount) {
+            $revenue[] = self::dr($code, $amount, $tags);
+        }
+
         return [
-            self::dr(self::code('water_revenue'), $net, $tags),
+            ...$revenue,
             self::dr(self::code('vat_payable'), (string) $i->tax, $tags),
             self::cr(self::code('receivables'), (string) $i->total, $tags),
         ];

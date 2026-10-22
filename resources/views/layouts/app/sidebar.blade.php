@@ -11,6 +11,7 @@
         $homeRoute = $user?->homeRoute() ?? url('/');
         $modules = \App\Support\Modules::for($user);
         $currentModule = \App\Support\Modules::current();
+        $isPropertyOwner = (bool) $user?->vendor?->isPropertyOwner();
     @endphp
 
     <flux:sidebar sticky collapsible="mobile"
@@ -140,9 +141,16 @@
                     @endcan
 
                     @canany(['vendor.clients.view', 'vendor.clients.manage'])
+                        @if ($isPropertyOwner)
+                            <flux:sidebar.item icon="home-modern" :href="route('vendor.units.index')"
+                                :current="request()->routeIs('vendor.units.index')" wire:navigate>
+                                {{ __('Houses') }}
+                            </flux:sidebar.item>
+                        @endif
+
                         <flux:sidebar.item icon="users" :href="route('vendor.clients.index')"
                             :current="request()->routeIs('vendor.clients.*')" wire:navigate>
-                            {{ __('Clients') }}
+                            {{ $isPropertyOwner ? __('Tenants') : __('Clients') }}
                         </flux:sidebar.item>
                     @endcanany
 
@@ -175,6 +183,15 @@
 
                 @canany(['vendor.invoices.view', 'vendor.invoices.manage', 'vendor.payments.view', 'vendor.payments.manage', 'vendor.mpesa.view', 'vendor.mpesa.reconcile', 'vendor.prepaid.view', 'vendor.tariffs.view', 'vendor.tariffs.manage'])
                 <flux:sidebar.group :heading="__('Billing')" class="grid">
+                    @if ($isPropertyOwner)
+                        @can('vendor.invoices.manage')
+                            <flux:sidebar.item icon="document-plus" :href="route('vendor.units.billing')"
+                                :current="request()->routeIs('vendor.units.billing')" wire:navigate>
+                                {{ __('Bill houses') }}
+                            </flux:sidebar.item>
+                        @endcan
+                    @endif
+
                     @canany(['vendor.invoices.view', 'vendor.invoices.manage'])
                         <flux:sidebar.item icon="document-text" :href="route('vendor.invoices.index')"
                             :current="request()->routeIs('vendor.invoices.*')" wire:navigate>

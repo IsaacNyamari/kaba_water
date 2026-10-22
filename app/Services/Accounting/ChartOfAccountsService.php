@@ -14,13 +14,14 @@ class ChartOfAccountsService
      */
     protected const POSTING_KEYS = [
         'cash', 'receivables', 'fixed_assets', 'accumulated_depreciation',
-        'payables', 'vat_payable', 'owners_equity', 'water_revenue',
+        'payables', 'vat_payable', 'owners_equity', 'water_revenue', 'rental_income', 'service_charges',
         'water_purchases', 'salaries', 'bad_debt', 'depreciation', 'other_expenses',
     ];
 
     /**
-     * The standard water-utility chart (CLAUDE.md), plus 5900 for expenses
-     * that fit none of the specific accounts (rent, power, office…).
+     * The standard water-utility chart (CLAUDE.md), plus 4300 / 4400 for
+     * property owners' rent and service charges, and 5900 for expenses that
+     * fit none of the specific accounts (rent, power, office…).
      *
      * Note 1510 Accumulated Depreciation: an ASSET account with a CREDIT
      * normal side (a contra-asset) — it reduces 1500 on the balance sheet.
@@ -43,6 +44,8 @@ class ChartOfAccountsService
             ['code' => '4000', 'name' => 'Water Revenue',             'type' => AccountType::Revenue,   'normal' => 'credit'],
             ['code' => '4100', 'name' => 'Connection Fees',           'type' => AccountType::Revenue,   'normal' => 'credit'],
             ['code' => '4200', 'name' => 'Penalties & Fees',          'type' => AccountType::Revenue,   'normal' => 'credit'],
+            ['code' => '4300', 'name' => 'Rental Income',             'type' => AccountType::Revenue,   'normal' => 'credit'],
+            ['code' => '4400', 'name' => 'Service Charges',           'type' => AccountType::Revenue,   'normal' => 'credit'],
             ['code' => '5000', 'name' => 'Water Purchases',           'type' => AccountType::Expense,   'normal' => 'debit'],
             ['code' => '5100', 'name' => 'Salaries',                  'type' => AccountType::Expense,   'normal' => 'debit'],
             ['code' => '5200', 'name' => 'Maintenance',               'type' => AccountType::Expense,   'normal' => 'debit'],
@@ -96,6 +99,7 @@ class ChartOfAccountsService
         return collect([
             array_intersect_key(config('accounting.accounts', []), array_flip(self::POSTING_KEYS)),
             config('accounting.payment_method_accounts', []),
+            config('accounting.invoice_item_accounts', []),
             config('accounting.expense_category_accounts', []),
         ])->flatten()->map(fn ($code) => (string) $code)->unique()->values()->all();
     }
